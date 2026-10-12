@@ -22,6 +22,10 @@ jobs:
           node --check docs/experimental-signal.js
           node --check docs/experimental-signal-ui.js
           node --check docs/simple-ui.js
+          node --check docs/ai-score-ui.js
+          node --check docs/browser-ai-runtime.js
+          node --check tests/browser-ai-engine.test.js
+          node --check tests/browser-ai-ui.test.js
           node --check tests/simple-ui-browser.test.js
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
@@ -46,6 +50,12 @@ jobs:
           node tests/browser-smoke.test.js
       - name: Simplified front page progressive disclosure regression
         run: node tests/simple-ui-browser.test.js
+      - name: Real research model adapter rules (no fake numbers)
+        run: node tests/browser-ai-engine.test.js
+      - name: Real browser AI score opt-in and UI regression
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: node tests/browser-ai-ui.test.js
       - name: Real Chrome PDF.js parsing, privacy and responsive workflow
         run: |
           test -s docs/vendor/pdfjs/pdf.mjs
@@ -63,3 +73,12 @@ jobs:
           test -s docs/vendor/tesseract/worker.min.js
           node --check tests/ocr-browser.test.js
           node tests/ocr-browser.test.js
+
+      - name: Collect real desktop/mobile interface screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-workspace-screenshots
+          path: /tmp/tis-ui-screenshots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
