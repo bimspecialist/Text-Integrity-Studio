@@ -45,7 +45,9 @@ function predict(text,model,opts={}){
  if(words<Math.max(75,Number(model.word_limit_minimum)||75)){result.reason='Too little text for the defined experimental eligibility rule.';return result;}
  if(!model.declared_languages.includes(lang)){result.reason='This document language is outside the model declared data.';return result;}
  if(text.length>120000){result.reason='Document too long for calibrated use.';return result;}
- const normalized=text.toLowerCase().replace(/\s{2,}/gu,' ');
+ // Match scikit-learn's default TfidfVectorizer(analyzer='char') preprocessing:
+ // lowercase text but preserve whitespace and punctuation, including repeated spaces.
+ const normalized=text.toLowerCase();
  const chars=Array.from(normalized);const vocab=model.vocabulary, frequencies=new Map();
  let observed=0;
  for(let n=3;n<=5;n++){
