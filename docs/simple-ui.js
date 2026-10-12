@@ -191,6 +191,14 @@ function setup(){
  for(const id of ['sample','clear','undo','redo','labAnalyze','labApply','labPreview','wordPreview']){
    $(id)?.addEventListener('click',()=>queueMicrotask(updateSummary));
  }
+ for(const id of ['clear','sample']){
+   $(id)?.addEventListener('click',()=>{
+     // Selecting the same file after Clear should still fire a change event.
+     input.value='';
+     setFileHint();
+     queueMicrotask(updateSummary);
+   });
+ }
  input.addEventListener('change',()=>{
    const f=input.files?.[0];
    if(f&&/\.pdf$/i.test(f.name)&&pdfTools)pdfTools.open=true;
