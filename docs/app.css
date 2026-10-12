@@ -21,3 +21,6 @@ select{padding:10px;border-radius:9px;color:white;background:#14253e;border:1px 
 .wordDropLabel{flex:1;min-width:180px}.wordWarning{color:#e3be8e}.wordExternal{color:#9bd3ff;font-size:12px}
 
 .privacyLink{color:#91c7ff;text-underline-offset:3px}.privacyLink:hover{color:#c3e2ff}
+
+/* PDF input and offline OCR */
+.pdf-controls{margin:14px 0;align-items:flex-end}.pdf-controls label{display:flex;flex-direction:column;gap:6px;min-width:94px}.pdf-controls input[type=number]{width:110px;max-width:100%;padding:10px;border-radius:9px;border:1px solid #354a68;color:white;background:#14253e}.pdf-controls select{max-width:215px}#pdfFacts{margin:12px 0}#pdfStatus{min-height:1.6em}
