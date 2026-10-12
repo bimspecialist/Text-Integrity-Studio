@@ -1,0 +1,8 @@
+# Optional, LOCAL ONLY: PDF text extraction + scanned-document OCR.
+# Does not activate any remote API or download AI models automatically.
+# Python 3.11+ recommended. For OCR also install Tesseract OCR binary with
+# English and Arabic language data separately from your trusted OS package source.
+pypdf>=6.0,<7
+pypdfium2>=4.30,<5
+pytesseract>=0.3.13,<0.4
+Pillow>=11,<13
