@@ -1,0 +1,4 @@
+# Small serving tier, no model downloads by default.
+fastapi>=0.115,<1
+pydantic>=2.9,<3
+uvicorn>=0.30,<1
