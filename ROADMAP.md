@@ -18,11 +18,12 @@ Ship a maintainable, bilingual, privacy-first writing and document-integrity web
 | WP09 | P3 optional | Weeks 10-13 | Backend/DevOps | Isolated opt-in inference API with quotas + no text logs | API security test, version pinning, deletion and rollback accepted |
 | WP10 | P3 | Weeks 13-18 | Product + UX researcher | Pilot and blind writing A/B study | Blind quality improves without higher semantic-error rate; critical failures zero |
 
-## Current state
-- **Implemented:** GitHub Pages site, local Unicode/Word inspection, DOCX preview/export, bilingual writing rules and review UI, benchmarking script and test suites.
-- **Partially implemented:** Editorial suggestions for extracted DOCX (plain-text preview/copy/export; **not** rich-text DOCX rewrite).
-- **Not implemented:** production grammar model, calibrated detector, provider API, PDF extraction/OCR, user accounts, external model data transfer.
-- **Documentation:** research/EXECUTIVE_RESEARCH_2026.md and evaluation/README.md.
+## Current state (updated 12 October 2026)
+- **Implemented and CI tested:** Static GitHub Pages interface, local bilingual Unicode and Word scanning, non-destructive DOCX download, protected citation/quotation/engineering-unit spans, Writing Lab review, **selected Word main-body edits with Track Changes**, browser-tested DOCX export, macro/DTD protection, restrictive CSP and privacy disclosure.
+- **Implemented research tools, not validated models:** Train/validation/test local TF-IDF detector baseline script, data-contamination controls, calibrated-score and fairness evaluation script, anonymized A/B outcomes analysis. These do NOT mean that a classifier is production-ready or that meaningful real-world accuracy has been demonstrated.
+- **Partially implemented:** Rich Word editorial editing works for ordinary simple direct text runs in document body; field-coded paragraphs, existing revisions, complex links, notes, headers and graphics are intentionally skipped. Arabic proofreading remains simple deterministic rules, not a fully contextual language model.
+- **Not implemented / conditional on missing resources and proof:** Trained and independently calibrated model weights, consented human/AI benchmark data, local large grammar model, full-complexity Word edit support, OCR/PDF ingestion, authenticated external inference service, accounts, and real-user A/B study. These cannot responsibly be called complete without datasets, optional infrastructure, and acceptance evidence.
+- **Documentation:** research/EXECUTIVE_RESEARCH_2026.md, evaluation/README.md, SECURITY.md, docs/privacy.html, README.md.
 
 ## Resourcing
 Baseline hosting: free GitHub Pages in public repository (subject to documented limits). For any opted-in remote CPU service, use measured demand before choosing capacity; a 2-vCPU/4-GiB DigitalOcean Basic VM is listed around $24/month as of Oct 2026, excluding backups, bandwidth excess and inference usage. A large self-hosted model budget is **unknown until model selection and load testing**.
