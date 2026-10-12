@@ -1,0 +1,4 @@
+# Public corpus research and controlled model provisioning; not required for serving.
+-r requirements-training.txt
+huggingface-hub>=0.35,<2
+pyarrow>=18,<30
