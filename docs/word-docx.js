@@ -56,7 +56,7 @@ function isHidden(run){const pr=childNamed(run,W,'rPr');if(!pr)return false;retu
 function textNodes(run){return Array.from(run.getElementsByTagNameNS(W,'t'));}
 function parseXML(str,path){const doc=new DOMParser().parseFromString(str,'application/xml');if(doc.getElementsByTagName('parsererror').length||doc.documentElement.localName==='parsererror')throw Error('Invalid Word XML: '+path);return doc;}
 function extract(doc){
- const rows=[],paras=doc.getElementsByTagNameNS(W,'p');
+ const rows=[],paras=Array.from(doc.getElementsByTagNameNS(W,'p'));
  for(const p of paras){
    let str='';
    const walker=doc.createTreeWalker(p,NodeFilter.SHOW_ELEMENT);
@@ -72,7 +72,7 @@ function extract(doc){
 }
 function inspectDoc(doc,path){
  const runs=Array.from(doc.getElementsByTagNameNS(W,'r')),hidden=runs.filter(isHidden).filter(r=>textNodes(r).some(x=>x.textContent));
- const all=doc.getElementsByTagName('*');let revisions=0,watermarks=0;
+ const all=Array.from(doc.getElementsByTagName('*'));let revisions=0,watermarks=0;
  for(const e of all){
    if(e.namespaceURI===W&&['ins','del','moveFrom','moveTo'].includes(e.localName))revisions++;
    if(/watermark/i.test([e.getAttribute('id'),e.getAttribute('name'),e.getAttribute('title'),e.getAttribute('descr')].filter(Boolean).join(' ')))watermarks++;
