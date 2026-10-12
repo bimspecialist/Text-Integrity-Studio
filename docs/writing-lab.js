@@ -56,7 +56,7 @@ function scan(){
  current=response.suggestions;
  dismissed.clear();lastText=txt;lastMode=$('labMode').value;
  render();preview();
- notify(current.length ? current.length+' '+l().ready:l().none);
+ notify(response.truncated?(lang==='ar'?'تحليل جزئي: تمت مراجعة أول '+response.scannedCharacters+' حرف فقط.':'Partial analysis: only the first '+response.scannedCharacters+' characters were reviewed.'):(current.length ? current.length+' '+l().ready:l().none));
 }
 function active(){return current.filter(s=>!dismissed.has(s.id)&&s.enabled!==false);}
 function isWord(){return $('source').readOnly;}
