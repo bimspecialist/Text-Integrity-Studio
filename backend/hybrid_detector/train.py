@@ -125,7 +125,9 @@ def fit(dataset: dict[str, list[dict]], *, language: str, domain: str, unit: str
         [r["text"] for r in dataset["train"] if r["label"] == "human"],
         [r["text"] for r in dataset["train"] if r["label"] == "ai"],
     )
-    extractor = Extractor(ngram_reference=reference)
+    # Resolve exactly the same local, pinned adapters used by serving.
+    from .api import _local_adapters
+    extractor = Extractor(ngram_reference=reference, **_local_adapters())
     # Production optional adapters must be supplied consistently to BOTH this
     # training feature extraction and serving. No missing feature is forged.
     by_split = {}
@@ -230,7 +232,7 @@ def main() -> None:
     data = read_dataset(args.dataset, args.language, args.domain, args.unit)
     artifact = fit(data, language=args.language, domain=args.domain, unit=args.unit, version=args.version)
     args.output.mkdir(parents=True, exist_ok=True)
-    target = args.output / (args.unit + ".json")
+    target = args.output / (args.unit + "." + args.language + ".json")
     target.write_text(json.dumps(artifact, ensure_ascii=False, indent=2, allow_nan=False), encoding="utf-8")
     print(json.dumps({"artifact": str(target), "release_approved": False, "validation": artifact["validation"]}, indent=2))
 
