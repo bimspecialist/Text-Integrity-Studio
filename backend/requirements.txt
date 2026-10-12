@@ -1,4 +1,4 @@
-# Small serving tier, no model downloads by default.
-fastapi>=0.115,<1
-pydantic>=2.9,<3
-uvicorn>=0.30,<1
+# Tested Python 3.12 runtime release set. Review transitives and pip-audit alerts on every change.
+fastapi==0.143.0
+pydantic==2.14.1
+uvicorn==0.54.0
