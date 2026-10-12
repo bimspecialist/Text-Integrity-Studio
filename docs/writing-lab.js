@@ -1,0 +1,112 @@
+/* Text Integrity Studio — bilingual editorial review interface */
+(function(){
+'use strict';
+const api=globalThis.TextIntegrityRules;
+if(!api)return;
+const $=id=>document.getElementById(id);
+let current=[],dismissed=new Set(),lastText='',lastMode='';
+const copy={
+en:{head:'04 · Writing improvement lab',note:'Human-reviewed improvements for clarity, grammar, punctuation and structure. No artificial typos, false claims, or detector-gaming.',tone:'Editing style',clear:'Clear and concise',academic:'Academic — preserve formality',professional:'Professional — concise',analyze:'Find suggestions',preview:'Preview selected improvements',apply:'Apply selected to text',copy:'Copy proposed text',export:'Export revised TXT',empty:'Paste text, then choose Find suggestions.',ready:'suggestions for review',none:'No suggestions under these deterministic checks. This does not prove your text is error-free.',review:'Optional — review meaning before applying',ignore:'Ignore',accept:'Apply this change',before:'Original',after:'Suggested',word:'Word mode: suggestions can be previewed, copied or exported as TXT. Rich Word download currently only applies Unicode cleanup; no automatic editorial rewrite is added to DOCX.',noAI:'Editorial checks are not an AI detector; changes do not prove human authorship or guarantee any external detector score.',unchanged:'Text changed. Scan again before applying.',changed:'Improvement applied.',select:'Select',all:'Selected',reset:'Refresh',safe:'Review references, numbers, terminology and quotations before accepting edits.'},
+ar:{head:'04 · مختبر تحسين الكتابة',note:'اقتراحات قابلة للمراجعة لتحسين الوضوح والقواعد والترقيم والبنية. لا نضيف أخطاء متعمدة أو ادعاءات غير صحيحة أو تحايلًا على أدوات الكشف.',tone:'أسلوب التحرير',clear:'واضح ومختصر',academic:'أكاديمي — الحفاظ على الرسمية',professional:'مهني — مختصر',analyze:'استخراج الاقتراحات',preview:'معاينة التحسينات المحددة',apply:'تطبيق المحدد على النص',copy:'نسخ النص المقترح',export:'تصدير TXT بعد التحسين',empty:'ألصق نصًا ثم اضغط استخراج الاقتراحات.',ready:'اقتراحًا للمراجعة',none:'لا توجد اقتراحات ضمن القواعد المحددة. هذا لا يعني أن النص خالٍ من الأخطاء.',review:'اختياري — راجع المعنى قبل التطبيق',ignore:'تجاهل',accept:'تطبيق هذا التعديل',before:'النص الأصلي',after:'الاقتراح',word:'وضع Word: يمكنك المعاينة والنسخ وتصدير TXT؛ تنزيل Word يحافظ على صياغته الأصلية ويطبق تنظيف Unicode فقط حاليًا.',noAI:'التدقيق التحريري ليس كشفًا للذكاء الاصطناعي، ولا يثبت أن النص بشري أو يضمن نتيجة أي أداة كشف خارجية.',unchanged:'تغير النص. أعد الفحص قبل تطبيق الاقتراح.',changed:'تم تطبيق التعديل.',select:'اختيار',all:'محدد',reset:'تحديث',safe:'راجع المراجع والأرقام والمصطلحات والاقتباسات قبل قبول التعديلات.'}
+};
+function l(){return copy[lang==='ar'?'ar':'en'];}
+function create(tag,cls,content){
+ const el=document.createElement(tag);
+ if(cls)el.className=cls;
+ if(content!==undefined)el.textContent=content;
+ return el;
+}
+function notify(msg){const p=$('labStatus');p.textContent=msg;p.setAttribute('role','status');}
+function setup(){
+ const style=create('style');
+ style.textContent='.writing-panel{border:1px solid #2f5479}.writing-header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:14px}.writing-bar{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:13px 0}.writing-bar label{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.writing-card{border-top:1px solid #30435e;padding:15px 2px}.writing-card:first-child{border-top:0}.writing-card p{font-size:12px;color:#a9bed7;line-height:1.75;margin:9px 0}.writing-card .pair{display:grid;grid-template-columns:1fr 1fr;gap:10px}.writing-card .chunk{font-size:13px;overflow-wrap:anywhere;white-space:pre-wrap;padding:10px;background:#281c31;border-radius:8px}.writing-card .chunk.after{background:#113e3b;color:#b8efdf}.writing-card .kind{font-size:11px;color:#91baff}.writing-card .row{margin-top:11px}.writing-card input{accent-color:#64aef0;min-width:17px;height:17px}.writing-results{max-height:520px;overflow-y:auto;padding:2px 3px}.writing-status{color:#99b5cf;font-size:12px;min-height:21px}.writing-preview{min-height:175px!important}.writing-note{font-size:12px;color:#c0cfdf;line-height:1.65}.writing-hidden{color:#dbb780}.writing-card button{padding:8px 12px}@media(max-width:530px){.writing-card .pair{grid-template-columns:1fr}.writing-bar select,.writing-bar button{width:100%}}';
+ document.head.append(style);
+ const panel=create('section','panel writing-panel');panel.id='writingLab';
+ panel.innerHTML='<div class="writing-header"><h2 id="labHeading"></h2><span id="labCount" class="small">0</span></div><p id="labNote" class="notice"></p><div class="writing-bar"><label><span id="labTone"></span><select id="labMode" aria-label="Editing style"><option value="clear"></option><option value="academic"></option><option value="professional"></option></select></label><button id="labAnalyze" class="primary" type="button"></button></div><p id="labStatus" class="writing-status" aria-live="polite"></p><div id="labResults" class="writing-results"></div><div class="writing-bar"><button id="labPreview" type="button"></button><button id="labApply" type="button"></button></div><label id="labPreviewLabel" for="labPreviewText"></label><textarea id="labPreviewText" class="writing-preview" readonly aria-label="Proposed reviewed text"></textarea><div class="writing-bar"><button id="labCopy" type="button"></button><button id="labExport" type="button"></button></div><p class="writing-note" id="labWord"></p><p class="writing-note" id="labAI"></p><p class="writing-note" id="labSafe"></p>';
+ document.querySelector('.workspace > div:first-child').append(panel);
+ $('labAnalyze').onclick=scan;
+ $('labMode').onchange=scan;
+ $('labPreview').onclick=preview;
+ $('labApply').onclick=applySelected;
+ $('labCopy').onclick=async()=>{preview();try{await navigator.clipboard.writeText($('labPreviewText').value);notify(lang==='ar'?'تم نسخ النسخة المقترحة':'Proposed revision copied.');}catch{notify(lang==='ar'?'النسخ غير متاح في هذا السياق. استخدم Ctrl+C.':'Clipboard unavailable here. Select the text and copy it.');}};
+ $('labExport').onclick=()=>{preview();download('text-integrity-edited.txt',$('labPreviewText').value,'text/plain;charset=utf-8');};
+ $('source').addEventListener('input',()=>{if(lastText!==$('source').value)invalidate();});
+ $('language').addEventListener('click',translateUI);
+ ['clear','sample'].forEach(id=>$(id).addEventListener('click',invalidate));
+ translateUI();invalidate();
+}
+function translateUI(){
+ const v=l();const k={
+ labHeading:'head',labNote:'note',labTone:'tone',labAnalyze:'analyze',labPreview:'preview',labApply:'apply',
+ labCopy:'copy',labExport:'export',labWord:'word',labAI:'noAI',labSafe:'safe'
+ };
+ for(const [id,name] of Object.entries(k))$(id).textContent=v[name];
+ $('labMode').options[0].textContent=v.clear;$('labMode').options[1].textContent=v.academic;$('labMode').options[2].textContent=v.professional;
+ $('labPreviewLabel').textContent=v.preview;
+ render();
+}
+function invalidate(){
+ current=[];dismissed.clear();lastText='';lastMode='';
+ $('labPreviewText').value='';$('labResults').replaceChildren();$('labCount').textContent='0';
+ notify(l().empty);
+}
+function scan(){
+ const txt=$('source').value;
+ const response=api.analyze(txt,$('labMode').value);
+ current=response.suggestions;
+ dismissed.clear();lastText=txt;lastMode=$('labMode').value;
+ render();preview();
+ notify(current.length ? current.length+' '+l().ready:l().none);
+}
+function active(){return current.filter(s=>!dismissed.has(s.id)&&s.enabled!==false);}
+function isWord(){return $('source').readOnly;}
+function render(){
+ if(!$('labResults'))return;
+ const root=$('labResults');root.replaceChildren();
+ $('labCount').textContent=active().length+' '+l().ready;
+ $('labApply').disabled=isWord()||!active().length;
+ if(!current.length){const p=create('p','empty',l().empty);root.append(p);return;}
+ current.forEach(s=>{
+  if(dismissed.has(s.id))return;
+  const card=create('div','writing-card');
+  const head=create('div','row between');
+  const id='lab-option-'+s.id.replace(/[^a-z0-9]/gi,'-');
+  const input=create('input');input.type='checkbox';input.id=id;input.checked=s.enabled!==false;input.addEventListener('change',()=>{s.enabled=input.checked;updateButtons();});
+  const title=create('label','',s.category+' · '+(s.risk==='medium'?l().review:l().select));title.htmlFor=id;
+  head.append(input,title);
+  const reason=create('p','',lang==='ar'?s.reasonAr:s.reason);
+  const pair=create('div','pair');
+  const left=create('div','');left.append(create('small','',l().before),create('div','chunk',s.original));
+  const right=create('div','');right.append(create('small','',l().after),create('div','chunk after',s.replacement||'∅'));
+  pair.append(left,right);
+  const actions=create('div','row');
+  const ignore=create('button','',l().ignore);ignore.type='button';ignore.onclick=()=>{dismissed.add(s.id);render();preview();};
+  const apply=create('button','',l().accept);apply.type='button';apply.disabled=isWord();apply.onclick=()=>{
+    if(isWord())return;
+    try{snapshot();$('source').value=api.apply($('source').value,s);analyze();scan();notify(l().changed);}
+    catch{notify(l().unchanged);scan();}
+  };
+  actions.append(ignore,apply);card.append(head,reason,pair,actions);root.append(card);
+ });
+ updateButtons();
+}
+function updateButtons(){
+ $('labApply').disabled=isWord()||!active().length;
+ $('labCount').textContent=active().length+' '+l().ready;
+}
+function preview(){
+ const text=$('source').value;
+ if(lastText!==text||lastMode!==$('labMode').value){scan();return;}
+ try{$('labPreviewText').value=api.previewAll(text,active());}
+ catch{$('labPreviewText').value=text;notify(l().unchanged);}
+}
+function applySelected(){
+ if(isWord()){notify(l().word);return;}
+ if(lastText!==$('source').value){notify(l().unchanged);scan();return;}
+ if(!active().length)return;
+ if(active().some(s=>s.risk==='medium')&&!confirm(lang==='ar'?'تتضمن الاقتراحات تغييرات أسلوبية. هل راجعت المعنى والمصطلحات؟':'Some changes affect style. Have you checked meaning and terminology?'))return;
+ try{const changed=api.previewAll($('source').value,active());snapshot();$('source').value=changed;analyze();scan();notify(l().changed);}
+ catch{notify(l().unchanged);}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
+})();
