@@ -73,6 +73,44 @@ def coverage(rows):
     return {k: dict(by_split[k]) for k in SPLITS}
 
 
+def browser_artifact(model, calibrator, rows):
+    """Exports numeric inference weights only; no raw document contents.
+
+    Vocabulary consists of short source-derived character n-grams and may reveal
+    fragments from private training data. Never upload trained exports publicly
+    without dataset licensing, privacy review and model provenance approval.
+    """
+    vectorizer = model.named_steps["tfidfvectorizer"]
+    classifier = model.named_steps["logisticregression"]
+    if classifier.classes_.tolist() != [0, 1] or calibrator.classes_.tolist() != [0, 1]:
+        raise ValueError("Model class order is incompatible with browser export")
+    weights = classifier.coef_[0]
+    names = vectorizer.vocabulary_
+    n = len(weights)
+    if n > 70000 or len(names) != n:
+        raise ValueError("Unexpected feature shape")
+    return {
+        "format": "TIS-char-tfidf-logreg-v1",
+        "status": "UNVERIFIED_RESEARCH_ONLY",
+        "training_origin": "USER_SUPPLIED_PRIVATE_DATA_NOT_AUDITED",
+        "ngram_range": [3, 5],
+        "vocabulary": names,
+        "idf": [float(x) for x in vectorizer.idf_],
+        "weights": [float(x) for x in weights],
+        "intercept": float(classifier.intercept_[0]),
+        "calibration": {
+            "method": "independent_validation_split_logistic",
+            "coef": float(calibrator.coef_[0, 0]),
+            "intercept": float(calibrator.intercept_[0])
+        },
+        "declared_languages": sorted(set(row["language"] for row in rows if row.get("language"))),
+        "declared_domains": sorted(set(row["domain"] for row in rows if row.get("domain"))),
+        "word_limit_minimum": 75,
+        "independent_holdout_approved": False,
+        "disclaimer": "Research-only local classifier signal. Not proof of authorship or a percentage of AI-written words."
+    }
+
+
 def train(rows, output_path, min_per_class=30):
     # Optional large dependencies are imported only for actual local training.
     from joblib import dump
@@ -114,6 +152,7 @@ def train(rows, output_path, min_per_class=30):
     # Only load artifacts you created locally; joblib/pickle is unsafe for untrusted files.
     dump({"model":model,"calibrator":calibrator,"version":"tfidf-char-3to5-logreg-platt-v1"},
          out/"local_experimental_model.joblib")
+    (out/"local_experimental_browser_model.json").write_text(json.dumps(browser_artifact(model,calibrator,rows),ensure_ascii=False,separators=(",",":")),encoding="utf-8")
     with (out/"held_out_scores.csv").open("w",encoding="utf-8",newline="") as f:
         w=csv.DictWriter(f,fieldnames=list(labeled[0]));w.writeheader();w.writerows(labeled)
     report={
@@ -122,7 +161,8 @@ def train(rows, output_path, min_per_class=30):
         "sample_counts":coverage(rows),
         "limitations":"Experimental, corpus-specific, cannot establish document authorship. NOT DEPLOYABLE without governance and fairness review.",
         "independently_verified_provenance":"NOT REVIEWED",
-        "holdout":scored
+        "holdout":scored,
+        "browser_model_export": "local_experimental_browser_model.json (unverified local research only)"
     }
     (out/"report.json").write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print(json.dumps(report,ensure_ascii=False,indent=2))
