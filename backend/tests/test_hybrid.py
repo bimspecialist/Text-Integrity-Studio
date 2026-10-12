@@ -162,7 +162,7 @@ def test_independent_segment_calibrator_controls_ui_tiers_not_document_score():
             assert result["segments"][0]["color"] == expected[1]
             assert result["segments"][0]["ai_probability_percent"] is not None
             assert result["segments"][0]["start"] == 0
-            assert result["segments"][0]["end"] == len(long_en(10))
+            assert result["segments"][0]["end"] == len(long_en(10).rstrip())
 
 
 def test_no_approval_manifest_refuses_approved_artifact():
