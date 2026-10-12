@@ -16,10 +16,14 @@ function uppercaseReplacement(original,replacement){
 }
 function analyze(text,mode='clear'){
  if(typeof text!=='string')throw new TypeError('Expected text');
+ const originalLength=text.length;
+ const MAX_CHARS=200000;
+ const truncated=originalLength>MAX_CHARS;
+ text=text.slice(0,MAX_CHARS);
  const result=[];let counter=0;
  function add(rule,start,end,replacement,category,explanation,arExplanation,risk='low'){
    const original=text.slice(start,end);
-   if(!original||original===replacement)return;
+   if(!original||original===replacement||result.length>=300)return;
    result.push({id:rule+':'+start+':'+end,rule,start,end,original,replacement,category,risk,
      reason:explanation,reasonAr:arExplanation,optional:true});
  }
@@ -72,6 +76,7 @@ function analyze(text,mode='clear'){
  const accepted=[],discarded=[];
  for(const s of sorted){const prior=accepted[accepted.length-1];if(prior&&s.start<prior.end){discarded.push(s);continue;}accepted.push(s);}
  return {suggestions:accepted,overlappingDiscarded:discarded.length,mode,
+   truncated,scannedCharacters:text.length,totalCharacters:originalLength,
    wordCount:(text.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}'’-]*/gu)||[]).length,
    caveat:'Deterministic editorial suggestions, not an AI detector or authorship estimator.'};
 }
