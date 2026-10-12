@@ -15,6 +15,8 @@ import difflib
 import hmac
 import json
 import os
+import re
+from collections import Counter
 from pathlib import Path
 import secrets
 import sys
@@ -154,6 +156,29 @@ def local_proofread(text: str, model: str = "qwen2.5:7b", language: str = "auto"
     return proposed
 
 
+PROTECTED_FACTS = re.compile(
+    r"\b(?:ISO|SBC|ASTM|ASCE|IEC)\s*[- ]?\d{2,6}(?:[-:]\d+)?\b"
+    r"|\b\d+(?:[.,]\d+)*(?:\s*(?:%|mm|cm|m²|m³|km|kPa|MPa|Pa|kW|kWh|Hz|°C|SAR|BHD))?\b"
+    r"|\[[0-9,\s;-]+\]"
+    r"|\b(?:https?://|doi:)\S+",
+    flags=re.IGNORECASE,
+)
+
+
+def check_factual_tokens(original: str, proposed: str) -> dict:
+    """Deterministic editorial guardrail; not a proof of meaning preservation."""
+    before = Counter(x.group(0).strip() for x in PROTECTED_FACTS.finditer(original))
+    after = Counter(x.group(0).strip() for x in PROTECTED_FACTS.finditer(proposed))
+    lost = list((before - after).elements())
+    added = list((after - before).elements())
+    return {
+        "risk": "HIGH" if lost or added else "NO_TOKEN_DIFFERENCE_DETECTED",
+        "missing_original_numbers_or_references": lost[:30],
+        "unexpected_numbers_or_references": added[:30],
+        "caveat": "Additional human review is still required for names, quotations, citations and meaning."
+    }
+
+
 def save_review(input_path: Path, original: str, proposed: str, output_path: Path) -> dict:
     if output_path.resolve()==input_path.resolve():
         raise CompanionError("Never overwrite the source.")
@@ -161,7 +186,10 @@ def save_review(input_path: Path, original: str, proposed: str, output_path: Pat
     diff="".join(difflib.unified_diff(original.splitlines(keepends=True),proposed.splitlines(keepends=True),
                                     fromfile=input_path.name,tofile=output_path.name))
     output_path.with_suffix(output_path.suffix+".diff").write_text(diff,encoding="utf-8")
-    return {"status":"DRAFT_REQUIRES_REVIEW","output":str(output_path),"diff":str(output_path)+".diff",
+    guard = check_factual_tokens(original, proposed)
+    return {"status":"HIGH_RISK_REVIEW_REQUIRED" if guard["risk"]=="HIGH" else "DRAFT_REQUIRES_REVIEW",
+            "output":str(output_path),"diff":str(output_path)+".diff",
+            "factual_token_guard":guard,
             "meaning_preservation":"NOT AUTOMATICALLY VERIFIED",
             "warning":"Confirm citations, numbers, technical terms and meaningful author voice before using a proposal."}
 
