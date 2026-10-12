@@ -1,0 +1,5 @@
+# Optional! Pre-download trusted, pinned local model checkpoints.
+-r requirements.txt
+torch>=2.3,<3
+transformers>=4.48,<6
+sentence-transformers>=3,<6
