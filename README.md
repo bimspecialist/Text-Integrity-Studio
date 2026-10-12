@@ -1,5 +1,18 @@
 # Text Integrity Studio
-A free, privacy-first **Arabic/English** text inspection studio, designed for GitHub Pages.
+A free, privacy-first **Arabic/English** text inspection and writing-review studio, designed for GitHub Pages.
+
+**Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
+
+### Research and development deliverables
+- [Executive research report — October 2026](research/EXECUTIVE_RESEARCH_2026.md): scholarly sources, practical methods, vendor limitations, ethics, privacy, architecture and budgets.
+- [Development roadmap](ROADMAP.md): phased work packages, owners, acceptance gates, risks and estimated resources.
+- [Detector evaluation framework](evaluation/README.md) and [Python metric evaluator](evaluation/score_detector.py): transparent false-positive rates, confidence intervals, stratification and uncertainty.
+- [Working browser prototype](docs/index.html) with [Writing Lab](docs/writing-lab.js), [bilingual rules](docs/writing-rules.js), and [Word DOCX tooling](docs/word-docx.js).
+
+**Scope:** This site **does not currently detect whether text was written by AI**. It provides document integrity scans and human-reviewed style/grammar suggestions, and intentionally displays no invented AI-authorship percentage. It never generates deliberate “human errors” or promises detector evasion.
+
+**Current Word limitation:** writing suggestions for extracted DOCX can be copied or exported as TXT; Word DOCX download currently only applies Unicode/hidden-run cleanup, not full rich-text editorial rewriting.
+
 
 ## Word DOCX — available now
 
@@ -23,6 +36,7 @@ To inspect a Word file **without Python**:
 After Pages is enabled, the static site is served from `/docs/index.html`.
 
 ## Features
+- Bilingual writing improvement lab: selectable spelling, grammar, punctuation, formatting and clarity edits with preview, undo and TXT export.
 - Detailed audit of invisible and unusual Unicode characters, with count, code point and review category.
 - Safe versus thorough cleanup, preview before applying, TXT download, clipboard copy.
 - Bidirectional markers and mixed-script look-alikes flagged for manual review rather than blindly removed.
