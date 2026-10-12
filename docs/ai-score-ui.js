@@ -1,184 +1,336 @@
-/* Main-workspace controller for an optional local ONNX detector.
- * No frame, CDN executable, or model network request before a user clicks.
- * Existing DOCX, PDF, OCR, and writing actions are unaffected.
+/* TIS advanced evidence UI — honest statistics, clear uncertainty, easy workflow.
+ * The regular editor/Word/PDF/OCR/cleanup features continue unchanged.
+ * No client-secret or remote text upload; optional model downloads need consent.
  */
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
+const VERSION='TIS_CONSENSUS_V2_2026_10';
+const PRIMARY='onnx-community/tmr-ai-text-detector-ONNX';
 let child=null,ready=false,currentRequest='',lastResult=null,counter=0;
-const messages={
+let inputSnapshot='',running=false;
+const languages={
  en:{
-  title:'AI text indicator',badge:'EXPERIMENTAL',unit:'Model signal',
-  idle:'No model estimate yet',
-  explanation:'A real English classifier can provide a research signal. This is not proof of who wrote a document.',
-  run:'Get experimental AI estimate',
-  consent:'First run downloads about 126 MB of model weights plus browser inference code from Hugging Face and a CDN. Your text is processed in the browser; third-party code is downloaded only after you click.',
-  legal:'English only · At least 120 words · Model output is not the share of AI-written words.',
-  noText:'Paste text or open a document before running AI analysis.',
-  short:'At least 120 words of English are required for this experimental model.',
-  language:'This classifier was trained for English. A number for Arabic or mixed writing would be misleading.',
-  loading:'Initializing the browser classifier. First-time download can be large...',
-  analyzing:'Analyzing your document in the browser...',
-  download:p=>'Downloading model assets: '+p+'%',
-  done:'Experimental model signal calculated. It is not independently calibrated and cannot establish authorship.',
-  failed:'The browser model is unavailable. Check internet access, memory, or content blockers. No number was guessed.',
-  unsupported:'The model returned an unknown label. No score can be shown.',
-  expired:'Text changed. Re-run the model to estimate this version.',
-  export:'Save model report'
+  title:'AI text evidence',badge:'EXPERIMENTAL',unit:'Model signal',
+  idle:'No analysis yet',
+  explanation:'Multiple text windows and an optional second detector show model evidence and disagreement, not certain authorship.',
+  run:'Analyze AI model signals',
+  consent:'First use downloads an English RoBERTa model (~126 MB) to your browser. Deep cross-check optionally downloads a second ~126 MB historical GPT-2 detector. Remote code/model downloads require internet; the app does not submit your document to a remote inference API.',
+  legal:'Uncalibrated classifier diagnostics · not a percentage of AI-authored words · English only, 120+ words. False positives remain possible.',
+  advanced:'Deep analysis options',
+  deep:'Compare with a second detector (more data and memory)',
+  deepHelp:'Optional model checks disagreement. It was trained on GPT-2 (2019), so its result is not a modern accuracy guarantee; disagreement blocks the combined number.',
+  contextLabel:'Writing context',
+  evidenceTitle:'View model comparison and analyzed passages',
+  noText:'Paste text or open a document before running analysis.',
+  short:'120 or more words of English text are required for this analysis.',
+  language:'English-only models cannot reliably estimate Arabic or mixed-language writing.',
+  loading:'Preparing on-device detectors. Large model downloads may take a while...',
+  analyzing:'Analyzing actual model-token windows. No text is being sent to a detector server.',
+  download:(p,model)=>'Downloading '+model+' model assets: '+p+'%',
+  done:'Model diagnostics calculated. They are not independently calibrated for this website.',
+  failed:'The model could not run. Check network access, browser memory or content blockers. No fabricated result is shown.',
+  unsupported:'Unexpected model output or class labels; results withheld.',
+  expired:'The text changed. Analyze again to evaluate this version.',
+  export:'Download model evidence',
+  uncertain:'Models disagree — no defensible combined percentage',
+  lowCoverage:'Too little of the document could be analyzed — no combined percentage',
+  partial:'Only the main model completed. No two-model agreement was assessed.',
+  measured:'Research model signal (not authorship probability)',
+  models:'Model comparison',
+  coverage:'Document sampled',
+  tokens:'Maximum tokens per window',
+  segments:'Text passages',
+  reportWindow:'Analyzed passage',
+  flags:'Limitations & uncertainty',
+  noFlags:'No additional processing warnings (model accuracy remains unverified).',
+  labelPrimary:'TMR (2025 / RAID)',
+  labelSecondary:'OpenAI (2019 / GPT-2)',
+  scoreLabel:'Uncalibrated AI-class signal',
+  contextWarning:'Scores can be biased by academic, polished or second-language writing.',
+  notHuman:'A lower model signal never proves human authorship.',
+  indicatorFallback:'Model analysis unavailable',
+  statusAgreement:'Both models produced broadly similar signals. This is not proof that either is correct.',
+  statusSampled:'Only a sample of this document was processed; see coverage below.',
+  modelReason:'The two detectors were trained on different generators and eras. Their numbers are not directly comparable to commercial detectors.',
+  noTextInReport:'Source text excluded from saved report.',
+  flagMap:{
+   LOW_DOCUMENT_COVERAGE:'A limited fraction of the document was processed.',
+   CONFLICTING_PASSAGES:'Some passages give opposite model signals.',
+   HIGH_SEGMENT_VARIANCE:'Substantial variation between document sections.',
+   FORMAL_OR_NON_NATIVE_FALSE_POSITIVE_RISK:'Formal or second-language writing can be falsely flagged.',
+   MODELS_DISAGREE:'Models differ by more than 25 percentage points.',
+   SECONDARY_LOW_COVERAGE:'The cross-check covered too little of the text.',
+   SECONDARY_MIXED_PASSAGES:'Cross-check signals vary sharply across passages.',
+   SECONDARY_MODEL_UNAVAILABLE:'The second model could not be loaded or run.'
+  }
  },
  ar:{
-  title:'مؤشر الذكاء الاصطناعي',badge:'تجريبي',unit:'إشارة النموذج',
-  idle:'لم يتم حساب نتيجة النموذج',
-  explanation:'يمكن لنموذج فعلي تحليل النص الإنجليزي وإعطاء إشارة بحثية، لكنه لا يثبت هوية كاتب المستند.',
-  run:'احسب مؤشر AI التجريبي',
-  consent:'يُنزّل عند أول تشغيل نموذجًا بحجم يقارب 126 ميجابايت مع كود التشغيل من Hugging Face وCDN. يعمل النموذج داخل المتصفح، ولا يبدأ التنزيل إلا بعد الضغط على الزر.',
-  legal:'للإنجليزية فقط · 120 كلمة على الأقل · النتيجة ليست نسبة الكلمات التي كتبها AI.',
-  noText:'الصق النص أو افتح ملفًا أولًا قبل تشغيل تحليل AI.',
-  short:'يحتاج النموذج التجريبي إلى 120 كلمة إنجليزية على الأقل.',
-  language:'هذا النموذج مدرّب للإنجليزية. سيكون عرض رقم للنص العربي أو المختلط مضللًا.',
-  loading:'يجري تهيئة النموذج. التنزيل الأول قد يكون كبيرًا...',
-  analyzing:'يجري تحليل المستند محليًا...',
-  download:p=>'جارٍ تنزيل النموذج: '+p+'%',
-  done:'تم حساب إشارة النموذج التجريبية. لم تُعاير بشكل مستقل ولا تصلح للحكم على كاتب المستند.',
-  failed:'تعذّر تنزيل النموذج أو تشغيله. تحقّق من الاتصال والذاكرة أو مانع المحتوى. لن نعرض رقمًا مخمّنًا.',
-  unsupported:'أعاد النموذج تصنيفًا غير معروف؛ لم نعرض أي رقم.',
-  expired:'تغيّر النص بعد التحليل. أعد تشغيل النموذج.',
-  export:'حفظ تقرير النموذج'
+  title:'أدلة الكشف عن AI',badge:'تجريبي',unit:'إشارة النموذج',
+  idle:'لم يبدأ التحليل بعد',
+  explanation:'تحليل عدة مقاطع من النص، مع نموذج ثانٍ اختياري لإظهار اختلاف النتائج، وليس لإثبات هوية الكاتب.',
+  run:'تحليل مؤشرات الذكاء الاصطناعي',
+  consent:'يُنزَّل أولًا نموذج RoBERTa إنجليزي (~126 ميجابايت) إلى المتصفح. المقارنة العميقة تنزّل نموذج GPT-2 تاريخيًا إضافيًا (~126 ميجابايت). لا يرسل التطبيق المستند عمدًا إلى خدمة كشف بعيدة، لكنه يحتاج اتصالًا لتنزيل الأكواد والأوزان.',
+  legal:'مؤشرات نماذج غير معايرة · ليست نسبة الكلمات المكتوبة بالذكاء الاصطناعي · إنجليزي فقط، 120 كلمة فأكثر. قد تحدث نتائج إيجابية خاطئة.',
+  advanced:'خيارات الفحص المتقدم',
+  deep:'قارن مع نموذج ثانٍ (يستهلك تنزيلًا وذاكرة أكبر)',
+  deepHelp:'خيار مستقل لكشف الاختلاف. النموذج الإضافي دُرّب على GPT-2 عام 2019، فلا يضمن كشف النماذج الحديثة. عند التعارض لا نعرض نسبة موحدة.',
+  contextLabel:'نوع الكتابة',
+  evidenceTitle:'مقارنة النماذج والمقاطع التي تم فحصها',
+  noText:'الصق النص أو افتح مستندًا أولًا.',
+  short:'يتطلب التحليل 120 كلمة إنجليزية على الأقل.',
+  language:'لا يمكن لنموذج إنجليزي إصدار درجة موثوقة للنص العربي أو المختلط.',
+  loading:'تجهيز نماذج الجهاز. قد يكون تنزيل الملفات كبيرًا...',
+  analyzing:'يُفحص النص بمقاطع ضمن حد الرموز الحقيقي للنموذج، دون إرسال النص إلى خادم كشف.',
+  download:(p,model)=>'تنزيل ملفات نموذج '+model+': '+p+'%',
+  done:'اكتمل حساب مؤشرات النماذج، لكنها لم تُعاير بشكل مستقل لهذا الموقع.',
+  failed:'تعذر تشغيل النموذج. تحقق من الشبكة والذاكرة ومانع المحتوى. لن نعرض رقمًا افتراضيًا.',
+  unsupported:'خرج تصنيف غير متوقع من النموذج، ولذلك حُجبت النتيجة.',
+  expired:'تغيّر النص بعد الفحص؛ شغّل التحليل مجددًا.',
+  export:'تنزيل تقرير أدلة النماذج',
+  uncertain:'النموذجان مختلفان — لا توجد نسبة موحدة يمكن الدفاع عنها',
+  lowCoverage:'لم تدخل كمية كافية من المستند في الفحص — لا توجد نسبة موحدة',
+  partial:'عمل النموذج الرئيسي فقط؛ لم يُتحقق من اتفاق النموذجين.',
+  measured:'إشارة نموذج بحثية وليست احتمال إثبات الكتابة',
+  models:'مقارنة النموذجين',
+  coverage:'نسبة النص المُعايَن',
+  tokens:'الحد الأعلى للرموز في المقطع',
+  segments:'المقاطع المفحوصة',
+  reportWindow:'مقطع مفحوص',
+  flags:'القيود وعدم اليقين',
+  noFlags:'لم تُرصد ملاحظات معالجة إضافية، لكن الدقة لم تُتحقق بصورة مستقلة.',
+  labelPrimary:'TMR ‏(2025 / RAID)',
+  labelSecondary:'OpenAI ‏(2019 / GPT-2)',
+  scoreLabel:'إشارة تصنيف AI غير معايرة',
+  contextWarning:'قد تُصنف الكتابة الأكاديمية أو المنقحة أو الإنجليزية كلغة ثانية خطأ.',
+  notHuman:'انخفاض إشارة النموذج لا يثبت أن النص كتبه إنسان.',
+  indicatorFallback:'نتيجة النموذج غير متاحة',
+  statusAgreement:'أعطى النموذجان إشارات متقاربة، ولا يثبت ذلك صحة أيّ منهما.',
+  statusSampled:'تم فحص عيّنة فقط من المستند، راجع نسبة التغطية.',
+  modelReason:'تدرب النموذجان على بيانات وعصور مختلفة، لذا لا تقارن أرقامهـما مباشرة بمواقع تجارية.',
+  noTextInReport:'لم يُدرج محتوى المستند في التقرير.',
+  flagMap:{
+   LOW_DOCUMENT_COVERAGE:'تم فحص جزء محدود من المستند.',
+   CONFLICTING_PASSAGES:'تختلف إشارات النموذج بقوة بين مقاطع المستند.',
+   HIGH_SEGMENT_VARIANCE:'تباين مرتفع بين المقاطع.',
+   FORMAL_OR_NON_NATIVE_FALSE_POSITIVE_RISK:'احتمال نتائج خاطئة في الكتابة الرسمية أو الإنجليزية كلغة ثانية.',
+   MODELS_DISAGREE:'يختلف النموذجان بأكثر من 25 نقطة مئوية.',
+   SECONDARY_LOW_COVERAGE:'تغطية غير كافية للنموذج الثاني.',
+   SECONDARY_MIXED_PASSAGES:'اختلاف كبير في نتائج مقاطع النموذج الثاني.',
+   SECONDARY_MODEL_UNAVAILABLE:'تعذّر تشغيل النموذج الثاني.'
+  }
  }
 };
 const lang=()=>document.documentElement.lang==='ar'?'ar':'en';
-const t=()=>messages[lang()];
-function label(id,value){const n=$(id);if(n)n.textContent=value;}
-function setStatus(message){label('aiStatus',message);}
-function reset(reason){
- lastResult=null;currentRequest='';
- $('aiBar').hidden=true;$('aiBar').value=0;
- $('aiExport').hidden=true;
- if($('aiMeterScore')?.firstChild)$('aiMeterScore').firstChild.textContent='—';
- label('aiShort',t().idle);
- setStatus(reason||'');
+const t=()=>languages[lang()];
+function set(id,value){if($(id))$(id).textContent=value;}
+function status(value){set('aiStatus',value);}
+function cancel(){
+ if(currentRequest&&child?.contentWindow)
+  child.contentWindow.postMessage({channel:'TIS_BROWSER_AI_V1',op:'CANCEL',requestId:currentRequest},location.origin);
+}
+function reset(reason=''){
+ cancel();lastResult=null;currentRequest='';inputSnapshot='';running=false;
  $('aiRun').disabled=false;
+ $('aiBar').value=0;$('aiBar').hidden=true;
+ $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
+ const indicator=$('aiMeterScore');if(indicator?.firstChild)indicator.firstChild.textContent='—';
+ set('aiShort',t().idle);status(reason);
 }
 function translate(){
- for(const [id,key] of [
-  ['aiMeterTitle','title'],['aiBadge','badge'],['aiMeterUnit','unit'],
-  ['aiMeterExplanation','explanation'],['aiRun','run'],
-  ['aiConsent','consent'],['aiLegal','legal'],['aiExport','export']
- ])label(id,t()[key]);
- if(!lastResult)label('aiShort',t().idle);
- else{label('aiShort',lang()==='ar'?'إشارة نموذج AI · تجريبية':'AI model signal · experimental');setStatus(t().done);}
- label('navEditor',lang()==='ar'?'المحرر':'Editor');
- label('navResults',lang()==='ar'?'النتائج':'Results');
- label('navWriting',lang()==='ar'?'تحسين الكتابة':'Writing tools');
- label('navCleanup',lang()==='ar'?'التنظيف':'Cleanup');
- label('heroEyebrow',lang()==='ar'?'مساحة العمل / مراجعة المستند':'WORKSPACE / DOCUMENT REVIEW');
+ const fields={
+  aiMeterTitle:'title',aiBadge:'badge',aiMeterUnit:'unit',
+  aiMeterExplanation:'explanation',aiRun:'run',aiConsent:'consent',
+  aiLegal:'legal',aiExport:'export',aiAdvancedSummary:'advanced',
+  aiDeepLabel:'deep',aiDeepHelp:'deepHelp',aiContextLabel:'contextLabel',
+  aiEvidenceTitle:'evidenceTitle'
+ };
+ for(const [id,key] of Object.entries(fields))set(id,t()[key]);
+ // These values affect warnings, never modify classifier outputs.
+ const options=$('aiContext')?.options;
+ if(options){
+  const texts=lang()==='ar'?
+   ['كتابة عامة','أكاديمية / تقنية','رسمية / منقحة','الإنجليزية كلغة ثانية']:
+   ['General writing','Academic / technical','Formal / polished','English as a second language'];
+  Array.from(options).forEach((option,i)=>{option.textContent=texts[i]||option.textContent;});
+ }
+ if(lastResult)render(lastResult);else set('aiShort',t().idle);
+ set('navEditor',lang()==='ar'?'المحرر':'Editor');
+ set('navResults',lang()==='ar'?'النتائج':'Results');
+ set('navWriting',lang()==='ar'?'تحسين الكتابة':'Writing tools');
+ set('navCleanup',lang()==='ar'?'التنظيف':'Cleanup');
+ set('heroEyebrow',lang()==='ar'?'مساحة العمل / مراجعة المستند':'WORKSPACE / DOCUMENT REVIEW');
 }
 function eligible(text){
- const words=(text.match(/[\p{L}\p{N}][\p{L}\p{N}\p{M}'’-]*/gu)||[]).length;
+ const words=(text.match(/\S+/gu)||[]).length;
  if(!text.trim())return 'NO_TEXT';
- if(words<120)return 'SHORT';
- const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
- const latin=(text.match(/[A-Za-z]/g)||[]).length;
- if(latin<Math.max(80,ar*18))return 'LANGUAGE';
- if(text.length>120000)return 'LONG';
+ if(words<120)return 'MIN_WORDS';
+ if(text.length>120000)return 'TEXT_TOO_LONG';
+ const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length,lat=(text.match(/[A-Za-z]/g)||[]).length;
+ const letters=(text.match(/\p{L}/gu)||[]).length;
+ if(lat<80||ar>Math.max(5,lat*.05)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
  return null;
 }
-function postRun(){
- if(!ready||!child||!currentRequest)return;
- child.contentWindow.postMessage({
-  channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,text:$('source').value
- },location.origin);
-}
 function start(){
- const failure=eligible($('source').value);
- if(failure){
-  reset(failure==='NO_TEXT'?t().noText:failure==='SHORT'?t().short:
-   failure==='LANGUAGE'?t().language:t().failed);
-  $('aiMeter').scrollIntoView({block:'nearest'});
-  return;
+ const text=$('source').value;
+ const problem=eligible(text);
+ if(problem){
+  reset(problem==='NO_TEXT'?t().noText:problem==='MIN_WORDS'?t().short:
+   problem==='UNSUPPORTED_LANGUAGE'?t().language:t().failed);
+  $('aiMeter').scrollIntoView({block:'nearest'});return;
  }
- reset();currentRequest=String(Date.now())+'-'+String(++counter);
- $('aiRun').disabled=true;
- setStatus(t().loading);
+ reset();running=true;inputSnapshot=text;
+ currentRequest=String(Date.now())+'-'+String(++counter);
+ $('aiRun').disabled=true;status(t().loading);
  $('aiMeter').scrollIntoView({block:'nearest'});
  if(!child){
   child=document.createElement('iframe');
   child.id='tisOnDeviceModel';
-  child.title='Optional browser model runtime';
+  child.title='Optional, user-triggered AI model runtime';
   child.setAttribute('sandbox','allow-scripts allow-same-origin');
   child.setAttribute('referrerpolicy','no-referrer');
-  child.setAttribute('aria-hidden','true');
-  child.hidden=true;
-  child.src='ai-runtime.html';
-  $('aiMeter').append(child);
-  return;
- }
- if(ready)postRun();
+  child.setAttribute('aria-hidden','true');child.hidden=true;
+  child.src='ai-runtime.html';$('aiMeter').append(child);
+ }else if(ready)postRun();
 }
-function onResult(data){
- const result=data.result;
- if(!result||result.calibration!=='NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'
-  ||result.model_id!=='onnx-community/tmr-ai-text-detector-ONNX'
-  ||!Number.isFinite(result.score)||result.score<0||result.score>100){
-  fail();return;
- }
- lastResult=result;
- if($('aiMeterScore')?.firstChild)$('aiMeterScore').firstChild.textContent=result.score.toFixed(1)+'%';
- label('aiShort',lang()==='ar'?'إشارة نموذج AI · تجريبية':'AI model signal · experimental');
- $('aiBar').hidden=false;$('aiBar').value=result.score;
- $('aiExport').hidden=false;$('aiRun').disabled=false;
- setStatus(t().done);
+function postRun(){
+ if(!ready||!child||!currentRequest)return;
+ child.contentWindow.postMessage({
+  channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,
+  text:inputSnapshot,deep:$('aiDeep').checked===true,
+  context:$('aiContext').value
+ },location.origin);
 }
-function fail(code){
- lastResult=null;$('aiRun').disabled=false;
+function element(name,className,textContent){
+ const e=document.createElement(name);
+ if(className)e.className=className;
+ if(typeof textContent==='string')e.textContent=textContent;
+ return e;
+}
+function row(parent,name,value){
+ const section=element('div','ai-evidence-row');
+ section.append(element('span','ai-evidence-label',name),element('strong','ai-evidence-value',value));
+ parent.append(section);
+ return section;
+}
+function renderEvidence(result){
+ const container=$('aiEvidenceBody');
+ container.replaceChildren();
+ const summary=element('div','ai-model-summary');
+ const models=Array.isArray(result.models)?result.models:[];
+ for(const model of models){
+  if(!model||!Number.isFinite(model.score))continue;
+  const heading=model.model_id===PRIMARY?t().labelPrimary:t().labelSecondary;
+  row(summary,heading,model.score.toFixed(1)+'%');
+  row(summary,t().coverage,String(model.coverage)+'%');
+  if(model.model_id!==PRIMARY)row(summary,t().modelReason,lang()==='ar'?'مقارنة مرجعية تاريخية':'Legacy cross-check');
+ }
+ if(Number.isFinite(result.agreementDifferencePoints)){
+  row(summary,lang()==='ar'?'فرق النموذجين':'Difference between models',result.agreementDifferencePoints.toFixed(1)+' pp');
+ }
+ container.append(element('h4','',t().models),summary);
+ const flags=Array.isArray(result.flags)?result.flags:[];
+ const list=element('ul','ai-warnings');
+ if(flags.length){
+  for(const flag of flags){
+   list.append(element('li','',t().flagMap[flag]||String(flag).slice(0,80)));
+  }
+ }else list.append(element('li','',t().noFlags));
+ container.append(element('h4','',t().flags),list);
+ if(result.primary?.segments?.length){
+  container.append(element('h4','',t().segments));
+  for(const [index,segment] of result.primary.segments.entries()){
+   const start=segment.start,end=segment.end;
+   if(!Number.isInteger(start)||!Number.isInteger(end)||start<0
+    ||end>inputSnapshot.length||start>=end)continue;
+   const box=element('div','ai-segment');
+   const header=element('div','ai-segment-top');
+   header.append(
+    element('strong','',t().reportWindow+' '+(index+1)),
+    element('span','ai-segment-score',String(segment.signal.toFixed(1))+'%')
+   );
+   box.append(header);
+   const excerpt=inputSnapshot.slice(start,end).replace(/\s+/g,' ').trim();
+   box.append(element('p','ai-segment-excerpt',
+    (excerpt.length>210?excerpt.slice(0,210)+'…':excerpt)));
+   box.append(element('small','',String(segment.words)+' '+(lang()==='ar'?'كلمة':'words')+
+    ' · '+String(segment.tokens)+' '+(lang()==='ar'?'رمزًا':'tokens')));
+   container.append(box);
+  }
+ }
+}
+function render(result){
+ if(!result||result.version!==VERSION||
+  result.calibration!=='NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'
+  ||result.primary?.model_id!==PRIMARY){
+  error('UNVERIFIED_MODEL_LABEL');return;
+ }
+ const number=result.score;
+ const hasNumber=Number.isFinite(number)&&number>=0&&number<=100;
+ if($('aiMeterScore')?.firstChild)$('aiMeterScore').firstChild.textContent=hasNumber?number.toFixed(1)+'%':'—';
+ const conflict=result.status==='MODEL_DISAGREEMENT';
+ const lowCoverage=result.status==='INSUFFICIENT_COVERAGE';
+ set('aiShort',conflict?t().uncertain:lowCoverage?t().lowCoverage:
+  result.status==='SECONDARY_UNAVAILABLE'?t().partial:t().measured);
+ $('aiBar').hidden=!hasNumber;
+ $('aiBar').value=hasNumber?number:0;
+ $('aiEvidence').hidden=false;
+ $('aiExport').hidden=false;
+ $('aiRun').disabled=false;
+ status(t().done+(result.primary.coverage<100?' '+t().statusSampled:'')+
+   (conflict?' '+t().modelReason:''));
+ renderEvidence(result);
+}
+function error(code){
+ $('aiRun').disabled=false;running=false;
  $('aiBar').hidden=true;$('aiExport').hidden=true;
- setStatus(code==='UNVERIFIED_MODEL_LABEL'?t().unsupported:
-  code==='UNSUPPORTED_LANGUAGE'?t().language:
-  code==='MIN_WORDS'?t().short:t().failed);
+ const message=code==='UNVERIFIED_MODEL_LABEL'?t().unsupported:
+  code==='MIN_WORDS'?t().short:
+  code==='UNSUPPORTED_LANGUAGE'?t().language:t().failed;
+ status(message);
 }
-function onMessage(event){
+function handleMessage(event){
  if(!child||event.source!==child.contentWindow||event.origin!==location.origin)return;
  const data=event.data;
- if(!data||data.channel!=='TIS_BROWSER_AI_V1')return;
+ if(data?.channel!=='TIS_BROWSER_AI_V1')return;
  if(data.op==='READY'){ready=true;postRun();return;}
  if(!currentRequest||data.requestId!==currentRequest)return;
  if(data.op==='PROGRESS'){
   if(data.stage==='DOWNLOADING'&&Number.isFinite(data.percent)){
-   setStatus(t().download(data.percent));
-  }else setStatus(data.stage==='ANALYZING'?t().analyzing:t().loading);
+   status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
+  }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
  }else if(data.op==='RESULT'){
-  onResult(data);currentRequest='';
+  currentRequest='';running=false;
+  if($('source').value!==inputSnapshot){reset(t().expired);return;}
+  lastResult=data.result;render(lastResult);
  }else if(data.op==='ERROR'){
-  fail(data.code);currentRequest='';
+  currentRequest='';running=false;error(data.code);
  }
 }
 function exportResult(){
  if(!lastResult)return;
  const report={
-  software:'Text Integrity Studio',source:'Browser ONNX research signal',
-  generatedAt:new Date().toISOString(),...lastResult,
-  privacy:'Original document text excluded.',
-  usage:'Not evidence sufficient for authorship or misconduct decisions.'
+  software:'Text Integrity Studio',createdAt:new Date().toISOString(),
+  ...lastResult,privacy:t().noTextInReport,
+  disclosure:'Models uncalibrated. Scores are not the fraction of AI-authored words and do not establish authorship.'
  };
- const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'}));
- const a=document.createElement('a');
- a.href=url;a.download='ai-model-research-signal.json';
+ const bytes=new Blob([JSON.stringify(report,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(bytes),a=document.createElement('a');
+ a.href=url;a.download='ai-detection-evidence.json';
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
-function initialize(){
- if(!$('aiMeter')||!$('aiRun'))return;
+function setup(){
+ if(!$('aiMeter'))return;
  $('aiRun').addEventListener('click',start);
  $('aiExport').addEventListener('click',exportResult);
- $('source')?.addEventListener('input',()=>{
-  if(lastResult||currentRequest)reset(t().expired);
- });
+ $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);});
  for(const id of ['clear','sample'])$(id)?.addEventListener('click',()=>reset());
  $('file')?.addEventListener('change',()=>reset());
  $('language')?.addEventListener('click',translate);
- window.addEventListener('message',onMessage);
+ window.addEventListener('message',handleMessage);
  translate();
 }
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initialize,{once:true});
-else initialize();
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});
+else setup();
 })();
