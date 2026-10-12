@@ -55,6 +55,20 @@ A separate research experiment fits regularized, monotonic sigmoid/Platt paramet
 
 Under no circumstances choose the cutoffs after looking at the untouched test split or tune to match an unrelated commercial site.
 
+### Completed independent-split research calibration (public weak labels only)
+
+[GitHub Actions run 38254633810](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38254633810) trained a monotone sigmoid/Platt mapping **only on the HC3 public CALIBRATION split**, and evaluated a separate 48-item TEST split (24 human-labeled and 24 ChatGPT-labeled examples). The labels remain unaudited dataset claims; this experiment was **not released** and does not authorize production percentages.
+
+| Measure (same untouched weak-labelled TEST) | Raw TMR model signal | Research Platt output |
+|---|---:|---:|
+| Brier score | 0.3009 | 0.1067 |
+| 10-bin ECE | 0.3461 | 0.2092 |
+| Observed human false alerts at >=80% | 13/24 (54.2%) | 0/24 (0%) |
+| Independent authorship validation | No | No |
+| Public probability release | **BLOCKED** | **BLOCKED** |
+
+**Interpretation:** empirical corpus-specific calibration improves these sample metrics without proving generalization. Post-hoc 0/24 is *not* evidence of a safe threshold: its 95%-Wilson upper FPR bound is still about 13.8%. The 0.2092 ECE also exceeds the proposed <=0.10 release criterion. A researcher must not deploy this mapping or use this evaluation's same TEST split to set a cutoff; more independently verified, larger and diverse data is required.
+
 ## 5. Scientific and product release gates
 
 Before any true probability claim:
