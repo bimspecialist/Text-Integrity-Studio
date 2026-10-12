@@ -26,8 +26,8 @@ function setup(){
  $('labMode').onchange=scan;
  $('labPreview').onclick=preview;
  $('labApply').onclick=applySelected;
- $('labCopy').onclick=async()=>{preview();try{await navigator.clipboard.writeText($('labPreviewText').value);notify(lang==='ar'?'تم نسخ النسخة المقترحة':'Proposed revision copied.');}catch{notify(lang==='ar'?'النسخ غير متاح في هذا السياق. استخدم Ctrl+C.':'Clipboard unavailable here. Select the text and copy it.');}};
- $('labExport').onclick=()=>{preview();download('text-integrity-edited.txt',$('labPreviewText').value,'text/plain;charset=utf-8');};
+ $('labCopy').onclick=async()=>{await preview();try{await navigator.clipboard.writeText($('labPreviewText').value);notify(lang==='ar'?'تم نسخ النسخة المقترحة':'Proposed revision copied.');}catch{notify(lang==='ar'?'النسخ غير متاح في هذا السياق. استخدم Ctrl+C.':'Clipboard unavailable here. Select the text and copy it.');}};
+ $('labExport').onclick=async()=>{await preview();download('text-integrity-edited.txt',$('labPreviewText').value,'text/plain;charset=utf-8');};
  $('source').addEventListener('input',()=>{if(lastText!==$('source').value)invalidate();});
  if($('wordToolbar')){const observer=new MutationObserver(()=>{if($('wordToolbar').hidden)invalidate();else scan();});observer.observe($('wordToolbar'),{attributes:true,attributeFilter:['hidden']});}
  $('language').addEventListener('click',translateUI);
