@@ -88,7 +88,7 @@ def evaluate(rows,min_per_arm=100,meaning_error_tolerance=0):
     return {"as_of":datetime.now(timezone.utc).isoformat(),
       "variants":{"A":a,"B":b},"per_locale":by_locale,"completion_difference_B_minus_A":change,
       "meaning_error_difference_B_minus_A":error_change,"gates":passes,
-      "release_decision":"INCONCLUSIVE" if "UNKNOWN" in passes.values() else "BLOCKED" if "FAIL" in passes.values() else "CONDITIONAL_REVIEW",
+      "release_decision":"BLOCKED" if "FAIL" in passes.values() else "INCONCLUSIVE" if "UNKNOWN" in passes.values() else "CONDITIONAL_REVIEW",
       "caveat":"A/B outcome cannot be equated to an AI detector score. Planning targets are not measured results."}
 
 
