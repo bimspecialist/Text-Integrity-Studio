@@ -20,6 +20,7 @@ from collections import Counter
 from pathlib import Path
 import secrets
 import sys
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from urllib.error import URLError
 from urllib.request import Request, build_opener, ProxyHandler
@@ -195,6 +196,8 @@ def save_review(input_path: Path, original: str, proposed: str, output_path: Pat
 
 
 def make_handler(token: str, model: str):
+    # Local proofreading can be CPU/GPU expensive; prevent request floods from parallel clients.
+    inference_slot=threading.BoundedSemaphore(1)
     class Handler(BaseHTTPRequestHandler):
         server_version="TIS-local/1"
         def log_message(self, fmt, *args):
@@ -215,7 +218,11 @@ def make_handler(token: str, model: str):
                     "bound_to":"127.0.0.1","classifier":"NOT VALIDATED","model":model})
             return self.response(404,{"error":"Not found"})
         def do_POST(self):
-            length=int(self.headers.get("Content-Length","0") or 0)
+            raw_length=self.headers.get("Content-Length","0")
+            try:
+                length=int(raw_length)
+            except (TypeError, ValueError):
+                return self.response(400,{"error":"Invalid Content-Length"})
             provided=self.headers.get("Authorization","")
             if not hmac.compare_digest(provided, "Bearer "+token):
                 return self.response(401,{"error":"Bearer token required"})
@@ -235,12 +242,16 @@ def make_handler(token: str, model: str):
                 return self.response(404,{"error":"Unknown endpoint"})
             if not isinstance(obj,dict) or not isinstance(obj.get("text"),str):
                 return self.response(422,{"error":"text string required"})
+            if not inference_slot.acquire(blocking=False):
+                return self.response(503,{"status":"BUSY","error":"Only one local proofreading request at a time."})
             try:
                 improved=local_proofread(obj["text"],model,language=str(obj.get("language","auto")))
                 return self.response(200,{"status":"DRAFT_REQUIRES_REVIEW",
                     "proposed_text":improved,"disclaimer":"Meaning, citations and reference accuracy must be human-reviewed."})
             except CompanionError as exc:
                 return self.response(503,{"error":str(exc)})
+            finally:
+                inference_slot.release()
     return Handler
 
 
