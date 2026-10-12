@@ -16,6 +16,7 @@ jobs:
           node-version: '22'
       - name: JavaScript syntax checks
         run: |
+          node --check docs/docx-editor.js
           node --check docs/word-docx.js
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
@@ -30,6 +31,7 @@ jobs:
           node tests/writing-rules.test.js
       - name: Word DOCX safe-clean integration tests
         run: node tests/word-docx.test.js
+          node tests/docx-editor.test.js
       - name: Real browser Word workflow smoke test
         run: |
           node --check tests/browser-smoke.test.js
