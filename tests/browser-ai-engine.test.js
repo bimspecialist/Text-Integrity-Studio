@@ -9,6 +9,7 @@ const windowMock={parent,addEventListener(type,fn){if(type==='message')windowMoc
 const sandbox={
  window:windowMock,globalThis:null,
  TISEvidenceCore:core,location:{origin:'http://localhost:3000',href:'http://localhost:3000/ai-runtime.html'},
+ URL,
  document:{getElementById:()=>({textContent:''})},console
 };
 sandbox.globalThis=sandbox;
