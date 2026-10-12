@@ -1,0 +1,65 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const os=require('node:os');
+const path=require('node:path');
+const JSZip=require('../docs/vendor/jszip.min.js');
+const puppeteer=require('puppeteer-core');
+const W='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+const chromeCandidates=[process.env.CHROME_BIN,'/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium'].filter(Boolean);
+const chrome=chromeCandidates.find(p=>fs.existsSync(p));
+if(!chrome){console.error('No Chrome executable available for browser smoke test');process.exit(1);}
+async function run(){
+ const temp=fs.mkdtempSync(path.join(os.tmpdir(),'tis-browser-'));
+ const zip=new JSZip();
+ zip.file('[Content_Types].xml','<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
+ zip.file('_rels/.rels','<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
+ zip.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="'+W+'"><w:body><w:p><w:r><w:t>One\u200b two</w:t></w:r></w:p><w:p><w:r><w:rPr><w:vanish/></w:rPr><w:t>Hidden</w:t></w:r><w:r><w:t>مرحبا\u200d بالعالم</w:t></w:r></w:p><w:sectPr/></w:body></w:document>');
+ zip.file('word/media/logo.png',Buffer.from([137,80,78,71,1]));
+ const sample=path.join(temp,'sample.docx');
+ fs.writeFileSync(sample,await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE'}));
+ const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--allow-file-access-from-files']});
+ try{
+   const page=await browser.newPage();
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   await page.goto('file://'+path.resolve('docs/index.html'),{waitUntil:'load'});
+   await page.waitForSelector('#wordPick',{timeout:10000});
+   assert.equal(await page.$eval('#wordToolbar',e=>e.hidden),true,'Word toolbar initially hidden');
+   await (await page.$('#file')).uploadFile(sample);
+   await page.waitForFunction(()=>document.getElementById('wordToolbar').hidden===false,{timeout:15000});
+   const loaded=await page.$eval('#source',e=>e.value);
+   assert(loaded.includes('One\u200b two'),'DOCX extracted hidden Unicode');
+   assert(loaded.includes('مرحبا\u200d'),'Arabic text extracted');
+   assert.equal(await page.$eval('#source',e=>e.readOnly),true,'Word extraction read-only');
+   await page.click('#wordPreview');
+   await page.waitForFunction(()=>!document.getElementById('resultbox').hidden);
+   const preview=await page.$eval('#result',e=>e.value);
+   assert(!preview.includes('One\u200b'),'Unicode cleaned in preview');
+   assert(preview.includes('Hidden'),'Explicit hidden runs are not deleted by default');
+   assert(preview.includes('مرحبا\u200d'),'Arabic joiner preserved');
+   await page.evaluate(()=>document.getElementById('stripHidden').checked=true);
+   await page.click('#wordPreview');
+   await page.waitForFunction(()=>document.getElementById('result').value.indexOf('Hidden')===-1);
+   await page.evaluate(()=>document.getElementById('stripHidden').checked=false);
+   await page.click('#language');
+   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl','RTL language switch works');
+   const client=await page.createCDPSession();
+   await client.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:temp});
+   await page.click('#wordDownload');
+   const saved=path.join(temp,'sample-cleaned.docx');
+   let found=false;
+   for(let i=0;i<35;i++){if(fs.existsSync(saved)){found=true;break;}await new Promise(r=>setTimeout(r,250));}
+   assert(found,'Downloaded cleaned Word file');
+   const resultZip=await JSZip.loadAsync(fs.readFileSync(saved));
+   const documentXML=await resultZip.file('word/document.xml').async('string');
+   assert(!documentXML.includes('\u200b'),'Downloaded DOCX cleaned Unicode');
+   assert(documentXML.includes('Hidden'),'Disabled hidden removal preserved hidden text');
+   assert(documentXML.includes('مرحبا\u200d'),'Downloaded Word retains Arabic joiner');
+   assert.deepEqual(await resultZip.file('word/media/logo.png').async('nodebuffer'),Buffer.from([137,80,78,71,1]),'Embedded media survives');
+   await page.setViewport({width:390,height:844});
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+5),'No horizontal overflow on phone');
+   assert.deepEqual(errors,[],'No browser runtime errors');
+   console.log('PASS browser DOCX upload, scan, preview, RTL, export, media preservation and responsive smoke test');
+ }finally{await browser.close();fs.rmSync(temp,{recursive:true,force:true});}
+}
+run().catch(e=>{console.error(e);process.exit(1);});
