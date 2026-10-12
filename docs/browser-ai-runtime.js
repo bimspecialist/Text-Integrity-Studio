@@ -36,7 +36,7 @@ function status(message){
 }
 function send(op,requestId,details={}){
  if(window.parent!==window){
-  window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op,requestId,...details},new URL(location.href).origin);
+  window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op,requestId,...details},location.origin);
  }
 }
 function aiSignalFromOutput(outputs,modelKey='primary'){
@@ -166,7 +166,7 @@ async function perform(data){
  }
 }
 window.addEventListener('message',event=>{
- if(event.source!==window.parent||event.origin!==new URL(location.href).origin)return;
+ if(event.source!==window.parent||event.origin!==location.origin)return;
  const data=event.data;
  if(!data||data.channel!=='TIS_BROWSER_AI_V1')return;
  if(data.op==='CANCEL'){
