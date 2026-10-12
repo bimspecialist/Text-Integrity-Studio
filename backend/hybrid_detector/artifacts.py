@@ -80,6 +80,8 @@ class CalibratedArtifact:
             reasons.append("Calibration ECE target not met")
         if not isinstance(review.get("coverage"), (int, float)) or review["coverage"] < 0.90:
             reasons.append("Eligible-domain coverage target not met")
+        if not review.get("independent_label_verification_passed"):
+            reasons.append("Independent human/AI authorship verification missing")
         if not review.get("held_out_model_families_checked"):
             reasons.append("Unseen generator-family testing missing")
         if not isinstance(review.get("tpr_at_high_alert_threshold"), (int, float)) or review["tpr_at_high_alert_threshold"] < 0.60:
