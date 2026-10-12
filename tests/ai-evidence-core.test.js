@@ -6,7 +6,7 @@ const arabic=('قمنا بفحص المبنى وتوثيق الملاحظات ا
 assert.equal(core.eligibility(english).eligible,true);
 assert.equal(core.eligibility(arabic).reason,'UNSUPPORTED_LANGUAGE');
 assert.equal(core.eligibility('just a sentence').reason,'MIN_WORDS');
-assert.equal(core.eligibility((english+' وهذه إضافة عربية كبيرة مختلفة بشكل واضح. ').repeat(3)).reason,'UNSUPPORTED_LANGUAGE');
+assert.equal(core.eligibility(english + (' وهذه فقرة عربية تتضمن شرحًا موسعًا ونتائج ميدانية ومقارنات علمية. ').repeat(12)).reason,'UNSUPPORTED_LANGUAGE');
 const fakeTokenizer={encode(text){return Array(Math.round(text.length/6)+2).fill(1);}};
 const r=core.partitionWindows(english,fakeTokenizer,{maxTokens:448,maxSamples:12});
 assert(r.windowCount>=1);assert(r.coverage>0);
