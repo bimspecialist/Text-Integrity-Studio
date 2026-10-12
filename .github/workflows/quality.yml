@@ -18,6 +18,7 @@ jobs:
         run: |
           node --check docs/docx-editor.js
           node --check docs/word-docx.js
+          node --check docs/pdf-support.js
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
       - name: Install test XML parser
@@ -38,3 +39,9 @@ jobs:
         run: |
           node --check tests/browser-smoke.test.js
           node tests/browser-smoke.test.js
+      - name: Real Chrome PDF.js parsing, privacy and responsive workflow
+        run: |
+          test -s docs/vendor/pdfjs/pdf.mjs
+          test -s docs/vendor/pdfjs/pdf.worker.mjs
+          node --check tests/pdf-browser.test.js
+          node tests/pdf-browser.test.js
