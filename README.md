@@ -3,6 +3,14 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
 
+## Advanced model-evidence update — October 2026
+
+After user reports of large differences against other AI detectors, the browser engine was investigated rather than tuned to copy another site's number. Real benchmark evidence found **13/24 public HC3 human-labeled texts triggered an >=80% TMR AI-class signal**, a 54.2% observed false alert at that cutoff on a small weak-label sample (Wilson 95% upper bound 72.1%; Brier 0.3009; ECE 0.3461). **Do not interpret the raw model percentage as an authorship probability.** [Measured audit](backend/research/AI_DETECTOR_VALIDATION.md) · [GitHub Action](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38253905498).
+
+The research-only engine now enforces true tokenizer windows of <=448 tokens instead of silently truncating long passages, stratifies sampled sections, measures exact document coverage, and displays raw passage variability. An explicitly opt-in **Deep analysis** option downloads a second OpenAI GPT-2-era MIT-licensed RoBERTa detector. If the two models disagree strongly or sample coverage is too low, **no combined number** is shown; individual raw diagnostics remain inspectable. The second model is a historical sanity check, *not* a validated universal detector. English only, >=120 words. User documents are not intentionally uploaded for inference; model downloads use external Hugging Face/CDN endpoints after opt-in.
+
+Research evaluation and weak-label calibration code lives under [backend/research](backend/research). The publicly deployed website does **not** install its unapproved calibration weights, does not claim certification, and does not promise matching another commercial AI detector.
+
 ## Simple interface, all existing tools
 
 The public browser app now follows **Add file or text → Check → Review & save**. One upload accepts TXT/MD/CSV/JSON, Word DOCX and PDF. The default view shows one primary check button and a short result; the remaining tools are retained behind accessible expandable sections: **grammar and writing suggestions, safe/thorough Unicode cleanup, tracked Word revisions/format-preserving export, PDF extraction and Arabic/English offline OCR, detailed security findings/reports, and optional experimental local-model research**. All Arabic/English labels work in RTL/LTR, with results appearing immediately after input on mobile. Expand only the tool you need.
