@@ -115,6 +115,23 @@ class LocalSequenceClassifier:
         return float(logits[self.ai_class_index] - logits[1 - self.ai_class_index])
 
 
+class LanguageRoutedClassifier:
+    """Dispatch English/Arabic to individually reviewed local classifiers.
+
+    Mixed-script text does not silently pick either language's detector and
+    therefore retains a missing specialist indicator.
+    """
+    def __init__(self, *, english=None, arabic=None):
+        self.english = english
+        self.arabic = arabic
+
+    def logit(self, text: str) -> float | None:
+        from .text import detect_language
+        language = detect_language(text)
+        model = self.english if language == "en" else self.arabic if language == "ar" else None
+        return model.logit(text) if model is not None else None
+
+
 class _RejectRedirect(HTTPRedirectHandler):
     def redirect_request(self, req, fp, code, msg, headers, newurl):
         raise ValueError("External classification provider redirected a request")
