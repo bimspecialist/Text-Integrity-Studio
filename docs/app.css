@@ -27,3 +27,99 @@ select{padding:10px;border-radius:9px;color:white;background:#14253e;border:1px 
 
 /* Experimental, research-only signal */
 #researchSignal{border-color:#36577c}#researchSignal .signal-file{display:block;margin:9px 0 15px;width:100%;max-width:100%;color:#bfd1e7;font-size:12px}#signalResult{border-top:1px solid #354b66;padding:14px 0;min-height:34px}#signalResult strong{font-size:14px;color:#d5e5fc}#signalStatus{min-height:19px}
+
+
+/* Simplified document workflow: progressive disclosure without deleting functionality. */
+.hero{padding:31px 0 16px;max-width:770px}
+.hero h1{font-size:clamp(26px,3.9vw,43px);line-height:1.18;letter-spacing:-.9px;margin:0 0 10px}
+.hero p{margin:0;color:#b3c6e0;line-height:1.65;font-size:15px}
+.steps{display:flex;gap:9px;align-items:center;flex-wrap:wrap;margin:0 0 19px}
+.steps span{font-weight:600;font-size:12px;line-height:1.2;border-radius:8px;padding:9px 12px;background:#192a41;border:1px solid #2b496a;color:#c9ddf4}
+.steps span:first-child{border-color:#558cd0;color:#d9eeff}
+.workspace{grid-template-columns:minmax(0,1.18fr) minmax(320px,.82fr);align-items:start;gap:18px}
+.workspace-main,.workspace-results{min-width:0}
+.panel{padding:21px;border-radius:14px;box-shadow:none;margin-bottom:13px}
+.panel-heading{margin-bottom:14px}
+.input-panel h2,.report-panel h2{font-size:19px}
+.file-input{display:flex;flex-wrap:wrap;align-items:center;gap:13px;padding:14px;border:1px dashed #5781a9;border-radius:11px;background:#122b42;cursor:pointer;color:#d8eaff;margin-bottom:14px;min-height:64px}
+.file-input:hover,.file-input:focus-within{border-color:#8ac8ff;background:#183955}
+.file-icon{width:33px;height:33px;display:grid;place-items:center;border-radius:8px;background:#25517a;color:#cceaff;font-weight:800;font-size:22px}
+.file-input-description{min-width:165px;flex:1}
+.file-input-description strong{font-size:14px;font-weight:650;display:block}
+.file-input-description small{display:block;font-size:11px;color:#a9bedb;margin-top:3px;line-height:1.5}
+.file-input input[type=file]{width:100%;max-width:100%;font-size:12px;border:none;color:#d4e4f8}
+.source-label{display:block;font-size:13px;font-weight:650;color:#b8cee7;margin-bottom:7px}
+#source{min-height:235px;height:235px;padding:13px 15px;font-size:14px;line-height:1.7}
+.input-summary,.inline-file-status{display:block;color:#acc4de;font-size:12px;margin:9px 0}
+.input-summary{min-height:18px}
+.main-actions{margin:12px 0 0}
+.main-actions button{font-size:13px;padding:11px 14px}
+.main-actions #scan{min-width:165px}
+.tool-details{border-radius:11px;overflow:visible}
+.tool-details>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 14px;color:#dcecff;font-weight:650;font-size:13px;list-style:none;position:relative}
+.tool-details>summary::-webkit-details-marker{display:none}
+.tool-details>summary:after{content:"+";font-size:20px;font-weight:400;color:#99c4ef;line-height:1;margin-inline-start:auto}
+.tool-details[open]>summary:after{content:"−"}
+.tool-details>summary:focus-visible{outline:3px solid #83c7ff;outline-offset:2px;border-radius:9px}
+.tool-disclosure{border:1px solid #2b405d;background:#121e31;margin-bottom:12px}
+.tool-disclosure>.panel{background:none;border:0;padding:0 17px 17px;margin:0}
+.disclosure-name{display:block}
+.disclosure-note{font-size:11px;display:block;color:#9db1c9;font-weight:400;margin-inline-start:12px}
+.editor-options{margin-top:12px;border-top:1px solid #2b3f5b}
+.editor-options>summary{padding:13px 0;font-size:12px;color:#afc7df}
+.editor-options .metrics{margin:9px 0}
+.editor-options .metric{padding:10px}
+.editor-options .metric b{font-size:18px}
+.report-lead{margin:12px 0;background:#19324a;padding:13px;border:1px solid #345a7c;border-radius:10px;line-height:1.7;color:#d8eaff;font-size:13px}
+.report-actions{display:flex;gap:9px;flex-wrap:wrap;margin:13px 0}
+.report-actions button{font-size:12px;padding:10px 12px}
+#reportMore{border-top:1px solid #2c405d;margin-top:12px}
+#reportMore>summary{padding:14px 0}
+#reportMore .tabs{padding-top:3px}
+#reportMore .flag{padding:12px 1px}
+.wordTool{background:#12303b;border-color:#386b70;margin-bottom:13px}
+.wordTool>h3{margin-bottom:6px}
+.word-more{border-top:1px solid #2e5f61;margin-top:14px}
+.word-more>summary{padding:12px 0}
+.word-more label{display:flex;gap:9px;margin:11px 0}
+.word-more .row{margin:10px 0}
+#writingTools .writing-panel,#pdfTools .panel,#researchTools .panel{padding:0 17px 17px;margin:0;border:0;background:transparent}
+#writingTools .writing-header h2{font-size:17px}
+#writingTools .writing-results{max-height:480px}
+#pdfTools .panel-heading{align-items:center}
+#wordPickerOptions .wordDrop{margin:0;border:0;border-top:1px solid #273f57;border-radius:0;background:transparent}
+#wordPickerOptions .wordDropLabel strong{font-size:12px}
+#wordReportTools .wordReport{padding:8px 17px 17px;border:0;background:transparent;margin:0}
+#aboutResults .panel{padding:1px 17px 16px}
+#researchTools{margin-bottom:17px}
+#quickReview[hidden]{display:none}
+[dir=rtl] .source-label,[dir=rtl] .file-input{text-align:right}
+[dir=rtl] .mini{border-right-color:#549df0}
+@media(max-width:900px){
+ .workspace{display:grid;grid-template-columns:1fr;gap:0}
+ .workspace-main,.workspace-results{display:contents}
+ #inputPanel{order:1}
+ #reportPanel{order:2}
+ #writingTools{order:3}
+ #cleanupTools{order:4}
+ #pdfTools{order:5}
+ #wordReportTools{order:6}
+ #wordPickerOptions{order:7}
+ #aboutResults{order:8}
+ #researchTools{order:9}
+}
+@media(max-width:550px){
+ .hero{padding:24px 0 14px}
+ .hero h1{font-size:29px;letter-spacing:-.4px}
+ .steps{gap:5px}
+ .steps span{font-size:10px;padding:7px 8px}
+ .panel{padding:15px}
+ .file-input{padding:11px}
+ #source{height:210px;min-height:210px}
+ .main-actions{display:grid;grid-template-columns:1fr 1fr}
+ .main-actions #scan{grid-column:1/-1}
+ .main-actions button{min-width:0}
+ .report-actions button{width:100%}
+ .disclosure-note{display:none}
+ #writingTools .writing-panel,#pdfTools .panel,#researchTools .panel{padding:0 13px 15px}
+}
