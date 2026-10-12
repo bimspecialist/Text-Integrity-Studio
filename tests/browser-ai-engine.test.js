@@ -8,7 +8,7 @@ const parent={postMessage(value,origin){sent.push({value,origin});}};
 const windowMock={parent,addEventListener(type,fn){if(type==='message')windowMock.dispatch=fn;}};
 const sandbox={
  window:windowMock,globalThis:null,
- TISEvidenceCore:core,location:{origin:'http://localhost:3000'},
+ TISEvidenceCore:core,location:{origin:'http://localhost:3000',href:'http://localhost:3000/ai-runtime.html'},
  document:{getElementById:()=>({textContent:''})},console
 };
 sandbox.globalThis=sandbox;
