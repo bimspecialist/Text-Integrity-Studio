@@ -25,7 +25,8 @@ const p=core.summarizeWindows(sampled.windows,scores,{modelId:'t1',coverage:samp
 assert.equal(p.score,70);
 assert.equal(p.segments.length,9);
 const concordant=core.consensus({...p,coverage:70},{...p,model_id:'t2',score:80,coverage:70});
-assert.equal(concordant.status,'AGREEMENT_UNCALIBRATED');assert.equal(concordant.score,75);
+assert.equal(concordant.status,'AGREEMENT_UNCALIBRATED');assert.equal(concordant.score,70);
+assert.equal(concordant.models[1].score,80,'Second model remains independently visible');
 assert(concordant.flags.length===0);
 const dissent=core.consensus({...p,coverage:70},{...p,model_id:'t2',score:15,coverage:70});
 assert.equal(dissent.status,'MODEL_DISAGREEMENT');
