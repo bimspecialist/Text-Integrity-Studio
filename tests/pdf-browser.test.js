@@ -82,4 +82,5 @@ async function run(){
    console.log('PASS PDF.js local import, PDF text extraction, TXT export, mobile/RTL and privacy.');
  }finally{await browser.close();await new Promise(r=>server.close(r));fs.rmSync(temp,{recursive:true,force:true});}
 }
-run().catch(e=>{console.error(e);process.exit(1);});
+if(require.main===module)run().catch(e=>{console.error(e);process.exit(1);});
+module.exports={serve,makePDF,chrome,root};
