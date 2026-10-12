@@ -78,4 +78,4 @@ def test_statistical_uncertainty_functions():
     assert wilson(0, 30) > 0.1
     assert wilson(0, 400) < 0.01
     assert ece([0, 1], [0, 1]) == 0
-    assert ece([0, 1], [0.5, 0.5]) > 0
+    assert ece([0, 1], [0.2, 0.2]) > 0
