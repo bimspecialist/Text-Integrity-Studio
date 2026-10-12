@@ -177,7 +177,7 @@ function setup(){
      return;
    }
    $('labAnalyze')?.click();
-   $('reportMore').open=true;
+   // Keep technical findings collapsed; the short summary remains visible.
    updateSummary();
  });
  $('quickReview').addEventListener('click',()=>show(writingTools));
