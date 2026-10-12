@@ -2,6 +2,10 @@
 
 The Next.js example is a standalone authenticated application next to the new Python/FastAPI detector, not part of the public GitHub Pages static site.
 
+## Simplified user experience
+
+The default page now has a three-step layout: paste/choose PDF, DOCX or TXT → Check document → Review the status and highlighted passages. Optional language, writing context and segment granularity live under **More options**; indicator breakdown, reasons and report download remain available under **Detailed indicators and explanations**. Removing an uploaded file restores the text area. Arabic/English and narrow screens are supported. A link to the separate public GitHub Pages studio exposes free writing suggestions, Unicode cleanup, DOCX revision export and local PDF OCR without implying that the public static site runs the private hybrid inference server.
+
 ## Run locally
 1. Start FastAPI according to backend/README.md; keep it on 127.0.0.1:8000.
 2. Open backend/examples/next-ui and run npm install.
