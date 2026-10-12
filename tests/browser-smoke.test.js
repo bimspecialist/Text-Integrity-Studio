@@ -14,7 +14,7 @@ async function run(){
  const zip=new JSZip();
  zip.file('[Content_Types].xml','<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');
  zip.file('_rels/.rels','<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');
- zip.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="'+W+'"><w:body><w:p><w:r><w:t>One\u200b two</w:t></w:r></w:p><w:p><w:r><w:rPr><w:vanish/></w:rPr><w:t>Hidden</w:t></w:r><w:r><w:t>مرحبا\u200d بالعالم</w:t></w:r></w:p><w:sectPr/></w:body></w:document>');
+ zip.file('word/document.xml','<?xml version="1.0" encoding="UTF-8"?><w:document xmlns:w="'+W+'"><w:body><w:p><w:r><w:t>One\u200b two</w:t></w:r></w:p><w:p><w:r><w:rPr><w:vanish/></w:rPr><w:t>Hidden</w:t></w:r><w:r><w:t>مرحبا\u200d بالعالم</w:t></w:r></w:p><w:p><w:r><w:t>teh report,which includes findings.</w:t></w:r></w:p><w:sectPr/></w:body></w:document>');
  zip.file('word/media/logo.png',Buffer.from([137,80,78,71,1]));
  const sample=path.join(temp,'sample.docx');
  fs.writeFileSync(sample,await zip.generateAsync({type:'nodebuffer',compression:'DEFLATE'}));
@@ -51,6 +51,13 @@ async function run(){
    await page.click('#wordPreview');
    await page.waitForFunction(()=>document.getElementById('result').value.indexOf('Hidden')===-1);
    await page.evaluate(()=>document.getElementById('stripHidden').checked=false);
+   await page.waitForFunction(()=>[...document.querySelectorAll('.writing-card .chunk')].some(x=>x.textContent==='teh'),{timeout:9000});
+   const editBox=await page.$('.writing-card input[type=checkbox]');
+   assert(editBox,'Word suggestion checkbox exists');
+   await editBox.click();
+   await page.click('#wordPreview');
+   await page.waitForFunction(()=>document.getElementById('result').value.includes('the report,which'));
+   assert.equal(await page.$eval('#wordTrackEdits',x=>x.checked),true,'Tracked revisions enabled by default');
    await page.click('#language');
    assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl','RTL language switch works');
    const client=await page.createCDPSession();
@@ -65,9 +72,13 @@ async function run(){
    assert(!documentXML.includes('\u200b'),'Downloaded DOCX cleaned Unicode');
    assert(documentXML.includes('Hidden'),'Disabled hidden removal preserved hidden text');
    assert(documentXML.includes('مرحبا\u200d'),'Downloaded Word retains Arabic joiner');
+   assert(documentXML.includes('w:ins')&&documentXML.includes('w:delText'),'Accepted Word suggestion exported as tracked revision');
+   assert(documentXML.includes('Text Integrity Studio'),'Revision author recorded in Word XML');
    assert.deepEqual(await resultZip.file('word/media/logo.png').async('nodebuffer'),Buffer.from([137,80,78,71,1]),'Embedded media survives');
    await page.setViewport({width:390,height:844});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+5),'No horizontal overflow on phone');
+   const policy=await page.$eval('meta[http-equiv="Content-Security-Policy"]',el=>el.content);
+   assert(policy.includes("script-src 'self'")&&policy.includes("connect-src 'none'"),'Restrictive CSP active');
    assert.deepEqual(errors,[],'No browser runtime errors');
    console.log('PASS browser DOCX upload, scan, preview, RTL, export, media preservation and responsive smoke test');
  }finally{await browser.close();fs.rmSync(temp,{recursive:true,force:true});}
