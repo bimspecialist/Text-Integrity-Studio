@@ -96,6 +96,15 @@ def test_private_fastapi_file_endpoint():
     assert answer["input_file"]["format"] == "docx"
     assert "text" not in answer["input_file"]
     assert response.headers["cache-control"] == "no-store"
+    assert "extracted_text" not in answer
+    round_trip = client.post(
+        "/v1/analyze-file", headers={"X-API-Key": "x" * 40},
+        files={"file": ("paper.docx", docx, "application/octet-stream")},
+        data={"language": "auto", "return_extracted_text": "true"},
+    )
+    assert round_trip.status_code == 200
+    assert round_trip.json()["extracted_text"].startswith("This is my own engineering study.")
+    assert round_trip.json()["privacy"]["raw_text_returned"] is True
 
 
 def test_upload_unsupported_and_ocr_error():
