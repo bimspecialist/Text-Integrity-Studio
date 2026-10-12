@@ -7,14 +7,17 @@ export const COLORS = Object.freeze({
 });
 export function renderMarkers(container, sourceText, segments) {
   container.replaceChildren();
+  // Python indexes Unicode code points, while JS String.slice indexes UTF-16 units.
+  // Array.from preserves correct offsets for emoji and supplementary characters.
+  const codepoints = Array.from(sourceText);
   let pos = 0;
   for (const seg of [...segments].sort((a,b)=>a.start-b.start)) {
     if (!Number.isInteger(seg.start) || !Number.isInteger(seg.end) ||
-        seg.start < pos || seg.end < seg.start || seg.end > sourceText.length) continue;
-    container.append(document.createTextNode(sourceText.slice(pos,seg.start)));
+        seg.start < pos || seg.end < seg.start || seg.end > codepoints.length) continue;
+    container.append(document.createTextNode(codepoints.slice(pos,seg.start).join("")));
     const mark = document.createElement('mark');
     mark.className = 'tis-tier-' + (COLORS[seg.tier] || 'gray');
-    mark.textContent = sourceText.slice(seg.start,seg.end);
+    mark.textContent = codepoints.slice(seg.start,seg.end).join("");
     const confidence = seg.ai_probability_percent === null
       ? 'No validated segment score'
       : 'Calibrated model signal: ' + seg.ai_probability_percent + '%; ' + seg.confidence_level;
@@ -23,5 +26,5 @@ export function renderMarkers(container, sourceText, segments) {
     container.append(mark);
     pos = seg.end;
   }
-  container.append(document.createTextNode(sourceText.slice(pos)));
+  container.append(document.createTextNode(codepoints.slice(pos).join("")));
 }
