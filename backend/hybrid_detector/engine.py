@@ -202,7 +202,7 @@ class HybridEngine:
                     "start": span.start, "end": span.end, "word_count": span.words,
                     "language": span.language, "tier": "UNASSESSED", "color": "gray",
                     "ai_probability_percent": None, "confidence_level": "LOW",
-                    "status": "INCONCLUSIVE",
+                    "status": "INCONCLUSIVE", "model_version": None, "indicators": None,
                     "reasons": ["No independent segment calibrator" if seg_model is None else "Segment too short"],
                 })
                 continue
@@ -215,7 +215,9 @@ class HybridEngine:
                 "language": span.language,
                 "tier": result["tier"], "color": result["color"],
                 "status": result["status"], "confidence_level": result["confidence_level"],
-                "ai_probability_percent": result["ai_probability_percent"], "reasons": result["reasons"],
+                "ai_probability_percent": result["ai_probability_percent"],
+                "model_version": result["model_version"], "indicators": result["indicators"],
+                "reasons": result["reasons"],
             })
 
         return {
