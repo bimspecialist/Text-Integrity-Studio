@@ -3,6 +3,12 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
 
+### Optional hybrid detection service (backend source, not hosted)
+
+The new [FastAPI hybrid detector](backend/README.md) implements Arabic/English segmentation, genuine optional language-model perplexity and burstiness, embedding coherence, stylometry and supervised n-gram analysis, local Hugging Face/approved provider adapters, independent calibration and segment-level UI response mapping. See [Node.js integration](backend/examples/node-express-route.js) and [FastAPI mounting](backend/examples/fastapi-mount.py).
+
+**Safety:** The GitHub Pages app remains separate and has no server API secret. No pretrained, independently validated detector is deployed; the backend returns INCONCLUSIVE and null percentages until real licensed evaluation data, held-out false-positive/fairness tests, model provenance review and a signed-off artifact pass the release gates. Source code and passing synthetic tests are not proof of real-world detection accuracy.
+
 ### Research and development deliverables
 - [Executive research report — October 2026](research/EXECUTIVE_RESEARCH_2026.md): scholarly sources, practical methods, vendor limitations, ethics, privacy, architecture and budgets.
 - [Development roadmap](ROADMAP.md): phased work packages, owners, acceptance gates, risks and estimated resources.
