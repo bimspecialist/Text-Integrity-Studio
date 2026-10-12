@@ -54,7 +54,7 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
     if not rows:raise ValueError("Empty benchmark")
     ids=set();groups={}
     for row in rows:
-        if set(row)<REQUIRED:raise ValueError("Missing provenance fields")
+        if not REQUIRED.issubset(row.keys()):raise ValueError("Missing provenance fields")
         if row["id"] in ids:raise ValueError("Repeated document ID")
         ids.add(row["id"])
         if row["label"] not in ("ai","human"):raise ValueError("Invalid authorship label")
