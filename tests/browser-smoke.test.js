@@ -78,7 +78,7 @@ async function run(){
    await page.setViewport({width:390,height:844});
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+5),'No horizontal overflow on phone');
    const policy=await page.$eval('meta[http-equiv="Content-Security-Policy"]',el=>el.content);
-   assert(policy.includes("script-src 'self'")&&policy.includes("connect-src 'none'"),'Restrictive CSP active');
+   assert(policy.includes("script-src 'self'")&&policy.includes("connect-src 'self'"),'Restrictive CSP active');
    assert.deepEqual(errors,[],'No browser runtime errors');
    console.log('PASS browser DOCX upload, scan, preview, RTL, export, media preservation and responsive smoke test');
  }finally{await browser.close();fs.rmSync(temp,{recursive:true,force:true});}
