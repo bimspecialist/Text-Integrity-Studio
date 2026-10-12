@@ -141,6 +141,30 @@ def test_synthetic_artifact_fixture_can_exercise_scoring_math_without_claiming_r
         assert not result["privacy"]["raw_text_returned"]
 
 
+def test_independent_segment_calibrator_controls_ui_tiers_not_document_score():
+    with tempfile.TemporaryDirectory() as d:
+        folder = Path(d)
+        for intercept, expected in ((6.0, ("HIGH_AI_SIGNAL", "red")), (-6.0, ("LOW_AI_SIGNAL", "green"))):
+            data = artifact(unit="paragraph")
+            data["predictor"]["intercept"] = intercept
+            encoded = json.dumps(data).encode()
+            target = folder / "paragraph.en.json"
+            target.write_bytes(encoded)
+            (folder / "paragraph.en.approval.json").write_text(json.dumps({
+                "artifact_sha256": hashlib.sha256(encoded).hexdigest(), "version": data["version"],
+            }))
+            engine = HybridEngine(artifact_directory=folder, allow_calibrated_results=True,
+                                  language_model=FakeLM(), embeddings=FakeEmbedding(),
+                                  transformer=FakeClassifier())
+            result = engine.analyze(long_en(10))
+            assert result["document"]["ai_probability_percent"] is None
+            assert result["segments"][0]["tier"] == expected[0]
+            assert result["segments"][0]["color"] == expected[1]
+            assert result["segments"][0]["ai_probability_percent"] is not None
+            assert result["segments"][0]["start"] == 0
+            assert result["segments"][0]["end"] == len(long_en(10))
+
+
 def test_no_approval_manifest_refuses_approved_artifact():
     with tempfile.TemporaryDirectory() as d:
         (Path(d) / "document.en.json").write_text(json.dumps(artifact()))
