@@ -73,4 +73,4 @@ async function readFile(f){if(!f)return;if(!/\.(txt|md|csv|json)$/i.test(f.name)
 $('file').onchange=e=>readFile(e.target.files[0]);$('source').ondragover=e=>{e.preventDefault();$('source').classList.add('drag');};$('source').ondragleave=()=>$('source').classList.remove('drag');$('source').ondrop=e=>{e.preventDefault();$('source').classList.remove('drag');readFile(e.dataTransfer.files[0]);};
 $('source').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click();}});
 translate();analyze();
-</script></body></html>
+</script><script src="vendor/jszip.min.js"></script><script src="word-docx.js"></script></body></html>
