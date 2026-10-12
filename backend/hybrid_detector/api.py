@@ -83,13 +83,45 @@ class SlidingWindowLimiter:
 
 
 def _local_adapters() -> dict:
-    from .adapters import CausalLanguageModel, LocalEmbeddings, LocalSequenceClassifier
+    from .adapters import CausalLanguageModel, LocalEmbeddings, LocalSequenceClassifier, LanguageRoutedClassifier
+    from .provision_models import inspect_label_map
+    import json
+    from pathlib import Path
+
     result = {}
     if path := os.getenv("TIS_LOCAL_CAUSAL_LM_DIR"):
         result["language_model"] = CausalLanguageModel(path)
     if path := os.getenv("TIS_LOCAL_EMBEDDINGS_DIR"):
         result["embeddings"] = LocalEmbeddings(path)
-    if path := os.getenv("TIS_LOCAL_CLASSIFIER_DIR"):
+
+    # Per-language opt-in classifiers are verified against an exact local,
+    # provider-revision-pinned provisioning manifest before loading weights.
+    per_locale = {}
+    for language in ("en", "ar"):
+        path = os.getenv(f"TIS_LOCAL_{language.upper()}_CLASSIFIER_DIR")
+        if not path:
+            continue
+        index = os.getenv(f"TIS_LOCAL_{language.upper()}_AI_CLASS_INDEX")
+        if index != "1":
+            raise RuntimeError("The reviewed English and Arabic checkpoints require explicit AI class index 1")
+        manifest_path = Path(path).expanduser().resolve() / "tis-model-manifest.json"
+        config_path = manifest_path.parent / "config.json"
+        if not manifest_path.is_file() or not config_path.is_file():
+            raise RuntimeError("Run hybrid_detector.provision_models before enabling the local classifier")
+        meta = json.loads(manifest_path.read_text(encoding="utf-8"))
+        from .provision_models import MODELS
+        expected = MODELS[language]
+        if (meta.get("language") != language or meta.get("repo") != expected["repo"]
+                or meta.get("ai_class_index") != 1 or meta.get("downstream_approval") is not False
+                or len(str(meta.get("revision", ""))) != 40):
+            raise RuntimeError("Model provenance/label mapping is not approved for this locale")
+        inspect_label_map(json.loads(config_path.read_text(encoding="utf-8")), language)
+        per_locale[language] = LocalSequenceClassifier(path, ai_class_index=1)
+    if per_locale:
+        result["transformer"] = LanguageRoutedClassifier(
+            english=per_locale.get("en"), arabic=per_locale.get("ar")
+        )
+    elif path := os.getenv("TIS_LOCAL_CLASSIFIER_DIR"):
         raw_index = os.getenv("TIS_LOCAL_AI_CLASS_INDEX")
         if raw_index not in ("0", "1"):
             raise RuntimeError("Set TIS_LOCAL_AI_CLASS_INDEX to a verified model label index (0 or 1)")
