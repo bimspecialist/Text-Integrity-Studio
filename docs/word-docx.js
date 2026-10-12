@@ -128,6 +128,18 @@ async function loadWord(file){
  finally{busy=false;document.getElementById('wordDrop').classList.remove('is-loading');}
 }
 function mode(){return $('mode').value;}
+function cleanWordText(text,mode){
+ if(mode!=='safe')return cleanup(text,mode);
+ // DOCX safe mode does not change no-break spaces, soft hyphens, word joiners,
+ // bidi controls or emoji joiners, all of which may have typographic meaning.
+ let value='',removed=0;
+ for(const c of text){
+   const cp=c.codePointAt(0);
+   if(cp===0x200b||cp===0xfeff||(cp<32&&![9,10,13].includes(cp))||cp===127){removed++;continue;}
+   value+=c;
+ }
+ return {text:value,removed,normalized:0};
+}
 function transformDoc(doc,opt){
  let changed=0,normalized=0,removedHidden=0;
  for(const el of Array.from(doc.getElementsByTagNameNS(W,'t'))){
@@ -138,7 +150,7 @@ function transformDoc(doc,opt){
       continue;
    }
    const before=el.textContent;
-   const clean=cleanup(before,opt.mode);
+   const clean=cleanWordText(before,opt.mode);
    if(before!==clean.text){
       el.textContent=clean.text;
       changed+=clean.removed;
@@ -148,7 +160,7 @@ function transformDoc(doc,opt){
  }
  // DrawingML text runs are part of visible text in text boxes/charts.
  for(const el of Array.from(doc.getElementsByTagNameNS(A,'t'))){
-   const before=el.textContent;const clean=cleanup(before,opt.mode);
+   const before=el.textContent;const clean=cleanWordText(before,opt.mode);
    if(before!==clean.text){el.textContent=clean.text;changed+=clean.removed;normalized+=clean.normalized;}
  }
  return {changed,normalized,removedHidden,text:extract(doc)};
