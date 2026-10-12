@@ -65,7 +65,8 @@ function translate(){
   ['aiMeterExplanation','explanation'],['aiRun','run'],
   ['aiConsent','consent'],['aiLegal','legal'],['aiExport','export']
  ])label(id,t()[key]);
- if(!lastResult)label('aiShort',t().idle);else setStatus(t().done);
+ if(!lastResult)label('aiShort',t().idle);
+ else{label('aiShort',lang()==='ar'?'إشارة نموذج AI · تجريبية':'AI model signal · experimental');setStatus(t().done);}
  label('navEditor',lang()==='ar'?'المحرر':'Editor');
  label('navResults',lang()==='ar'?'النتائج':'Results');
  label('navWriting',lang()==='ar'?'تحسين الكتابة':'Writing tools');
