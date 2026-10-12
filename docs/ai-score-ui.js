@@ -39,7 +39,7 @@ const languages={
   uncertain:'Models disagree — no defensible combined percentage',
   lowCoverage:'Too little of the document could be analyzed — no combined percentage',
   partial:'Only the main model completed. No two-model agreement was assessed.',
-  measured:'Research model signal (not authorship probability)',
+  measured:'Primary model signal (research-only, not authorship probability)',
   models:'Model comparison',
   coverage:'Document sampled',
   tokens:'Maximum tokens per window',
@@ -97,7 +97,7 @@ const languages={
   uncertain:'النموذجان مختلفان — لا توجد نسبة موحدة يمكن الدفاع عنها',
   lowCoverage:'لم تدخل كمية كافية من المستند في الفحص — لا توجد نسبة موحدة',
   partial:'عمل النموذج الرئيسي فقط؛ لم يُتحقق من اتفاق النموذجين.',
-  measured:'إشارة نموذج بحثية وليست احتمال إثبات الكتابة',
+  measured:'إشارة النموذج الأساسي (بحثية وليست احتمال إثبات الكتابة)',
   models:'مقارنة النموذجين',
   coverage:'نسبة النص المُعايَن',
   tokens:'الحد الأعلى للرموز في المقطع',
@@ -285,7 +285,8 @@ function render(result){
  $('aiExport').hidden=false;
  $('aiRun').disabled=false;
  status(t().done+(result.primary.coverage<100?' '+t().statusSampled:'')+
-   (conflict?' '+t().modelReason:''));
+   (conflict?' '+t().modelReason:'')+
+   (result.status==='AGREEMENT_UNCALIBRATED'?' '+t().statusAgreement:''));
  renderEvidence(result);
 }
 function error(code){
