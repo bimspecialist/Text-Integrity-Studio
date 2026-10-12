@@ -1,0 +1,60 @@
+name: Bundle private PDF and OCR engines
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/vendor-document-engines.yml
+permissions:
+  contents: write
+concurrency:
+  group: bundle-document-engines
+  cancel-in-progress: false
+jobs:
+  bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install fixed-version parser and OCR libraries
+        run: |
+          mkdir -p /tmp/tis-vendor
+          npm install --prefix /tmp/tis-vendor --ignore-scripts --no-audit --no-package-lock --save-exact pdfjs-dist@6.4.299 tesseract.js@7.0.0 tesseract.js-core@7.0.0
+      - name: Vendor first-party-served browser assets
+        run: |
+          set -eu
+          PDF=/tmp/tis-vendor/node_modules/pdfjs-dist
+          OCR=/tmp/tis-vendor/node_modules/tesseract.js
+          CORE=/tmp/tis-vendor/node_modules/tesseract.js-core
+          mkdir -p docs/vendor/pdfjs/cmaps docs/vendor/pdfjs/standard_fonts docs/vendor/tesseract/core docs/vendor/tesseract/lang
+          cp "$PDF/build/pdf.mjs" docs/vendor/pdfjs/pdf.mjs
+          cp "$PDF/build/pdf.worker.mjs" docs/vendor/pdfjs/pdf.worker.mjs
+          cp "$PDF/cmaps/"*.bcmap docs/vendor/pdfjs/cmaps/
+          cp "$PDF/standard_fonts/"* docs/vendor/pdfjs/standard_fonts/
+          cp "$PDF/LICENSE" docs/vendor/pdfjs/LICENSE
+          cp "$OCR/dist/tesseract.min.js" docs/vendor/tesseract/tesseract.min.js
+          cp "$OCR/dist/worker.min.js" docs/vendor/tesseract/worker.min.js
+          cp "$OCR/LICENSE" docs/vendor/tesseract/LICENSE
+          cp "$CORE/"tesseract-core* docs/vendor/tesseract/core/
+          curl --fail --show-error --silent --location --retry 3 https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/eng.traineddata.gz --output docs/vendor/tesseract/lang/eng.traineddata.gz
+          curl --fail --show-error --silent --location --retry 3 https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/ara.traineddata.gz --output docs/vendor/tesseract/lang/ara.traineddata.gz
+          for filename in docs/vendor/pdfjs/pdf.mjs docs/vendor/pdfjs/pdf.worker.mjs docs/vendor/tesseract/worker.min.js docs/vendor/tesseract/tesseract.min.js docs/vendor/tesseract/lang/eng.traineddata.gz docs/vendor/tesseract/lang/ara.traineddata.gz; do
+            test -s "$filename"
+          done
+          du -sh docs/vendor/pdfjs docs/vendor/tesseract
+      - name: Commit versions and licenses
+        run: |
+          git config user.name 'Text Integrity Release Bot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add docs/vendor/pdfjs docs/vendor/tesseract
+          if git diff --staged --quiet; then
+            echo 'Vendor assets already up to date.'
+          else
+            git commit -m 'Vendor offline PDF.js 6.4.299 and Tesseract 7 engines with English Arabic data'
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
