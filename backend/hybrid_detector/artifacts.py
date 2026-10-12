@@ -143,11 +143,11 @@ def validate(raw: dict) -> CalibratedArtifact:
     return CalibratedArtifact(raw)
 
 
-def load_artifact(directory: str | Path, unit: str) -> CalibratedArtifact | None:
-    if unit not in SCOPE_VALUES:
-        raise ValueError("Invalid analysis scope")
+def load_artifact(directory: str | Path, unit: str, language: str) -> CalibratedArtifact | None:
+    if unit not in SCOPE_VALUES or language not in ("en", "ar", "mixed"):
+        raise ValueError("Invalid analysis scope or language")
     base = Path(directory).resolve()
-    source = base / (unit + ".json")
+    source = base / (unit + "." + language + ".json")
     if not source.is_file():
         return None
     if source.stat().st_size > 1_500_000:
@@ -158,10 +158,14 @@ def load_artifact(directory: str | Path, unit: str) -> CalibratedArtifact | None
         raise ValueError("Calibration unit mismatch")
     # Release manifest must match exact bytes of the artifact and is separate from
     # the model output. A manual approval still requires the metric gates above.
-    manifest = base / (unit + ".approval.json")
+    manifest = base / (unit + "." + language + ".approval.json")
     if manifest.is_file():
         release = json.loads(manifest.read_text(encoding="utf-8"))
         digest = hashlib.sha256(source.read_bytes()).hexdigest()
         if release.get("artifact_sha256") != digest or release.get("version") != artifact.version:
             raise ValueError("Calibration release manifest fingerprint mismatch")
+    elif artifact.raw.get("governance", {}).get("release_approved"):
+        raise ValueError("Approved artifact is missing its integrity manifest")
+    if language not in artifact.languages:
+        raise ValueError("Calibration language mismatch")
     return artifact
