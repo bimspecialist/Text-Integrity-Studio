@@ -150,7 +150,7 @@ function wordSelect(ids,requestedMode){
  $('resultbox').hidden=true;
  return editorialSelection.size;
 }
-globalThis.TextIntegrityWordBridge={isActive:()=>!!session,getSuggestions:editorialPlan,setSelection:wordSelect,getSelectedIds:()=>[...editorialSelection]};
+globalThis.TextIntegrityWordBridge={isActive:()=>!!session,getSuggestions:editorialPlan,setSelection:wordSelect,getSelectedIds:()=>[...editorialSelection],previewSelected:async()=>{const p=await prepareWord();return p.text;}};
 function cleanWordText(text,mode){
  if(mode!=='safe')return cleanup(text,mode);
  // DOCX safe mode does not change no-break spaces, soft hyphens, word joiners,
