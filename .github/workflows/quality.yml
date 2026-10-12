@@ -20,6 +20,6 @@ jobs:
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
       - name: Install test XML parser
-        run: npm install --no-save --no-package-lock --ignore-scripts @xmldom/xmldom@0.8.10
+        run: npm install --no-save --no-package-lock --ignore-scripts @xmldom/xmldom@latest
       - name: Word DOCX safe-clean integration tests
         run: node tests/word-docx.test.js
