@@ -37,6 +37,7 @@ const ctx={document:{readyState:'loading',addEventListener(){}},DOMParser:Parser
 vm.runInNewContext(script,ctx,{filename:'word-docx.js'});
 const api=ctx.__wordTests;
 assert(api&&api.parseXML&&api.transformDoc&&api.checkZipLimits,'Word engine available');
+assert.throws(()=>api.parseXML('<!DOCTYPE doc [<!ENTITY test "unsafe">]><doc>&test;</doc>','word/document.xml'),/unsupported entity declarations/,'DTD/entity input rejected');
 const xml='<?xml version="1.0" encoding="UTF-8"?>'+
 '<w:document xmlns:w="'+W+'"><w:body>'+
 '<w:p><w:r><w:t>Before\u200b after</w:t></w:r></w:p>'+
@@ -78,6 +79,9 @@ async function roundtrip(){
  const badZip=await JSZip.loadAsync(await bad.generateAsync({type:'nodebuffer'}));
  assert.throws(()=>api.checkZipLimits(badZip,{size:100}),/DOCX package/,'Invalid archives refused');
  assert.throws(()=>api.checkZipLimits(parsed,{size:19*1024*1024}),/invalid|Word|unencrypted|docx/i,'Large archives refused');
+ const withMacro=new JSZip();withMacro.file('[Content_Types].xml','<Types/>');withMacro.file('word/document.xml',xml);withMacro.file('word/vbaProject.bin','macro');
+ const macroZip=await JSZip.loadAsync(await withMacro.generateAsync({type:'nodebuffer'}));
+ assert.throws(()=>api.checkZipLimits(macroZip,{size:200}),/Macro-enabled/,'Macro-enabled documents refused');
  console.log('PASS 16 DOCX engine, privacy, formatting and archive checks');
 }
 roundtrip().catch(error=>{console.error(error);process.exit(1);});
