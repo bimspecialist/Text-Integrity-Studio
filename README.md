@@ -11,7 +11,7 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Scope:** This site **does not currently detect whether text was written by AI**. It provides document integrity scans and human-reviewed style/grammar suggestions, and intentionally displays no invented AI-authorship percentage. It never generates deliberate “human errors” or promises detector evasion.
 
-**Current Word limitation:** writing suggestions for extracted DOCX can be copied or exported as TXT; Word DOCX download currently only applies Unicode/hidden-run cleanup, not full rich-text editorial rewriting.
+**Updated Word editor:** Writing Lab suggestions for simple document-body paragraphs can now be selected for **Word DOCX export with Track Changes** (on by default), or exported as clean revisions. Complex fields, hyperlinks, marked-up paragraphs, notes/comments, drawings and style-heavy structures remain untouched. Word may retain or simplify formatting inside replaced text across differently styled runs: review tracked edits in Microsoft Word before final use.
 
 
 ## Word DOCX — available now
@@ -21,8 +21,10 @@ To inspect a Word file **without Python**:
 1. Open the app (`docs/index.html` locally or via GitHub Pages after enabling it).
 2. Click **Choose Word document (.docx)** and select a Word DOCX file (up to 18 MB).
 3. Review **Unicode**, **Writing quality**, **Security**, and the **Word document inspection** report.
-4. Click **Preview Word cleanup**, then **Download cleaned Word (.docx)**. The original file remains untouched.
-5. An optional checkbox clears text from Word runs explicitly marked hidden (`w:vanish`, `w:webHidden`, `w:specVanish`). This is OFF by default and requires extra confirmation.
+4. In **Writing improvement lab**, select individual, meaning-preserving suggestions. The default is **no editorial changes selected** for Word.
+5. Keep **Track editorial changes in Word** checked if you want Microsoft Word to show suggested insertions/deletions for review.
+6. Click **Preview Word cleanup** and **Download cleaned Word (.docx)**. The original file remains untouched.
+7. An optional checkbox clears text from Word runs explicitly marked hidden (`w:vanish`, `w:webHidden`, `w:specVanish`). This is OFF by default and requires extra confirmation.
 
 **Preservation:** Rewrites affected text runs in OOXML and repacks the existing DOCX archive, retaining the rest of the document package, including images, sections, tables and styles. Extremely complex Word files must be checked in Word after export. Scanned pages, password-protected files and legacy `.doc` are not supported. For an old `.doc` use Word → Save As → `.docx`.
 
@@ -32,10 +34,17 @@ To inspect a Word file **without Python**:
 
 **Testing:** `tests/word-docx.test.js` and `.github/workflows/quality.yml` provide an automated ZIP roundtrip + safety regression test.
 
+## New engineering and research tools
+- [Local baseline AI detector training pipeline](evaluation/train_baseline.py) with [optional, pinned model dependencies](evaluation/requirements-model.txt). Requires user-provided, independently labeled and authorized train/validation/test data. No pretrained production AI detector is deployed.
+- [Offline A/B writing evaluation](evaluation/ab_editor.py) measures reviewed completion and meaning-error risks without uploading any drafts.
+- [Security review and risk register](SECURITY.md), [bilingual privacy disclosure](docs/privacy.html), and no-network browser CSP.
+- CI tests verify style-preserving Word revisions, browser export, protected spans, ZIP safety, dataset leakage, evaluation metrics, and privacy baseline.
+
 ## Open the web app
 After Pages is enabled, the static site is served from `/docs/index.html`.
 
 ## Features
+- Review-first DOCX editorial suggestions with Word Track Changes for eligible main-body paragraphs, preserving source document files.
 - Bilingual writing improvement lab: selectable spelling, grammar, punctuation, formatting and clarity edits with preview, undo and TXT export.
 - Detailed audit of invisible and unusual Unicode characters, with count, code point and review category.
 - Safe versus thorough cleanup, preview before applying, TXT download, clipboard copy.
