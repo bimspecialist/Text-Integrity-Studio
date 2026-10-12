@@ -194,14 +194,15 @@ async function prepareWord(){
  const next=[];let removed=0,norm=0,hiddenRuns=0,editorialApplied=0,editorialSkipped=0;
  for(const part of session.parts){
    const xmlDoc=parseXML(part.xml,part.name);
+   let editorialInPart=0;
    if(editorialSelection.size){
      const review=globalThis.TextIntegrityDocxEditor.applyDocument(xmlDoc,globalThis.TextIntegrityRules,[...editorialSelection],{
        part:part.name,mode:editorialMode,track:$('wordTrackEdits').checked,author:'Text Integrity Studio'});
-     editorialApplied+=review.applied;editorialSkipped+=review.skipped;
+     editorialInPart=review.applied;editorialApplied+=review.applied;editorialSkipped+=review.skipped;
    }
    const outcome=transformDoc(xmlDoc,config);
    removed+=outcome.changed;norm+=outcome.normalized;hiddenRuns+=outcome.removedHidden;
-   next.push({name:part.name,xml:outcome.changed||outcome.normalized||outcome.removedHidden||editorialApplied?new XMLSerializer().serializeToString(xmlDoc):null,text:outcome.text});
+   next.push({name:part.name,xml:outcome.changed||outcome.normalized||outcome.removedHidden||editorialInPart?new XMLSerializer().serializeToString(xmlDoc):null,text:outcome.text});
  }
  return {next,removed,norm,hiddenRuns,editorialApplied,editorialSkipped,text:next.map(x=>x.text).filter(Boolean).join('\n\n')};
 }
