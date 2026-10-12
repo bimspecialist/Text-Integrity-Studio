@@ -11,15 +11,19 @@ const corpus=process.env.TIS_PUBLIC_WEAK_CORPUS;
 const output=process.env.TIS_BENCH_RESULTS||'/tmp/tis-hc3-benchmark.jsonl';
 if(!corpus||!fs.existsSync(corpus))throw Error('Bounded public baseline JSONL required');
 const dataset=fs.readFileSync(corpus,'utf8').trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
-function choose(label){
+const includeCalibration=process.env.TIS_BENCH_INCLUDE_CALIBRATION==='1';
+function choose(label,split,limit){
  const filtered=dataset.filter(r=>
-  r.label===label&&r.split==='test'&&r.language==='en'&&
+  r.label===label&&r.split===split&&r.language==='en'&&
   typeof r.text==='string'&&r.text.length<120000&&r.text.trim().split(/\s+/u).length>=120
  );
  filtered.sort((a,b)=>a.id.localeCompare(b.id));
- return filtered.slice(0,24);
+ return filtered.slice(0,limit);
 }
-const selected=[...choose('human'),...choose('ai')];
+const selected=[
+ ...choose('human','test',24),...choose('ai','test',24),
+ ...(includeCalibration?[...choose('human','calibration',32),...choose('ai','calibration',32)]:[])
+];
 const human=selected.filter(x=>x.label==='human').length;
 const machine=selected.filter(x=>x.label==='ai').length;
 if(human<12||machine<12)throw Error('Not enough consent/license-audited public weak-label samples for an informative pilot');
@@ -59,7 +63,7 @@ async function run(){
     score:result.primary.score,
     group:sample.source_group,
     domain:sample.domain||'general',
-    language:'en',split:'test',
+    language:'en',split:sample.split,
     benchmark:'HC3_PUBLIC_WEAK_LABELS',
     label_provenance:'UNVERIFIED_PUBLIC_DATASET_CLAIM',
     covered_percent:result.primary.coverage,
