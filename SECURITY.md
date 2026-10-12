@@ -1,15 +1,17 @@
 # Security policy and operational boundaries
-Status: browser-only research prototype, October 2026. This document is not a certification or penetration-test report.
+Status: browser research prototype with optional token-protected loopback companion, October 2026. This document is not a certification or penetration-test report.
 
 ## What we enforce
-- Static GitHub Pages site; no hosted user-document processing, API keys or model uploads.
-- External CSS/JavaScript with a restrictive Content Security Policy meta tag (`connect-src 'none'`, `script-src 'self'`).
+- Static GitHub Pages site; no hosted user-document processing or remote model uploads (experimental models are selected from local files).
+- External CSS/JavaScript with a restrictive Content Security Policy meta tag (`connect-src 'self'`, `script-src 'self' 'wasm-unsafe-eval'`, `worker-src 'self'`) to load only same-origin OCR/PDF assets.
 - Bundled JSZip, attributed under MIT. Supported DOCX files are scanned locally and ZIP sizes/entry counts/expansion ratios are limited before XML decompression.
 - Word XML DTD/ENTITY declarations and macro-enabled packages are rejected; non-destructive exported copies are used.
 - Complex field-coded, linked or previously revised paragraphs are conservatively excluded from tracked editorial changes.
 - Unsigned/incorrect Word files can still fail open or re-save in Microsoft Word. Signed files are warned; Office validation is required for consequential documents.
 - Human review is required for grammar edits, technical measurements and citations.
-- AI-authorship classifier is not deployed, so no invented AI probabilities.
+- No **validated** AI-authorship model is deployed. A user-supplied private experimental model can calculate an explicitly unverified numeric signal, with abstention outside its declared scope.
+- Local-only Tesseract and PDF.js assets are bundled and version-pinned; image OCR has explicit resource caps and is opt-in.
+- The optional Python local companion binds only to loopback and requires a bearer token; browser Origins are denied. Number/citation changes in drafts are flagged for review.
 
 ## Residual risks
 | ID | Severity | Issue / boundary | Response |
@@ -17,8 +19,8 @@ Status: browser-only research prototype, October 2026. This document is not a ce
 | SEC-01 | Medium | GitHub Pages CSP is a meta tag, not configurable HTTP response headers; it cannot enforce `frame-ancestors` | Document limitation; require reverse proxy for stronger header deployment |
 | SEC-02 | Medium | The Word editor accepts only simple direct text runs and may change formatting within replaced spans spanning differently styled runs | Show tracked changes; don't overwrite source; include regression fixtures |
 | SEC-03 | Medium | Unsupported Word styles, drawings, images, fields and metadata are not fully analyzed; DTD rejection is limited to parsed text XML parts | Surface coverage; no claims of complete scan |
-| SEC-04 | Medium | Vendored JSZip and development dependencies require ongoing vulnerability monitoring | Periodically review vendor advisories, pin versions and keep tests green |
-| SEC-05 | High if enabled | Remote inference/API would expose text and require quotas, authentication, purpose limitation and deletion policies | No public API deployed; explicit design and approval gates before implementation |
+| SEC-04 | Medium | Vendored JSZip, PDF.js, Tesseract WASM and browser build dependencies require ongoing vulnerability monitoring | Periodically review vendor advisories, pin versions and keep tests green |
+| SEC-05 | High if enabled | Remote inference/API would expose text and require quotas, authentication, purpose limitation and deletion policies | No public API deployed; optional token-protected loopback-only API exists and public hosting still requires explicit governance |
 | SEC-06 | High | Wrongful automated AI authorship accusations from miscalibrated classifiers | No public classifier score; separate held-out benchmark and human review |
 
 ## Reporting a vulnerability
