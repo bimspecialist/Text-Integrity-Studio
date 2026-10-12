@@ -1,0 +1,37 @@
+name: Live optional AI browser model smoke
+on:
+  pull_request:
+    paths:
+      - 'docs/browser-ai-runtime.js'
+      - 'docs/ai-runtime.html'
+      - 'docs/ai-score-ui.js'
+      - 'tests/browser-ai-live.test.js'
+      - '.github/workflows/live-browser-ai.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  run-real-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium test driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0
+      - name: Test real downloaded model output (not a synthetic fixture)
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: |
+          node --check tests/browser-ai-live.test.js
+          node tests/browser-ai-live.test.js
+      - name: Archive real model screenshot when available
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-browser-ai-model-visual
+          path: /tmp/tis-ui-screenshots/real-model-runtime.png
+          retention-days: 3
+          if-no-files-found: ignore

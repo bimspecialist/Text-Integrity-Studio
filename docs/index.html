@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'self'; worker-src 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
 <title>Text Integrity Studio — Check and Improve Documents</title>
@@ -11,14 +11,21 @@
 </head>
 <body>
 <div class="shell">
-<header>
-  <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity Studio</span></div>
+<header class="app-sidebar">
+  <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
+  <nav class="side-navigation" aria-label="Workspace navigation">
+    <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
+    <a class="nav-item" href="#reportPanel"><span aria-hidden="true">◷</span><span id="navResults">Results</span></a>
+    <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
+    <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
+  </nav>
   <div class="top"><span class="tag" id="localtag">● Private · On your device</span><button type="button" id="language" aria-label="Change interface language">العربية</button></div>
 </header>
 <main>
   <section class="hero" aria-labelledby="heading">
+    <div class="eyebrow" id="heroEyebrow">WORKSPACE / DOCUMENT REVIEW</div>
     <h1 id="heading">Check and improve your text.</h1>
-    <p id="subtitle">Paste text or upload a Word, PDF, or TXT file. Check it, review improvements, then save a copy.</p>
+    <p id="subtitle">Paste text or upload Word, PDF, or TXT. Review quality findings and, if you choose, try the experimental AI model.</p>
   </section>
   <div class="steps" aria-label="Three easy steps">
     <span id="stepInput">1 · Add text</span>
@@ -81,6 +88,22 @@
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
         <div class="panel-heading"><h2 id="titleAudit">2 · Your results</h2><span id="checkedLabel" class="small">No check yet</span></div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <section id="aiMeter" class="ai-meter" aria-labelledby="aiMeterTitle">
+          <div class="ai-meter-head"><h3 id="aiMeterTitle">AI text indicator</h3><span class="ai-research-badge" id="aiBadge">EXPERIMENTAL</span></div>
+          <div class="ai-meter-content">
+            <div class="ai-meter-score" id="aiMeterScore" aria-live="polite">—<small id="aiMeterUnit">Model signal</small></div>
+            <div class="ai-meter-desc">
+              <strong id="aiShort">No model estimate yet</strong>
+              <p id="aiMeterExplanation">An optional English classifier can display a research signal. This is not proof of who wrote a document.</p>
+            </div>
+          </div>
+          <progress id="aiBar" max="100" value="0" aria-label="Experimental model AI signal" hidden></progress>
+          <button id="aiRun" class="ai-run-button" type="button">Get experimental AI estimate</button>
+          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB open-source model and a browser runtime from Hugging Face/CDN. No text is intentionally sent to an AI API.</p>
+          <p id="aiStatus" class="small" role="status" aria-live="polite"></p>
+          <button id="aiExport" type="button" hidden>Save model report</button>
+          <div class="ai-legal" id="aiLegal">English only · Minimum 120 words · Uncalibrated model score, not an AI-written percentage.</div>
+        </section>
         <div class="report-actions">
           <button id="quickReview" class="primary" type="button" hidden>Review writing suggestions</button>
           <button id="quickClean" type="button">Preview cleanup</button>
@@ -125,5 +148,6 @@
 <script src="experimental-signal.js"></script>
 <script src="experimental-signal-ui.js"></script>
 <script src="simple-ui.js"></script>
+<script src="ai-score-ui.js"></script>
 </body>
 </html>
