@@ -1,0 +1,37 @@
+name: Next.js private proxy and React UI
+on:
+  pull_request:
+    paths:
+      - 'backend/examples/next-ui/**'
+      - 'backend/examples/express-authenticated-proxy.js'
+      - '.github/workflows/next-integration.yml'
+  push:
+    branches: [main, 'feature/**']
+    paths:
+      - 'backend/examples/next-ui/**'
+      - 'backend/examples/express-authenticated-proxy.js'
+      - '.github/workflows/next-integration.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check Express proxy syntax
+        run: node --check backend/examples/express-authenticated-proxy.js
+      - name: Install standalone Next.js demo dependencies
+        working-directory: backend/examples/next-ui
+        run: npm install --ignore-scripts --no-audit --no-fund
+      - name: Strict TypeScript check
+        working-directory: backend/examples/next-ui
+        run: npm run typecheck
+      - name: Build authenticated private upload frontend
+        working-directory: backend/examples/next-ui
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
