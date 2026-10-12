@@ -1,0 +1,25 @@
+name: Quality checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  docx-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: JavaScript syntax checks
+        run: |
+          node --check docs/word-docx.js
+          node --check docs/vendor/jszip.min.js
+          node --check tests/word-docx.test.js
+      - name: Install test XML parser
+        run: npm install --no-save --no-package-lock --ignore-scripts @xmldom/xmldom@0.8.10
+      - name: Word DOCX safe-clean integration tests
+        run: node tests/word-docx.test.js
