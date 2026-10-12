@@ -64,6 +64,7 @@ async function run(){
    await page.waitForFunction(()=>document.getElementById('source').value.includes('PDF private extraction works'),{timeout:40000});
    assert.equal(await page.$eval('#pdfDetails',el=>el.hidden),false);
    assert.equal(await page.$eval('#source',el=>el.readOnly),false,'PDF extraction can be edited as plain text');
+   await page.click('#writingTools > summary');
    await page.click('#labAnalyze');
    const client=await page.createCDPSession();await client.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:temp});
    await page.click('#pdfExport');
