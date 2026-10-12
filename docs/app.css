@@ -24,3 +24,6 @@ select{padding:10px;border-radius:9px;color:white;background:#14253e;border:1px 
 
 /* PDF input and offline OCR */
 .pdf-controls{margin:14px 0;align-items:flex-end}.pdf-controls label{display:flex;flex-direction:column;gap:6px;min-width:94px}.pdf-controls input[type=number]{width:110px;max-width:100%;padding:10px;border-radius:9px;border:1px solid #354a68;color:white;background:#14253e}.pdf-controls select{max-width:215px}#pdfFacts{margin:12px 0}#pdfStatus{min-height:1.6em}
+
+/* Experimental, research-only signal */
+#researchSignal{border-color:#36577c}#researchSignal .signal-file{display:block;margin:9px 0 15px;width:100%;max-width:100%;color:#bfd1e7;font-size:12px}#signalResult{border-top:1px solid #354b66;padding:14px 0;min-height:34px}#signalResult strong{font-size:14px;color:#d5e5fc}#signalStatus{min-height:19px}
