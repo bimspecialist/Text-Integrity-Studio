@@ -30,6 +30,15 @@ class CompanionTests(unittest.TestCase):
    self.assertEqual(result["status"],"DRAFT_REQUIRES_REVIEW")
    with self.assertRaisesRegex(mod.CompanionError,"overwrite"):
     mod.save_review(src,"x","y",src)
+ def test_protected_numbers_and_references_flagged(self):
+  verdict=mod.check_factual_tokens('SBC 201 requires 150 kPa [4].','SBC 201 requires 250 kPa [4].')
+  self.assertEqual(verdict['risk'],'HIGH')
+  self.assertTrue(any('150' in x for x in verdict['missing_original_numbers_or_references']))
+  self.assertTrue(any('250' in x for x in verdict['unexpected_numbers_or_references']))
+  with tempfile.TemporaryDirectory() as d:
+   src=pathlib.Path(d)/'source.txt';src.write_text('150 kPa',encoding='utf8')
+   report=mod.save_review(src,'150 kPa','250 kPa',pathlib.Path(d)/'candidate.txt')
+   self.assertEqual(report['status'],'HIGH_RISK_REVIEW_REQUIRED')
  def test_docx_utf8_extract(self):
   with tempfile.TemporaryDirectory() as d:
    file=pathlib.Path(d)/"test.docx"
