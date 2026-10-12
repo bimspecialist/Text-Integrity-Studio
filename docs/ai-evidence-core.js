@@ -21,7 +21,7 @@ function validateLanguage(text){
  const latin=(text.match(/[A-Za-z]/g)||[]).length;
  const nonlatin=(text.match(/\p{L}/gu)||[]).length-latin-ar;
  // 5%+ Arabic and major non-Latin scripts are unsupported in English detectors.
- if(latin<80 || ar>Math.max(5,latin*.05) || nonlatin>Math.max(10,latin*.10))return false;
+ if(latin<80 || ar>Math.max(3,latin*.02) || nonlatin>Math.max(10,latin*.10))return false;
  return true;
 }
 function eligibility(text){
