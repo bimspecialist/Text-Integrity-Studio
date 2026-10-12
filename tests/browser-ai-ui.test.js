@@ -7,10 +7,18 @@ const {serve,chrome}=require('./pdf-browser.test.js');
 const modelFixture = '<!doctype html><html><body><script>'+
  "window.addEventListener('message',function(e){"+
  "if(e.origin!==location.origin || e.data.op!=='RUN')return;"+
- "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:e.data.requestId,result:"+
- "{score:64.2,language:'en',sampleCount:1,words:245,confidence:'UNVALIDATED',"+
- "model_id:'onnx-community/tmr-ai-text-detector-ONNX',"+
- "calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'}},location.origin);"+
+ "const primary={model_id:'onnx-community/tmr-ai-text-detector-ONNX',score:64.2,coverage:100,"+
+ "sampleCount:1,range_percent:[64.2,64.2],consistency:'CONSISTENT_PASSAGES',"+
+ "segments:[{start:0,end:75,signal:64.2,words:15,tokens:25}]};"+
+ "const secondary={model_id:'onnx-community/roberta-base-openai-detector-ONNX',score:15.5,coverage:100,"+
+ "sampleCount:1,range_percent:[15.5,15.5],consistency:'CONSISTENT_PASSAGES',segments:[]};"+
+ "const deep=e.data.deep===true;"+
+ "const result={version:'TIS_CONSENSUS_V2_2026_10',primary:primary,"+
+ "secondary:deep?secondary:null,models:deep?[primary,secondary]:[primary],"+
+ "status:deep?'MODEL_DISAGREEMENT':'SINGLE_UNCALIBRATED_MODEL',score:deep?null:64.2,"+
+ "flags:deep?['MODELS_DISAGREE']:[],agreementDifferencePoints:deep?48.7:null,"+
+ "calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'};"+
+ "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:e.data.requestId,result},location.origin);"+
  "});"+
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},location.origin);"+
  '</script></body></html>';
@@ -57,7 +65,17 @@ async function run(){
   await page.waitForSelector('#tisOnDeviceModel');
   await page.waitForFunction(()=>document.querySelector('#aiMeterScore')?.textContent.includes('64.2%'),{timeout:10000});
   assert.equal(await page.$eval('#aiBar',e=>e.value),64.2);
-  assert((await page.$eval('#aiShort',n=>n.textContent)).includes('experimental'),'Experimental interpretation always visible');
+  assert.equal(await page.$eval('#aiEvidence',e=>e.hidden),false,'Detailed evidence available on demand');
+  await page.click('#aiEvidence > summary');
+  assert((await page.$eval('#aiEvidenceBody',el=>el.textContent)).includes('64.2%'),'Per-model and per-passage evidence visible');
+  await page.click('#aiAdvanced > summary');
+  await page.click('#aiDeep');
+  await page.click('#aiRun');
+  await page.waitForFunction(()=>document.getElementById('aiShort').textContent.includes('Models disagree'),{timeout:10000});
+  assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
+  assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('15.5%'),'Second independent model remains inspectable');
+
+  assert((await page.$eval('#aiLegal',n=>n.textContent)).includes('not a percentage of AI-authored words'),'Explicit uncalibrated-model disclaimer remains visible regardless of result wording');
   assert.equal(thirdParty.length,0,'No remote executable/model fetch in mock before live model download');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');

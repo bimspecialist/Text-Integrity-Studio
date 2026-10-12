@@ -1,122 +1,184 @@
-/* Optional browser-only RoBERTa model runner.
- * INVARIANT: no fetch or upload of the user's text. External requests performed
- * by Transformers.js fetch executable runtime assets and pretrained weights.
- * Scores are RESEARCH classifier outputs, NOT validated authorship probabilities.
+/* Text Integrity Studio — calibrated-evidence-aware experimental runtime.
+ * The first model (RAID/TMR) remains the fast default. Explicit deep mode
+ * loads a separately trained, older GPT-2 detector for a *disagreement check*.
+ * These scores are NEVER independently validated authorship probabilities.
  *
- * Model: onnx-community/tmr-ai-text-detector-ONNX (MIT)
- * Basis: Oxidane/tmr-ai-text-detector, RAID-trained; label index 1 means AI.
- * Transformers.js pinned to 3.8.1; q8 ONNX model is around 126 MiB.
- * Never show a percentage for Arabic/mixed or fewer than 120 words.
+ * Inference runs only after the user clicks, locally in the browser.
+ * No code path transmits text to remote classifier APIs.
  */
 'use strict';
+const core=globalThis.TISEvidenceCore;
+if(!core)throw Error('Evidence engine unavailable');
 
-const MODEL_ID='onnx-community/tmr-ai-text-detector-ONNX';
+const MODELS={
+ primary:{
+  id:'onnx-community/tmr-ai-text-detector-ONNX',
+  revision:'b9aa251e5bcda7e429fcc936767d921435945b60',
+  label:'TMR · RAID-trained English',
+  ai:new Set(['AI']),human:new Set(['HUMAN']),
+  training:'RAID_2024'
+ },
+ secondary:{
+  id:'onnx-community/roberta-base-openai-detector-ONNX',
+  revision:'54895bd11f34b47a01369d25b2255224717409b8',
+  label:'OpenAI GPT-2-era cross-check',
+  ai:new Set(['FAKE']),human:new Set(['REAL']),
+  training:'GPT2_2019_LEGACY'
+ }
+};
 const LIBRARY_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
-const MIN_WORDS=120, MAX_TEXT_CHARS=120000, MAX_CHUNKS=8;
-let classifierPromise=null;
-let busy=false;
+const clients=new Map();
+let libraryPromise=null,busy=false,nextRequest=null,cancelled=false;
 
 function status(message){
- const node=document.getElementById('engine-status');
- if(node)node.textContent=message;
+ const element=document.getElementById('engine-status');
+ if(element)element.textContent=message;
 }
 function send(op,requestId,details={}){
- if(!window.parent || window.parent===window)return;
- window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op,requestId,...details},location.origin);
-}
-function selectChunks(text){
- const words=text.match(/\S+/gu)||[];
- if(words.length<MIN_WORDS)throw new Error('MIN_WORDS');
- if(text.length>MAX_TEXT_CHARS)throw new Error('TEXT_TOO_LONG');
- const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
- const latin=(text.match(/[A-Za-z]/g)||[]).length;
- if(latin<Math.max(80,ar*18))throw new Error('UNSUPPORTED_LANGUAGE');
- const chunks=[];
- for(let i=0;i<words.length;i+=230){
-  const chunk=words.slice(i,i+230);
-  if(chunk.length>=70)chunks.push(chunk.join(' '));
+ if(window.parent!==window){
+  window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op,requestId,...details},location.origin);
  }
- if(!chunks.length)throw new Error('MIN_WORDS');
- if(chunks.length<=MAX_CHUNKS)return {chunks,words:words.length};
- const selected=[];
- for(let j=0;j<MAX_CHUNKS;j++){
-  const index=Math.round(j*(chunks.length-1)/(MAX_CHUNKS-1));
-  selected.push(chunks[index]);
- }
- return {chunks:selected,words:words.length};
 }
-function aiSignalFromOutput(outputs){
+function aiSignalFromOutput(outputs,modelKey='primary'){
  const item=Array.isArray(outputs)?outputs[0]:outputs;
- if(!item || !Number.isFinite(Number(item.score)))throw new Error('INVALID_MODEL_OUTPUT');
- const label=String(item.label||'').toUpperCase().replace(/\s+/g,'_');
- const positive=new Set(['LABEL_1','AI','AI_GENERATED','AI-GENERATED','FAKE','1']);
- const negative=new Set(['LABEL_0','HUMAN','HUMAN_WRITTEN','HUMAN-WRITTEN','REAL','0']);
- if(!positive.has(label)&&!negative.has(label))throw new Error('UNVERIFIED_MODEL_LABEL');
- const raw=Math.max(0,Math.min(1,Number(item.score)));
- return positive.has(label)?raw:1-raw;
+ if(!item||!Number.isFinite(item.score)||item.score<0||item.score>1)
+  throw Error('INVALID_MODEL_OUTPUT');
+ const kind=MODELS[modelKey];
+ if(!kind)throw Error('UNVERIFIED_MODEL_LABEL');
+ const label=String(item.label||'').toUpperCase().trim();
+ if(kind.ai.has(label))return item.score;
+ if(kind.human.has(label))return 1-item.score;
+ throw Error('UNVERIFIED_MODEL_LABEL');
 }
-async function getClassifier(requestId){
- if(!classifierPromise){
-  classifierPromise=(async()=>{
-   status('Downloading an English-only AI classifier to your browser...');
-   send('PROGRESS',requestId,{stage:'LOADING',percent:null});
-   const {pipeline}=await import(LIBRARY_URL);
-   const worker=await pipeline('text-classification',MODEL_ID,{
+async function getClassifier(which,requestId){
+ if(clients.has(which))return clients.get(which);
+ const metadata=MODELS[which];
+ if(!metadata)throw Error('UNKNOWN_MODEL');
+ const promise=(async()=>{
+  if(!libraryPromise)libraryPromise=import(LIBRARY_URL).catch(e=>{libraryPromise=null;throw e;});
+  const {pipeline}=await libraryPromise;
+  send('PROGRESS',requestId,{stage:'LOADING',model:which});
+  const pipe=await pipeline('text-classification',metadata.id,{
     dtype:'q8',
+    revision:metadata.revision,
     progress_callback:p=>{
      if(p?.status==='progress'&&Number.isFinite(p.progress)){
-      send('PROGRESS',requestId,{stage:'DOWNLOADING',percent:Math.round(Math.min(100,Math.max(0,p.progress)))});
+      send('PROGRESS',requestId,{
+       stage:'DOWNLOADING',model:which,
+       percent:Math.round(Math.max(0,Math.min(100,p.progress)))
+      });
      }
     }
-   });
-   if(typeof worker!=='function')throw new Error('MODEL_LOAD_FAILED');
-   return worker;
-  })().catch(err=>{classifierPromise=null;throw err;});
- }
- return classifierPromise;
+  });
+  if(typeof pipe!=='function'||typeof pipe.tokenizer?.encode!=='function')
+   throw Error('MODEL_LOAD_FAILED');
+  // Verify checkpoint's classifier label contract before observing any user's text.
+  const labels=pipe.model?.config?.id2label||{};
+  const list=Object.values(labels).map(v=>String(v).toUpperCase());
+  if(list.length!==2||!list.some(v=>metadata.ai.has(v))||
+     !list.some(v=>metadata.human.has(v))){
+   throw Error('UNVERIFIED_MODEL_LABEL');
+  }
+  return pipe;
+ })().catch(e=>{clients.delete(which);throw e;});
+ clients.set(which,promise);
+ return promise;
 }
-async function evaluate(text,requestId){
- const eligible=selectChunks(text);
- const classifier=await getClassifier(requestId);
- let values=[];
- for(let i=0;i<eligible.chunks.length;i++){
-  send('PROGRESS',requestId,{stage:'ANALYZING',percent:Math.round(i/eligible.chunks.length*100)});
-  const response=await classifier(eligible.chunks[i],{truncation:true});
-  values.push(aiSignalFromOutput(response));
+function ensureActive(){if(cancelled)throw Error('CANCELLED');}
+async function runModel(which,text,requestId,context){
+ ensureActive();
+ const pipe=await getClassifier(which,requestId);
+ const selection=core.partitionWindows(text,pipe.tokenizer,{maxTokens:448,maxSamples:12});
+ if(!selection.windows.length)throw Error('INSUFFICIENT_COVERAGE');
+ const results=[];
+ for(let i=0;i<selection.windows.length;i++){
+  ensureActive();
+  send('PROGRESS',requestId,{
+   stage:'ANALYZING',model:which,
+   percent:Math.round(i/selection.windows.length*100)
+  });
+  const response=await pipe(selection.windows[i].text,{truncation:false});
+  const ai=aiSignalFromOutput(response,which);
+  results.push(ai);
  }
- const avg=values.reduce((a,b)=>a+b,0)/values.length;
- const spread=Math.sqrt(values.reduce((a,b)=>a+(b-avg)**2,0)/values.length);
+ ensureActive();
+ const summary=core.summarizeWindows(selection.windows,results,{
+  modelId:MODELS[which].id,coverage:selection.coverage
+ });
  return {
-  score:Math.round(avg*1000)/10,
-  sampleCount:values.length,
-  words:eligible.words,
-  dispersion:Math.round(spread*1000)/1000,
-  language:'en',confidence:'UNVALIDATED',
-  model_id:MODEL_ID,model_kind:'QUANTIZED_ROBERTA_BROWSER',
-  calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE',
-  warning:'Experimental model signal only. Not a share of AI-written words and not proof of authorship.'
+  ...summary,model_label:MODELS[which].label,
+  revision:MODELS[which].revision,training:MODELS[which].training,
+  words:selection.totalWords,
+  supportedCoverage:Math.round(selection.supportedCoverage*1000)/10,
+  totalWindows:selection.windowCount,
+  skippedOversizeWords:selection.oversizeCount,
+  sampling:selection.method,
+  context
  };
 }
-window.addEventListener('message',async event=>{
- if(event.source!==window.parent||event.origin!==location.origin)return;
- const data=event.data;
- if(!data || data.channel!=='TIS_BROWSER_AI_V1' || data.op!=='RUN'
-  || typeof data.requestId!=='string' || data.requestId.length>80
-  || typeof data.text!=='string')return;
- if(busy){send('ERROR',data.requestId,{code:'BUSY'});return;}
- busy=true;
+async function evaluate(text,requestId,opts={}){
+ const eligibility=core.eligibility(text);
+ if(!eligibility.eligible)throw Error(eligibility.reason);
+ const primary=await runModel('primary',text,requestId,opts.context);
+ let secondary=null,secondaryError=null;
+ if(opts.deep===true){
+  try{secondary=await runModel('secondary',text,requestId,opts.context);}
+  catch(e){
+   if(e?.message==='CANCELLED')throw e;
+   secondaryError='SECONDARY_MODEL_UNAVAILABLE';
+  }
+ }
+ const summary=core.consensus(primary,secondary,{context:opts.context});
+ if(opts.deep===true&&!secondary){
+  summary.status='SECONDARY_UNAVAILABLE';
+  summary.flags.push('SECONDARY_MODEL_UNAVAILABLE');
+ }
+ return {
+  ...summary,primary,secondary,secondaryError,
+  deepRequested:opts.deep===true,
+  score_type:'UNCALIBRATED_CLASSIFIER_SIGNAL_NOT_AUTHORSHIP_PROBABILITY',
+  words:eligibility.words,language:'en',
+  version:'TIS_CONSENSUS_V2_2026_10',
+  processing:'CLIENT_ON_DEVICE_NO_REMOTE_INFERENCE',
+  warning:'This percentage is an uncalibrated model diagnostic, not the portion written by AI. Model agreement does not prove accuracy.'
+ };
+}
+async function perform(data){
+ busy=true;cancelled=false;
  try{
-  const result=await evaluate(data.text,data.requestId);
-  send('RESULT',data.requestId,{result});
+  const result=await evaluate(data.text,data.requestId,{
+   deep:data.deep===true,context:data.context||'general'
+  });
+  ensureActive();send('RESULT',data.requestId,{result});
  }catch(e){
-  // Fail closed and do not expose user content or raw model URLs in errors.
   const supported=new Set([
    'MIN_WORDS','TEXT_TOO_LONG','UNSUPPORTED_LANGUAGE','INVALID_MODEL_OUTPUT',
-   'UNVERIFIED_MODEL_LABEL','MODEL_LOAD_FAILED','BUSY'
+   'UNVERIFIED_MODEL_LABEL','MODEL_LOAD_FAILED','INSUFFICIENT_COVERAGE',
+   'CANCELLED','BUSY'
   ]);
-  const code=supported.has(e?.message)?e.message:'MODEL_UNAVAILABLE';
-  send('ERROR',data.requestId,{code});
- }finally{busy=false;}
+  send('ERROR',data.requestId,{code:supported.has(e?.message)?e.message:'MODEL_UNAVAILABLE'});
+ }finally{
+  busy=false;cancelled=false;
+  if(nextRequest){
+   const pending=nextRequest;nextRequest=null;
+   perform(pending);
+  }
+ }
+}
+window.addEventListener('message',event=>{
+ if(event.source!==window.parent||event.origin!==location.origin)return;
+ const data=event.data;
+ if(!data||data.channel!=='TIS_BROWSER_AI_V1')return;
+ if(data.op==='CANCEL'){
+  cancelled=true;
+  return;
+ }
+ if(data.op!=='RUN'||typeof data.requestId!=='string'||data.requestId.length>80
+  ||typeof data.text!=='string')return;
+ if(busy){
+  cancelled=true;
+  nextRequest=data;
+ }else perform(data);
 });
-status('Browser model engine ready. No text was submitted.');
+status('Optional models ready for on-demand download. No document uploaded.');
 send('READY','');

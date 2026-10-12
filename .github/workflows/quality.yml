@@ -24,6 +24,8 @@ jobs:
           node --check docs/simple-ui.js
           node --check docs/ai-score-ui.js
           node --check docs/browser-ai-runtime.js
+          node --check docs/ai-evidence-core.js
+          node --check tests/ai-evidence-core.test.js
           node --check tests/browser-ai-engine.test.js
           node --check tests/browser-ai-ui.test.js
           node --check tests/simple-ui-browser.test.js
@@ -50,6 +52,8 @@ jobs:
           node tests/browser-smoke.test.js
       - name: Simplified front page progressive disclosure regression
         run: node tests/simple-ui-browser.test.js
+      - name: Token-aware detector validation, coverage and disagreement safeguards
+        run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)
         run: node tests/browser-ai-engine.test.js
       - name: Real browser AI score opt-in and UI regression

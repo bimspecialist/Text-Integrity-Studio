@@ -1,0 +1,52 @@
+'use strict';
+const assert=require('node:assert/strict');
+const core=require('../docs/ai-evidence-core.js');
+const english=('We inspected the constructed slab and recorded measurements to compare the design assumptions. ').repeat(30);
+const arabic=('قمنا بفحص المبنى وتوثيق الملاحظات الميدانية للتأكد من نتائج الدراسة الفنية. ').repeat(30);
+assert.equal(core.eligibility(english).eligible,true);
+assert.equal(core.eligibility(arabic).reason,'UNSUPPORTED_LANGUAGE');
+assert.equal(core.eligibility('just a sentence').reason,'MIN_WORDS');
+assert.equal(core.eligibility(english + (' وهذه فقرة عربية تتضمن شرحًا موسعًا ونتائج ميدانية ومقارنات علمية. ').repeat(12)).reason,'UNSUPPORTED_LANGUAGE');
+const fakeTokenizer={encode(text){return Array(Math.round(text.length/6)+2).fill(1);}};
+const r=core.partitionWindows(english,fakeTokenizer,{maxTokens:448,maxSamples:12});
+assert(r.windowCount>=1);assert(r.coverage>0);
+for(const w of r.windows){
+ assert(w.tokens<=448,'Real tokenizer maximum length never exceeded');
+ assert.equal(w.words,core.wordsWithOffsets(w.text).length);
+ assert(english.slice(w.start,w.end)===w.text,'Absolute spans map to the original');
+}
+const lots=('The electrical engineer inspected the survey and recorded the drainage measurements at the site. ').repeat(1000);
+const sampled=core.partitionWindows(lots,fakeTokenizer,{maxTokens:448,maxSamples:9});
+assert(sampled.windowCount>9&&sampled.windows.length===9);
+assert(sampled.coverage<1 && sampled.coverage>0);
+assert(sampled.windows[0].start===0 && sampled.windows.at(-1).end===lots.trimEnd().length);
+const scores=Array(sampled.windows.length).fill(.7);
+const p=core.summarizeWindows(sampled.windows,scores,{modelId:'t1',coverage:sampled.coverage});
+assert.equal(p.score,70);
+assert.equal(p.segments.length,9);
+const concordant=core.consensus({...p,coverage:70},{...p,model_id:'t2',score:80,coverage:70});
+assert.equal(concordant.status,'AGREEMENT_UNCALIBRATED');assert.equal(concordant.score,70);
+assert.equal(concordant.models[1].score,80,'Second model remains independently visible');
+assert(concordant.flags.length===0);
+const dissent=core.consensus({...p,coverage:70},{...p,model_id:'t2',score:15,coverage:70});
+assert.equal(dissent.status,'MODEL_DISAGREEMENT');
+assert.equal(dissent.score,null);
+assert(dissent.flags.includes('MODELS_DISAGREE'));
+const underserved=core.consensus({...p,coverage:24});
+assert.equal(underserved.score,null);
+assert.equal(underserved.status,'INSUFFICIENT_COVERAGE');
+const formal=core.consensus({...p,coverage:85},null,{context:'second_language'});
+assert(formal.flags.includes('FORMAL_OR_NON_NATIVE_FALSE_POSITIVE_RISK'));
+const variance=core.summarizeWindows([{start:0,end:70,words:5,tokens:30},{start:71,end:150,words:5,tokens:30}],[.1,.94],{modelId:'t1',coverage:1});
+assert.equal(variance.consistency,'MIXED_PASSAGES');
+assert(variance.segments[0].tier==='LOWER_MODEL_SIGNAL');
+assert(variance.segments[1].tier==='HIGHER_MODEL_SIGNAL');
+const massive='a'.repeat(3000)+' '+english;
+const long=core.partitionWindows(massive,{encode(text){return Array(Math.ceil(text.length/2)+2).fill(1);}},{
+ maxTokens:448,maxSamples:8
+});
+assert(long.oversizeCount>=1,'Oversize single token cannot be silently truncated');
+assert(long.supportedCoverage<1);
+for(const w of long.windows)assert(w.tokens<=448);
+assert.deepEqual(core.sampleIndices(10,3),[0,5,9]);
+console.log('PASS token-aware coverage, document offsets, safe abstention, independent model disagreement, segment variance and Arabic caution');
