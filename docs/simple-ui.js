@@ -27,7 +27,7 @@ const copy = {
    resultsEmpty:'Your results will appear after you add text.',
    resultsReady: (n,c) => c ? n+' words checked · '+c+' observations found.' : n+' words checked · No issues found in these checks.',
    resultsSuggestion: n=>n+' writing suggestions available for your review.',
-   review:'Review writing suggestions',reviewWord:'Review suggested Word edits',
+   quickClean:'Preview cleanup',review:'Review writing suggestions',reviewWord:'Review suggested Word edits',
    scannedPdf:'PDF loaded · open OCR tools when necessary.',
    reportText:'No verified AI-origin percentage is available without independently validated model weights.',
    fileSelection:'Selected file: ',fileNo:'Text stays on your device',
@@ -53,7 +53,7 @@ const copy = {
    resultsEmpty:'ستظهر النتائج بعد إضافة النص.',
    resultsReady:(n,c)=>c?n+' كلمة تم فحصها · '+c+' ملاحظة.':n+' كلمة تم فحصها · لا ملاحظات ضمن الفحص الحالي.',
    resultsSuggestion:n=>n+' اقتراحًا لغويًا متاحًا للمراجعة.',
-   review:'مراجعة اقتراحات التحسين',reviewWord:'مراجعة تعديلات Word المقترحة',
+   quickClean:'معاينة التنظيف',review:'مراجعة اقتراحات التحسين',reviewWord:'مراجعة تعديلات Word المقترحة',
    scannedPdf:'تم فتح ملف PDF · استخدم OCR عند الحاجة.',
    reportText:'لا توجد نسبة AI معتمدة دون نموذج اجتاز التحقق العلمي المستقل.',
  }
@@ -133,6 +133,7 @@ function translate(){
  const ids=['fileDescription','sourceLabel','stepInput','stepScan','stepSave',
  'editorMore','cleanupSummary','cleanupDescription','aboutSummary','reportMoreLabel'];
  for(const id of ids)setText(id,labels[id]);
+ setText('quickClean',labels.quickClean);
  for(const [box,k] of [[writingTools,'writing'],[pdfTools,'pdf'],[wordPickTools,'word'],[wordReportTools,'wordReport'],[researchTools,'ai']]){
    if(!box)continue;
    const title=$(box.id+'Label'),hint=$(box.id+'Hint');
