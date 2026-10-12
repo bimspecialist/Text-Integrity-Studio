@@ -82,6 +82,8 @@ class CalibratedArtifact:
             reasons.append("Eligible-domain coverage target not met")
         if not review.get("held_out_model_families_checked"):
             reasons.append("Unseen generator-family testing missing")
+        if not isinstance(review.get("tpr_at_high_alert_threshold"), (int, float)) or review["tpr_at_high_alert_threshold"] < 0.60:
+            reasons.append("High-alert detection sensitivity below pre-registered minimum")
         if not review.get("group_audits_passed"):
             reasons.append("Language/domain/proficiency subgroup audit missing")
         if not governance.get("provenance_reviewed") or not governance.get("approval_ref"):
