@@ -9,6 +9,14 @@ The public browser app now follows **Add file or text → Check → Review & sav
 
 **Deployment boundary:** The public GitHub Pages UI remains fully local with no backend keys. The separate authenticated Next.js/FastAPI AI-evidence interface is likewise simplified, but **requires a running private server and verified login** and continues to return INCONCLUSIVE rather than fake AI-origin percentages.
 
+### Public-site design correction + opt-in browser AI signal (October 2026)
+
+The earlier visual shown in chat was an **illustrative stock reference, not a screenshot of this website**. The actual [GitHub Pages UI](https://bimspecialist.github.io/Text-Integrity-Studio/) has now been redesigned as a dark navy document workspace with a navigation rail, editor, right-side results, and a visible experimental AI indicator.
+
+For *English only*, the optional **onnx-community/tmr-ai-text-detector-ONNX** model (MIT, RoBERTa-base fine-tuned for AI-vs-human classification on RAID) can be downloaded and run **inside the browser** through Transformers.js after the user explicitly clicks the button. Approximate quantized model download size is 126 MB, plus runtime code. Eligible English text requires >=120 words. The result is the model's top-label signal transformed to the AI-class score and averaged over up to eight document windows. It is displayed as **EXPERIMENTAL / NOT INDEPENDENTLY CALIBRATED**, NOT a verified probability or fraction of AI-authored words. **Arabic, mixed scripts, very short documents, or failed network/model loads yield no percentage rather than a guessed number.** No remote inference API is called by the application, but the optional third-party code/weights downloads introduce security and connection-metadata considerations, disclosed in [privacy.html](docs/privacy.html).
+
+The existing separately deployable FastAPI/Node hybrid backend continues to require proper independent validation before it exposes *calibrated* authorship risk percentages. The optional public browser classifier is deliberately a separate research-only UI path and does not silently override backend release approval.
+
 ### New public-data baseline, secure uploads and authenticated React interface
 
 The complete [integration and local deployment guide](backend/INTEGRATION_GUIDE.md) explains the public HC3 English calibration experiment, blocked Arabic DPO minimum-word validation, opt-in RoBERTa/AraBERT provisioning, the FastAPI multipart PDF/DOCX/TXT parser, [full authenticated Next.js UI](backend/examples/next-ui/README.md), and [Express proxy](backend/examples/express-authenticated-proxy.js).
