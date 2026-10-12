@@ -74,7 +74,10 @@ class HybridEngine:
         self.allow_calibrated_results = bool(allow_calibrated_results)
         self.minimum_word_count = max(75, int(minimum_word_count))
         self.artifacts = {
-            unit: load_artifact(artifact_directory, unit) if artifact_directory else None
+            unit: {
+                language: load_artifact(artifact_directory, unit, language) if artifact_directory else None
+                for language in ("en", "ar", "mixed")
+            }
             for unit in ("document", "paragraph", "sentence")
         }
         self.adapters = {
@@ -185,12 +188,12 @@ class HybridEngine:
         full = Span(0, len(text), text, len(tokenize(text)), actual_language)
         document = self._evaluate(
             full, language=actual_language, domain=domain, context=writing_context,
-            artifact=self.artifacts["document"], min_words=self.minimum_word_count
+            artifact=self.artifacts["document"].get(actual_language), min_words=self.minimum_word_count
         )
         spans = paragraphs(text) if segment_by == "paragraph" else sentences(text)
         visible = spans[:MAX_SEGMENTS] if include_segments else []
         segment_results = []
-        artifact = self.artifacts[segment_by]
+        artifact = self.artifacts[segment_by].get(actual_language)
         for span in visible:
             # Not enough text for a segment classifier: show an unassessed overlay.
             if span.words < 75 or artifact is None:
@@ -204,7 +207,7 @@ class HybridEngine:
                 continue
             result = self._evaluate(
                 span, language=span.language, domain=domain, context=writing_context,
-                artifact=artifact, min_words=75
+                artifact=self.artifacts[segment_by].get(span.language), min_words=75
             )
             segment_results.append({
                 "start": span.start, "end": span.end, "word_count": span.words,
@@ -228,7 +231,7 @@ class HybridEngine:
                 "truncated": include_segments and len(spans) > MAX_SEGMENTS,
             },
             "calibration": {
-                "document_artifact_present": self.artifacts["document"] is not None,
+                "document_artifact_present": self.artifacts["document"].get(actual_language) is not None,
                 "segment_artifact_present": artifact is not None,
                 "production_scores_enabled": self.allow_calibrated_results,
                 "feature_version": VERSION,
