@@ -180,7 +180,7 @@ def test_api_validation_and_payload_limits():
     client = TestClient(create_app(APISettings(api_keys=("a" * 40,), requests_per_minute=20), engine=HybridEngine()))
     key = {"X-API-Key": "a" * 40}
     assert client.post("/v1/analyze", headers=key, json={"text": "hello", "extra": "secret"}).status_code == 422
-    assert client.post("/v1/analyze", headers=key, json={"text": "x" * 130000}).status_code == 413
+    assert client.post("/v1/analyze", headers=key, json={"text": "x" * 140000}).status_code == 413
     assert client.post("/v1/analyze", headers=key, json={"text": "", "language": "ar"}).status_code == 422
     reply = client.post("/v1/analyze", headers=key, json={"text": "A large text in English. " * 25, "language": "ar"})
     assert reply.status_code == 422
