@@ -1,0 +1,9 @@
+/* Use these only for independently validated segment-model results. */
+.tis-tier-red{background:#ffd4d4;color:#661717}
+.tis-tier-yellow{background:#fff2b5;color:#554300}
+.tis-tier-green{background:#d9f6e4;color:#195b35}
+.tis-tier-gray{background:#e5e7eb;color:#374151}
+mark[class^="tis-tier"]{box-decoration-break:clone;padding:0.08em 0.16em;border-radius:0.16em}
+@media (prefers-contrast:more) {
+ mark[class^="tis-tier"]{outline:2px solid currentColor;text-decoration:underline}
+}
