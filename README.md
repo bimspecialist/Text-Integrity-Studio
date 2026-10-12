@@ -3,6 +3,12 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
 
+### New public-data baseline, secure uploads and authenticated React interface
+
+The complete [integration and local deployment guide](backend/INTEGRATION_GUIDE.md) explains the public HC3 English calibration experiment, blocked Arabic DPO minimum-word validation, opt-in RoBERTa/AraBERT provisioning, the FastAPI multipart PDF/DOCX/TXT parser, [full authenticated Next.js UI](backend/examples/next-ui/README.md), and [Express proxy](backend/examples/express-authenticated-proxy.js).
+
+The actual English baseline produced unapproved research weights and a measured held-out diagnostic—not verified AI authorship percentages. The [baseline run record](backend/datasets/BASELINE_RUN_2026-10-12.md) includes the achieved false-positive confidence interval and missing validation gates. GitHub Pages cannot host the new Node/FastAPI service. No verified model or public backend is deployed.
+
 ### Optional hybrid detection service (backend source, not hosted)
 
 The new [FastAPI hybrid detector](backend/README.md) implements Arabic/English segmentation, genuine optional language-model perplexity and burstiness, embedding coherence, stylometry and supervised n-gram analysis, local Hugging Face/approved provider adapters, independent calibration and segment-level UI response mapping. See [Node.js integration](backend/examples/node-express-route.js) and [FastAPI mounting](backend/examples/fastapi-mount.py).
