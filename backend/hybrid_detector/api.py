@@ -142,7 +142,7 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
             body.extend(chunk)
         try:
             payload = AnalyzeRequest.model_validate_json(bytes(body))
-        except Exception as exc:
+        except Exception:
             # Never include body or raw Pydantic validation messages, which can echo source text.
             raise HTTPException(status_code=422, detail="Invalid analysis JSON payload") from None
 
@@ -170,7 +170,7 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
         return {
             "service": "hybrid-detector", "ok": True,
             "score_release_enabled": config.allow_calibrated_results,
-            "artifact_present": api.state.engine.artifacts["document"] is not None,
+            "artifact_present": any(item is not None for item in api.state.engine.artifacts["document"].values()),
             "classifier_conclusion": "INCONCLUSIVE_UNLESS_INDEPENDENTLY_APPROVED",
         }
 
