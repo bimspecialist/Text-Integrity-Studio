@@ -1,0 +1,6 @@
+# Optional offline AI-detector research only. NOT loaded by the website.
+# Inspect current security advisories before installing.
+scikit-learn==1.7.2
+numpy==2.3.3
+scipy==1.16.2
+joblib==1.5.2
