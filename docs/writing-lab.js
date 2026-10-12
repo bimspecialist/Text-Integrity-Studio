@@ -6,8 +6,8 @@ if(!api)return;
 const $=id=>document.getElementById(id);
 let current=[],dismissed=new Set(),lastText='',lastMode='';
 const copy={
-en:{head:'04 · Writing improvement lab',note:'Human-reviewed improvements for clarity, grammar, punctuation and structure. No artificial typos, false claims, or detector-gaming.',tone:'Editing style',clear:'Clear and concise',academic:'Academic — preserve formality',professional:'Professional — concise',analyze:'Find suggestions',preview:'Preview selected improvements',apply:'Apply selected to text',copy:'Copy proposed text',export:'Export revised TXT',empty:'Paste text, then choose Find suggestions.',ready:'suggestions for review',none:'No suggestions under these deterministic checks. This does not prove your text is error-free.',review:'Optional — review meaning before applying',ignore:'Ignore',accept:'Apply this change',before:'Original',after:'Suggested',word:'Word mode: suggestions can be previewed, copied or exported as TXT. Rich Word download currently only applies Unicode cleanup; no automatic editorial rewrite is added to DOCX.',noAI:'Editorial checks are not an AI detector; changes do not prove human authorship or guarantee any external detector score.',unchanged:'Text changed. Scan again before applying.',changed:'Improvement applied.',select:'Select',all:'Selected',reset:'Refresh',safe:'Review references, numbers, terminology and quotations before accepting edits.'},
-ar:{head:'04 · مختبر تحسين الكتابة',note:'اقتراحات قابلة للمراجعة لتحسين الوضوح والقواعد والترقيم والبنية. لا نضيف أخطاء متعمدة أو ادعاءات غير صحيحة أو تحايلًا على أدوات الكشف.',tone:'أسلوب التحرير',clear:'واضح ومختصر',academic:'أكاديمي — الحفاظ على الرسمية',professional:'مهني — مختصر',analyze:'استخراج الاقتراحات',preview:'معاينة التحسينات المحددة',apply:'تطبيق المحدد على النص',copy:'نسخ النص المقترح',export:'تصدير TXT بعد التحسين',empty:'ألصق نصًا ثم اضغط استخراج الاقتراحات.',ready:'اقتراحًا للمراجعة',none:'لا توجد اقتراحات ضمن القواعد المحددة. هذا لا يعني أن النص خالٍ من الأخطاء.',review:'اختياري — راجع المعنى قبل التطبيق',ignore:'تجاهل',accept:'تطبيق هذا التعديل',before:'النص الأصلي',after:'الاقتراح',word:'وضع Word: يمكنك المعاينة والنسخ وتصدير TXT؛ تنزيل Word يحافظ على صياغته الأصلية ويطبق تنظيف Unicode فقط حاليًا.',noAI:'التدقيق التحريري ليس كشفًا للذكاء الاصطناعي، ولا يثبت أن النص بشري أو يضمن نتيجة أي أداة كشف خارجية.',unchanged:'تغير النص. أعد الفحص قبل تطبيق الاقتراح.',changed:'تم تطبيق التعديل.',select:'اختيار',all:'محدد',reset:'تحديث',safe:'راجع المراجع والأرقام والمصطلحات والاقتباسات قبل قبول التعديلات.'}
+en:{head:'04 · Writing improvement lab',note:'Human-reviewed improvements for clarity, grammar, punctuation and structure. No artificial typos, false claims, or detector-gaming.',tone:'Editing style',clear:'Clear and concise',academic:'Academic — preserve formality',professional:'Professional — concise',analyze:'Find suggestions',preview:'Preview selected improvements',apply:'Apply selected to text',copy:'Copy proposed text',export:'Export revised TXT',empty:'Paste text, then choose Find suggestions.',ready:'suggestions for review',none:'No suggestions under these deterministic checks. This does not prove your text is error-free.',review:'Optional — review meaning before applying',ignore:'Ignore',accept:'Apply this change',before:'Original',after:'Suggested',word:'Word mode: select improvements to include in your DOCX export. Enable Track changes to review each edit in Microsoft Word. Complex field-coded or previously revised paragraphs are skipped to protect formatting.',noAI:'Editorial checks are not an AI detector; changes do not prove human authorship or guarantee any external detector score.',unchanged:'Text changed. Scan again before applying.',changed:'Improvement applied.',select:'Select',all:'Selected',reset:'Refresh',safe:'Review references, numbers, terminology and quotations before accepting edits.'},
+ar:{head:'04 · مختبر تحسين الكتابة',note:'اقتراحات قابلة للمراجعة لتحسين الوضوح والقواعد والترقيم والبنية. لا نضيف أخطاء متعمدة أو ادعاءات غير صحيحة أو تحايلًا على أدوات الكشف.',tone:'أسلوب التحرير',clear:'واضح ومختصر',academic:'أكاديمي — الحفاظ على الرسمية',professional:'مهني — مختصر',analyze:'استخراج الاقتراحات',preview:'معاينة التحسينات المحددة',apply:'تطبيق المحدد على النص',copy:'نسخ النص المقترح',export:'تصدير TXT بعد التحسين',empty:'ألصق نصًا ثم اضغط استخراج الاقتراحات.',ready:'اقتراحًا للمراجعة',none:'لا توجد اقتراحات ضمن القواعد المحددة. هذا لا يعني أن النص خالٍ من الأخطاء.',review:'اختياري — راجع المعنى قبل التطبيق',ignore:'تجاهل',accept:'تطبيق هذا التعديل',before:'النص الأصلي',after:'الاقتراح',word:'في Word اختر الاقتراحات التي تريد تضمينها في ملف DOCX. يمكنك تفعيل تعقب التغييرات لمراجعتها داخل Microsoft Word. يتم تجاوز الفقرات المعقدة لحماية التنسيق.',noAI:'التدقيق التحريري ليس كشفًا للذكاء الاصطناعي، ولا يثبت أن النص بشري أو يضمن نتيجة أي أداة كشف خارجية.',unchanged:'تغير النص. أعد الفحص قبل تطبيق الاقتراح.',changed:'تم تطبيق التعديل.',select:'اختيار',all:'محدد',reset:'تحديث',safe:'راجع المراجع والأرقام والمصطلحات والاقتباسات قبل قبول التعديلات.'}
 };
 function l(){return copy[lang==='ar'?'ar':'en'];}
 function create(tag,cls,content){
@@ -53,26 +53,29 @@ function invalidate(){
 }
 function scan(){
  const txt=$('source').value;
- const response=api.analyze(txt,$('labMode').value);
+ const response=isWord()&&bridge()?bridge().getSuggestions($('labMode').value):api.analyze(txt,$('labMode').value);
  current=response.suggestions;
+ if(isWord())current.forEach(s=>s.enabled=false);
  dismissed.clear();lastText=txt;lastMode=$('labMode').value;
  render();preview();
- notify(response.truncated?(lang==='ar'?'تحليل جزئي: تمت مراجعة أول '+response.scannedCharacters+' حرف فقط.':'Partial analysis: only the first '+response.scannedCharacters+' characters were reviewed.'):(current.length ? current.length+' '+l().ready:l().none));
+ notify(isWord()&&response.skipped?(lang==='ar'?'تم تجاهل '+response.skipped+' فقرة معقدة حفاظًا على التنسيق.':'Skipped '+response.skipped+' complex paragraphs to protect formatting.'):response.truncated?(lang==='ar'?'تحليل جزئي: تمت مراجعة أول '+response.scannedCharacters+' حرف فقط.':'Partial analysis: only the first '+response.scannedCharacters+' characters were reviewed.'):(current.length ? current.length+' '+l().ready:l().none));
 }
 function active(){return current.filter(s=>!dismissed.has(s.id)&&s.enabled!==false);}
 function isWord(){return $('source').readOnly;}
+function bridge(){return globalThis.TextIntegrityWordBridge;}
+function syncWord(){if(isWord()&&bridge())bridge().setSelection(active().map(s=>s.id),$('labMode').value);}
 function render(){
  if(!$('labResults'))return;
  const root=$('labResults');root.replaceChildren();
  $('labCount').textContent=active().length+' '+l().ready;
- $('labApply').disabled=isWord()||!active().length;
+ $('labApply').disabled=!active().length;
  if(!current.length){const p=create('p','empty',l().empty);root.append(p);return;}
  current.forEach(s=>{
   if(dismissed.has(s.id))return;
   const card=create('div','writing-card');
   const head=create('div','row between');
   const id='lab-option-'+s.id.replace(/[^a-z0-9]/gi,'-');
-  const input=create('input');input.type='checkbox';input.id=id;input.checked=s.enabled!==false;input.addEventListener('change',()=>{s.enabled=input.checked;updateButtons();});
+  const input=create('input');input.type='checkbox';input.id=id;input.checked=s.enabled!==false;input.addEventListener('change',()=>{s.enabled=input.checked;updateButtons();syncWord();preview();});
   const title=create('label','',s.category+' · '+(s.risk==='medium'?l().review:l().select));title.htmlFor=id;
   head.append(input,title);
   const reason=create('p','',lang==='ar'?s.reasonAr:s.reason);
@@ -81,9 +84,9 @@ function render(){
   const right=create('div','');right.append(create('small','',l().after),create('div','chunk after',s.replacement||'∅'));
   pair.append(left,right);
   const actions=create('div','row');
-  const ignore=create('button','',l().ignore);ignore.type='button';ignore.onclick=()=>{dismissed.add(s.id);render();preview();};
-  const apply=create('button','',l().accept);apply.type='button';apply.disabled=isWord();apply.onclick=()=>{
-    if(isWord())return;
+  const ignore=create('button','',l().ignore);ignore.type='button';ignore.onclick=()=>{dismissed.add(s.id);syncWord();render();preview();};
+  const apply=create('button','',l().accept);apply.type='button';apply.onclick=()=>{
+    if(isWord()){s.enabled=true;syncWord();render();preview();notify(lang==='ar'?'تم تحديد الاقتراح لتصدير Word.':'Suggestion queued for Word export.');return;}
     try{snapshot();$('source').value=api.apply($('source').value,s);analyze();scan();notify(l().changed);}
     catch{notify(l().unchanged);scan();}
   };
@@ -92,17 +95,24 @@ function render(){
  updateButtons();
 }
 function updateButtons(){
- $('labApply').disabled=isWord()||!active().length;
+ $('labApply').disabled=!active().length;
  $('labCount').textContent=active().length+' '+l().ready;
 }
-function preview(){
+async function preview(){
  const text=$('source').value;
  if(lastText!==text||lastMode!==$('labMode').value){scan();return;}
- try{$('labPreviewText').value=api.previewAll(text,active());}
- catch{$('labPreviewText').value=text;notify(l().unchanged);}
+ try{
+   if(isWord()&&bridge()){
+     syncWord();$('labPreviewText').value=await bridge().previewSelected();
+   }else $('labPreviewText').value=api.previewAll(text,active());
+ }catch(error){$('labPreviewText').value=text;notify(l().unchanged);}
 }
 function applySelected(){
- if(isWord()){notify(l().word);return;}
+ if(isWord()){
+   if(!active().length)return;
+   if(active().some(s=>s.risk==='medium')&&!confirm(lang==='ar'?'هل راجعت المصطلحات والمراجع قبل وضع التعديلات في Word؟':'Have you reviewed terminology and references before queuing Word edits?'))return;
+   syncWord();preview();notify(lang==='ar'?'التعديلات جاهزة ضمن تنزيل Word. اضغط تنزيل Word.':'Edits queued for Word export. Use Download Word DOCX.');return;
+ }
  if(lastText!==$('source').value){notify(l().unchanged);scan();return;}
  if(!active().length)return;
  if(active().some(s=>s.risk==='medium')&&!confirm(lang==='ar'?'تتضمن الاقتراحات تغييرات أسلوبية. هل راجعت المعنى والمصطلحات؟':'Some changes affect style. Have you checked meaning and terminology?'))return;
