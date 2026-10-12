@@ -14,6 +14,24 @@ function uppercaseReplacement(original,replacement){
   if(original[0]===original[0].toUpperCase())return replacement[0].toUpperCase()+replacement.slice(1);
   return replacement;
 }
+// Preserve quoted statements, citations, URLs, measurements and code.
+function protectedRanges(text){
+ const result=[];
+ const patterns=[
+  /https?:\/\/[^\s<>"']+/giu,
+  /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/giu,
+  /https?:\/\/doi\.org\/[^\s]+|\bdoi\s*:\s*10\.\d{4,9}\/\S+/giu,
+  /\[[0-9]+(?:\s*[,;\-]\s*[0-9]+)*\]/gu,
+  /\([A-Z][A-Za-z' .&-]+,\s*(?:19|20)\d{2}[a-z]?\)/g,
+  /"[^"\n]{1,2000}"|“[^”\n]{1,2000}”|«[^»\n]{1,2000}»/gu,
+  /\x60[^\x60\n]+\x60|\x60{3}[\s\S]*?\x60{3}/gu,
+  /\[[^\]\n]+\]\(https?:\/\/[^\s)]+\)/gu,
+  /\b\d+(?:\.\d+)?\s*(?:%|mm|cm|m²|m³|km|kPa|MPa|Pa|kW|kWh|Hz|GHz|MB|GB|TB|°C)\b/giu,
+  /\b(?:ISO|SBC|ASTM|ASCE|IEC|IEEE|Revit)\s*[- ]?\d{2,6}(?:[-:]\d+)?\b/giu
+ ];
+ for(const re of patterns){re.lastIndex=0;let m;while((m=re.exec(text))!==null){result.push([m.index,m.index+m[0].length]);if(m[0].length===0)re.lastIndex++;}}
+ return result;
+}
 function analyze(text,mode='clear'){
  if(typeof text!=='string')throw new TypeError('Expected text');
  const originalLength=text.length;
@@ -21,9 +39,11 @@ function analyze(text,mode='clear'){
  const truncated=originalLength>MAX_CHARS;
  text=text.slice(0,MAX_CHARS);
  const result=[];let counter=0;
+ const protectedSpans=protectedRanges(text);
+ const overlapsProtected=(start,end)=>protectedSpans.some(([a,b])=>start<b&&end>a);
  function add(rule,start,end,replacement,category,explanation,arExplanation,risk='low'){
    const original=text.slice(start,end);
-   if(!original||original===replacement||result.length>=300)return;
+   if(!original||original===replacement||result.length>=300||overlapsProtected(start,end))return;
    result.push({id:rule+':'+start+':'+end,rule,start,end,original,replacement,category,risk,
      reason:explanation,reasonAr:arExplanation,optional:true});
  }
@@ -76,7 +96,7 @@ function analyze(text,mode='clear'){
  const accepted=[],discarded=[];
  for(const s of sorted){const prior=accepted[accepted.length-1];if(prior&&s.start<prior.end){discarded.push(s);continue;}accepted.push(s);}
  return {suggestions:accepted,overlappingDiscarded:discarded.length,mode,
-   truncated,scannedCharacters:text.length,totalCharacters:originalLength,
+   truncated,scannedCharacters:text.length,totalCharacters:originalLength,protectedSpanCount:protectedSpans.length,
    wordCount:(text.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}'’-]*/gu)||[]).length,
    caveat:'Deterministic editorial suggestions, not an AI detector or authorship estimator.'};
 }
