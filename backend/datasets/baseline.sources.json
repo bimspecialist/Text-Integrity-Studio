@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "purpose": "RESEARCH_ONLY_WEAK_LABEL_BASELINE",
+  "method": "HuggingFace public dataset snapshots; prompt-pair-group-disjoint train/calibration/test",
+  "release_approved": false,
+  "sources": [
+    {
+      "key": "hc3_en",
+      "repo": "Hello-SimpleAI/HC3",
+      "revision": "main",
+      "license": "cc-by-sa-4.0",
+      "language": "en",
+      "files": [
+        "open_qa.jsonl",
+        "wiki_csai.jsonl"
+      ],
+      "labels": {
+        "human": "human_answers",
+        "ai": "chatgpt_answers"
+      },
+      "generator_family": "HC3-ChatGPT",
+      "ground_truth": "dataset_claim_only",
+      "notes": "Human answers and ChatGPT answers share a question; split by question ID. Source copyright and CC BY-SA obligations require review."
+    },
+    {
+      "key": "aya_ar",
+      "repo": "2A2I/Aya-SambaLingo.Arabic.Chat-DPO",
+      "revision": "main",
+      "license": "apache-2.0",
+      "language": "ar",
+      "files": "auto_discover_parquet",
+      "labels": {
+        "human": "chosen",
+        "ai": "rejected"
+      },
+      "generator_family": "SambaLingo",
+      "ground_truth": "dataset_claim_only_unverified",
+      "notes": "Chosen/rejected are preference-training labels, not independently audited human/AI authorship. Short Arabic responses may not meet 75-word requirement. Never use as production test data."
+    }
+  ],
+  "seed": 20261012,
+  "min_words": 75,
+  "max_words": 12000,
+  "default_pairs_per_language": 800,
+  "output_safety": "Private training corpus; do not commit source content, model weights or licenses incorrectly."
+}
