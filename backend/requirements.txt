@@ -2,3 +2,7 @@
 fastapi==0.143.0
 pydantic==2.14.1
 uvicorn==0.54.0
+# Server-side private binary document extraction.
+python-multipart==0.0.32
+pypdf==6.20.0
+defusedxml==0.7.1
