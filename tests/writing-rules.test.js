@@ -29,7 +29,7 @@ const suggest=(s,mode)=>rules.analyze(s,mode).suggestions;
  const c=rules.analyze(s,'clear').suggestions;
  assert(!a.some(x=>x.rule.startsWith('concise-')));
  assert(c.some(x=>x.rule.startsWith('concise-')));
- assert.equal(rules.previewAll(s,c),'to test, we proceed.');
+ assert.equal(rules.previewAll(s,c),'To test, we proceed.');
 }
 {
  const s='A  B';
