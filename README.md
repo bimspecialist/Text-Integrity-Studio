@@ -3,6 +3,12 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
 
+## Simple interface, all existing tools
+
+The public browser app now follows **Add file or text → Check → Review & save**. One upload accepts TXT/MD/CSV/JSON, Word DOCX and PDF. The default view shows one primary check button and a short result; the remaining tools are retained behind accessible expandable sections: **grammar and writing suggestions, safe/thorough Unicode cleanup, tracked Word revisions/format-preserving export, PDF extraction and Arabic/English offline OCR, detailed security findings/reports, and optional experimental local-model research**. All Arabic/English labels work in RTL/LTR, with results appearing immediately after input on mobile. Expand only the tool you need.
+
+**Deployment boundary:** The public GitHub Pages UI remains fully local with no backend keys. The separate authenticated Next.js/FastAPI AI-evidence interface is likewise simplified, but **requires a running private server and verified login** and continues to return INCONCLUSIVE rather than fake AI-origin percentages.
+
 ### New public-data baseline, secure uploads and authenticated React interface
 
 The complete [integration and local deployment guide](backend/INTEGRATION_GUIDE.md) explains the public HC3 English calibration experiment, blocked Arabic DPO minimum-word validation, opt-in RoBERTa/AraBERT provisioning, the FastAPI multipart PDF/DOCX/TXT parser, [full authenticated Next.js UI](backend/examples/next-ui/README.md), and [Express proxy](backend/examples/express-authenticated-proxy.js).
