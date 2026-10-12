@@ -35,7 +35,36 @@ async function main(){
   const dirname=process.env.TIS_SCREENSHOT_DIR||'/tmp/tis-ui-screenshots';
   fs.mkdirSync(dirname,{recursive:true});
   await page.screenshot({path:path.join(dirname,'real-model-runtime.png'),fullPage:true});
-  console.log(JSON.stringify({result:'PASS',score_type:'EXPERIMENTAL_UNCALIBRATED_MODEL_SIGNAL',score,models:'onnx-community/tmr-ai-text-detector-ONNX',download_failures:failures.length,warnings:warnings.slice(-6)},null,2));
+  // Explicit advanced opt-in: download a second independent historical model
+  // and verify it really runs instead of simulating a second number.
+  await page.click('#aiAdvanced > summary');
+  await page.click('#aiDeep');
+  await page.click('#aiRun');
+  await page.waitForFunction(()=>{
+    const details=document.getElementById('aiEvidenceBody')?.textContent||'';
+    const button=document.getElementById('aiRun');
+    const stage=document.getElementById('aiStatus')?.textContent||'';
+    return (details.includes('OpenAI') && !button.disabled) ||
+      (/unavailable|unable|unexpected/i.test(stage) && !button.disabled);
+  },{timeout:320000});
+  const deep=await page.evaluate(()=>({
+    meter:document.getElementById('aiMeterScore')?.textContent,
+    text:document.getElementById('aiEvidenceBody')?.textContent?.slice(0,2500),
+    status:document.getElementById('aiStatus')?.textContent,
+    label:document.getElementById('aiShort')?.textContent
+  }));
+  if(!deep.text?.includes('OpenAI') || !deep.text?.match(/\d+(\.\d+)?%/g)?.length ||
+     deep.text?.match(/\d+(\.\d+)?%/g)?.length < 2){
+    throw Error('Real optional second model not confirmed: '+
+      JSON.stringify({deep,failures:failures.slice(-8),warnings:warnings.slice(-12)}));
+  }
+  await page.screenshot({path:path.join(dirname,'real-dual-model-runtime.png'),fullPage:true});
+  console.log(JSON.stringify({
+    result:'PASS',score_type:'EXPERIMENTAL_UNCALIBRATED_MODEL_SIGNALS',
+    primaryScore:score,deepResult:deep,modelCount:2,
+    modelIds:['onnx-community/tmr-ai-text-detector-ONNX','onnx-community/roberta-base-openai-detector-ONNX'],
+    downloadFailures:failures.length,warnings:warnings.slice(-8)
+  },null,2));
  }finally{
   await browser.close();
   await new Promise(r=>server.close(r));
