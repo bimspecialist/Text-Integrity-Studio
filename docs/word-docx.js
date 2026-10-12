@@ -7,6 +7,7 @@
 const W='http://schemas.openxmlformats.org/wordprocessingml/2006/main';
 const A='http://schemas.openxmlformats.org/drawingml/2006/main';
 const MAX_FILE=18*1024*1024,MAX_UNPACKED=115*1024*1024,MAX_XML=16*1024*1024,MAX_ENTRIES=1200;
+// Check inflated sizes BEFORE decompressing ZIP content (CRC checking would decompress too early).
 const TEXT_PART=/^word\/(?:document|header\d+|footer\d+|footnotes|endnotes|comments)\.xml$/i;
 let session=null,busy=false;
 const ui={
@@ -98,7 +99,7 @@ async function loadWord(file){
  try{
    await new Promise(r=>setTimeout(r,16));
    const bytes=await file.arrayBuffer();
-   const zip=await JSZip.loadAsync(bytes,{checkCRC32:true});
+   const zip=await JSZip.loadAsync(bytes,{checkCRC32:false});
    checkZipLimits(zip,file);
    const names=Object.keys(zip.files).filter(k=>TEXT_PART.test(k)).sort((x,y)=>x==='word/document.xml'?-1:y==='word/document.xml'?1:x.localeCompare(y));
    const parts=[];let hidden=0,revisions=0,watermarks=0;
