@@ -24,6 +24,15 @@ async function run(){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto('file://'+path.resolve('docs/index.html'),{waitUntil:'load'});
    await page.waitForSelector('#wordPick',{timeout:10000});
+   await page.waitForSelector('#writingLab',{timeout:10000});
+   await page.$eval('#source',el=>{el.value='teh teh note,which';el.dispatchEvent(new Event('input',{bubbles:true}));});
+   await page.click('#labAnalyze');
+   await page.waitForFunction(()=>document.querySelectorAll('.writing-card').length>0);
+   await page.click('#labPreview');
+   const draft=await page.$eval('#labPreviewText',el=>el.value);
+   assert(draft.includes('the note, which'),'Writing lab makes reviewable edits');
+   await page.click('#labApply');
+   assert((await page.$eval('#source',el=>el.value)).includes('the note, which'),'Writing lab accepted edits');
    assert.equal(await page.$eval('#wordToolbar',e=>e.hidden),true,'Word toolbar initially hidden');
    await (await page.$('#file')).uploadFile(sample);
    await page.waitForFunction(()=>document.getElementById('wordToolbar').hidden===false,{timeout:15000});
@@ -31,6 +40,7 @@ async function run(){
    assert(loaded.includes('One\u200b two'),'DOCX extracted hidden Unicode');
    assert(loaded.includes('مرحبا\u200d'),'Arabic text extracted');
    assert.equal(await page.$eval('#source',e=>e.readOnly),true,'Word extraction read-only');
+   await page.waitForFunction(()=>document.getElementById('labApply').disabled,{timeout:8000});
    await page.click('#wordPreview');
    await page.waitForFunction(()=>!document.getElementById('resultbox').hidden);
    const preview=await page.$eval('#result',e=>e.value);
