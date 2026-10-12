@@ -19,6 +19,8 @@ jobs:
           node --check docs/docx-editor.js
           node --check docs/word-docx.js
           node --check docs/pdf-support.js
+          node --check docs/experimental-signal.js
+          node --check docs/experimental-signal-ui.js
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
       - name: Install test XML parser
@@ -46,6 +48,10 @@ jobs:
           test -s docs/vendor/pdfjs/pdf.worker.mjs
           node --check tests/pdf-browser.test.js
           node tests/pdf-browser.test.js
+      - name: Local optional AI research model checks
+        run: |
+          node tests/experimental-signal.test.js
+          node tests/signal-browser.test.js
       - name: Offline scanned-PDF OCR using vendored Tesseract
         timeout-minutes: 3
         run: |
