@@ -81,7 +81,26 @@ Compare version A (existing text cleanup) versus version B (opt-in suggestion re
 - user learning: % suggestions accepted, corrections reversed, reviewer complaints.
 Do **not** use lower AI-detector output as success for writing improvements. Track score changes only as a research robustness signal, with frozen detectors and explicit consent.
 
-## 9. Sources (source-to-test traceability)
+## 9. Optional local detector training and writing A/B analysis
+
+**These are executable research tools, not hosted services.** No trained model, calibrated probability or data collection is bundled into GitHub Pages.
+
+**Labeled dataset:** Prepare a consented CSV with fields `id,text,label,split,language,domain,dialect,author_group,model_family`. Split into `train`, `validation`, and `test` before using the script. The dataset loader refuses duplicate IDs, identical text crossing splits, and verified human-author groups crossing splits. Assess near duplicates, copyright and consent manually.
+
+    python -m pip install -r evaluation/requirements-model.txt
+    python evaluation/train_baseline.py authorized_corpus.csv --out-dir local-results
+
+This writes an experimental model artifact, **held-out scores** and a JSON report for offline research. Never load an untrusted joblib file. Check data provenance and calibration by language/domain and manually review the FPR confidence bounds before any deployment proposal. The script uses 30 examples per class per split as a minimum **software run condition**, not a statistically sufficient validation target (research plan recommends substantially more).
+
+**Writing quality A/B:** Do not submit document content. Prepare an anonymized, user-authorized CSV with fields `session_hash,variant,locale,completed,seconds,meaning_error,reversed,reviewer_score` (optional reviewer_score). Run:
+
+    python evaluation/ab_editor.py authorized_aggregate_events.csv --out ab-result.json
+
+Measures completion and meaning-error rates by locale with explicit release uncertainty; a missing blind reviewer calibration keeps the result INCONCLUSIVE. Detector-score reductions are not the primary editorial success metric.
+
+**Sample data** in code-level regression fixtures is synthetic and must never be used to advertise accuracy.
+
+## 10. Sources (source-to-test traceability)
 - RAID / ACL 2024: https://aclanthology.org/2024.acl-long.674/ (domain, model, attack splits).
 - M4 / EACL 2024: https://aclanthology.org/2024.eacl-long.83/ (multilingual, cross-generator).
 - EvoBench / ACL 2025: https://aclanthology.org/2025.findings-acl.754/ (evolving models).
