@@ -40,7 +40,7 @@ function planDocument(doc,rules,options={}){
  let skipped=0,eligible=0;const suggestions=[];
  paragraphs.forEach((p,index)=>{
    const data=paragraphRuns(p);
-   if(!data){if(children(p).some(n=>is(n,'r')))skipped++;return;}
+   if(!data){if(descendants(p,'r').length)skipped++;return;}
    eligible++;
    // Analyze each paragraph independently, so no suggestion spans headings or tables.
    const response=rules.analyze(data.text,mode);
