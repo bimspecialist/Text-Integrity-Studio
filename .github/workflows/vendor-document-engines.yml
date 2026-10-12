@@ -38,7 +38,7 @@ jobs:
           cp "$PDF/LICENSE" docs/vendor/pdfjs/LICENSE
           cp "$OCR/dist/tesseract.min.js" docs/vendor/tesseract/tesseract.min.js
           cp "$OCR/dist/worker.min.js" docs/vendor/tesseract/worker.min.js
-          cp "$OCR/LICENSE" docs/vendor/tesseract/LICENSE
+          curl --fail --show-error --silent --location --retry 3 https://raw.githubusercontent.com/naptha/tesseract.js/v7.0.0/LICENSE.md --output docs/vendor/tesseract/LICENSE
           cp "$CORE/"tesseract-core* docs/vendor/tesseract/core/
           curl --fail --show-error --silent --location --retry 3 https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/eng.traineddata.gz --output docs/vendor/tesseract/lang/eng.traineddata.gz
           curl --fail --show-error --silent --location --retry 3 https://raw.githubusercontent.com/naptha/tessdata/gh-pages/4.0.0/ara.traineddata.gz --output docs/vendor/tesseract/lang/ara.traineddata.gz
