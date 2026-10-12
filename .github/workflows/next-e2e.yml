@@ -81,4 +81,5 @@ jobs:
             -F 'file=@/tmp/tis-fixture.txt;filename=fixture.txt' -F 'language=auto' \
             http://localhost:3000/api/analyze-file > /tmp/tis-file.json
           python -c 'import json; d=json.load(open("/tmp/tis-file.json")); assert d["analysis_status"]=="INCONCLUSIVE" and d["input_file"]["format"]=="txt" and "engineering measurements" in d["extracted_text"]'
+          node tests/simple-ui.test.cjs
           echo 'PASS real Next JWT session -> private FastAPI JSON+TXT upload -> INCONCLUSIVE, and auth/Origin denials'
