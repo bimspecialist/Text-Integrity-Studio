@@ -55,7 +55,7 @@ function childNamed(node,ns,name){return Array.from(node.childNodes).find(c=>c.n
 function trueProp(node){const val=attrWord(node,'val').toLowerCase();return !['false','0','off','no'].includes(val);}
 function isHidden(run){const pr=childNamed(run,W,'rPr');if(!pr)return false;return Array.from(pr.childNodes).some(n=>n.nodeType===1&&n.namespaceURI===W&&['vanish','webHidden','specVanish'].includes(n.localName)&&trueProp(n));}
 function textNodes(run){return Array.from(run.getElementsByTagNameNS(W,'t'));}
-function parseXML(str,path){const doc=new DOMParser().parseFromString(str,'application/xml');if(doc.getElementsByTagName('parsererror').length||doc.documentElement.localName==='parsererror')throw Error('Invalid Word XML: '+path);return doc;}
+function parseXML(str,path){if(/<!DOCTYPE|<!ENTITY/i.test(str))throw Error('Word document XML contains unsupported entity declarations: '+path);const doc=new DOMParser().parseFromString(str,'application/xml');if(doc.getElementsByTagName('parsererror').length||doc.documentElement.localName==='parsererror')throw Error('Invalid Word XML: '+path);return doc;}
 function extract(doc){
  const rows=[],paras=Array.from(doc.getElementsByTagNameNS(W,'p'));
  for(const p of paras){
@@ -92,6 +92,7 @@ function checkZipLimits(zip,file){
  }
  if(total>MAX_UNPACKED)throw Error('Word archive expands beyond the safety limit.');
  if(!zip.file('[Content_Types].xml')||!zip.file('word/document.xml'))throw Error('Not a supported DOCX package.');
+ if(Object.keys(zip.files).some(n=>/vbaProject\.bin$/i.test(n)))throw Error('Macro-enabled Word documents are not supported. Save a macro-free DOCX.');
 }
 async function loadWord(file){
  if(busy)return; if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
@@ -111,7 +112,8 @@ async function loadWord(file){
       hidden+=check.hiddenRuns;revisions+=check.revisions;watermarks+=check.possibleWatermarkShapes;
       parts.push({name,xml,text:extract(doc),check});
    }
-   session={name:file.name,bytes,parts,hidden,revisions,watermarks,zip};
+   session={name:file.name,bytes,parts,hidden,revisions,watermarks,zip,
+     signed:Object.keys(zip.files).some(n=>n.startsWith('_xmlsignatures/'))};
    editorialSelection=new Set();editorialMode='academic';
    $('source').readOnly=true;
    history=[];future=[];histButtons();
@@ -123,7 +125,7 @@ async function loadWord(file){
    $('file').value='';
    analyze();updateWord();
    setNotice(tr('done')+' · '+file.name);
-   const labels=[tr('loaded'),file.name,parts.length+' '+tr('parts')];if(hidden)labels.push(hidden+' '+tr('hidden'));
+   const labels=[tr('loaded'),file.name,parts.length+' '+tr('parts')];if(session.signed)labels.push(lang==='ar'?'قد يبطل التوقيع الرقمي':'digitally signed: edits may invalidate signature');if(hidden)labels.push(hidden+' '+tr('hidden'));
    document.getElementById('wordMeta').textContent=labels.join(' · ');
    if(!$('source').value)toast(tr('empty'));
  }catch(error){resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
@@ -135,6 +137,7 @@ function editorialPlan(requestedMode){
  const editingMode=requestedMode||editorialMode;
  const suggestions=[];let skipped=0,eligible=0;
  for(const part of session.parts){
+   if(part.name!=='word/document.xml')continue; // Never editorially rewrite citations in notes, comments or headers.
    const doc=parseXML(part.xml,part.name);
    const report=globalThis.TextIntegrityDocxEditor.planDocument(doc,globalThis.TextIntegrityRules,{part:part.name,mode:editingMode});
    skipped+=report.skipped;eligible+=report.eligible;
@@ -195,7 +198,7 @@ async function prepareWord(){
  for(const part of session.parts){
    const xmlDoc=parseXML(part.xml,part.name);
    let editorialInPart=0;
-   if(editorialSelection.size){
+   if(editorialSelection.size&&part.name==='word/document.xml'){
      const review=globalThis.TextIntegrityDocxEditor.applyDocument(xmlDoc,globalThis.TextIntegrityRules,[...editorialSelection],{
        part:part.name,mode:editorialMode,track:$('wordTrackEdits').checked,author:'Text Integrity Studio'});
      editorialInPart=review.applied;editorialApplied+=review.applied;editorialSkipped+=review.skipped;
@@ -220,6 +223,7 @@ async function downloadWord(){
  if(!session||busy)return;
  const snapshot=session;
  if($('stripHidden').checked&&!window.confirm(tr('confirm')))return;
+ if(snapshot.signed&&!window.confirm(lang==='ar'?'المستند يحتوي على توقيع رقمي، وتعديله قد يبطل التوقيع. هل تريد إنشاء نسخة جديدة؟':'This DOCX has a digital signature. Editing it can invalidate the signature. Export a modified copy anyway?'))return;
  busy=true;setNotice(tr('processing'));$('wordDownload').disabled=true;
  try{
    await new Promise(r=>setTimeout(r,16));
