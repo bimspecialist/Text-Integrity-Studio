@@ -13,6 +13,18 @@ const secret = process.env.TIS_SESSION_JWT_SECRET || '';
 const key = process.env.TIS_API_KEY || '';
 const api = 'http://127.0.0.1:8000/v1';
 const origin = process.env.TIS_PUBLIC_ORIGIN || '';
+const perUserTimes = new Map();
+function limitUser(id) {
+  const now = Date.now();
+  const recent = (perUserTimes.get(id) || []).filter(t => now - t < 60000);
+  if (recent.length >= 12) return false;
+  recent.push(now); perUserTimes.set(id,recent);
+  if (perUserTimes.size > 3000) {
+    for (const [key,times] of perUserTimes) if (times.every(t=>now-t>60000)) perUserTimes.delete(key);
+  }
+  return true;
+}
+
 function respond(res, status, data) {
   res.set('Cache-Control', 'no-store');
   return res.status(status).json(data);
@@ -36,6 +48,7 @@ async function authenticate(req, res, next) {
   }
   if (req.get('origin') && req.get('origin') !== origin)
     return respond(res, 403, { error: 'Origin forbidden' });
+  if (!limitUser(req.authenticatedUserId)) return respond(res,429,{error:'Per-user request limit reached'});
   next();
 }
 async function upstream(path, payload, multipart, res) {
