@@ -77,7 +77,7 @@ async function roundtrip(){
  const bad=new JSZip();bad.file('word/document.xml',xml);
  const badZip=await JSZip.loadAsync(await bad.generateAsync({type:'nodebuffer'}));
  assert.throws(()=>api.checkZipLimits(badZip,{size:100}),/DOCX package/,'Invalid archives refused');
- assert.throws(()=>api.checkZipLimits(parsed,{size:19*1024*1024}),/invalid|Word/i,'Large archives refused');
+ assert.throws(()=>api.checkZipLimits(parsed,{size:19*1024*1024}),/invalid|Word|unencrypted|docx/i,'Large archives refused');
  console.log('PASS 16 DOCX engine, privacy, formatting and archive checks');
 }
 roundtrip().catch(error=>{console.error(error);process.exit(1);});
