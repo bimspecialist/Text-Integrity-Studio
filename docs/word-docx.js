@@ -208,7 +208,7 @@ function resetWord(){session=null;$('source').readOnly=false;$('wordToolbar').hi
 function updateWord(){
  $('wordPick').textContent=tr('pick');$('wordOr').textContent=tr('or');$('wordPrivate').textContent=tr('privacy');$('wordTitle').textContent=tr('wordTitle');
  $('wordNote').textContent=tr('wordNote');$('stripHiddenLabel').textContent=tr('removeHidden');$('wordDownload').textContent=tr('download');
- $('wordPreview').textContent=tr('preview');$('wordSafe').textContent=tr('safe');$('wordReadOnly').textContent=tr('readOnly');$('wordWarning').textContent=tr('warning');
+ $('wordPreview').textContent=tr('preview');$('wordCopy').textContent=lang==='ar'?'نسخ نص Word':'Copy Word text';$('wordExternal').textContent=lang==='ar'?'كشف AI خارجي اختياري ↗':'Optional external AI detector ↗';$('wordSafe').textContent=tr('safe');$('wordReadOnly').textContent=tr('readOnly');$('wordWarning').textContent=tr('warning');
  $('loadText').textContent=tr('pick');if(session){
     const list=$('wordStats');list.replaceChildren();
     const stats=[
@@ -230,12 +230,13 @@ function setup(){
  drop.innerHTML='<div style="flex:1;min-width:180px"><strong>Word DOCX · Local document scanner</strong><small id="wordOr"></small><small id="wordPrivate"></small><small id="wordStatus" aria-live="polite"></small></div><button id="wordPick" type="button" class="primary"></button>';
  $('source').parentElement.insertBefore(drop,$('source'));
  const tool=document.createElement('div');tool.id='wordToolbar';tool.hidden=true;tool.className='wordTool';
- tool.innerHTML='<h3>DOCX</h3><div class="small" id="wordMeta"></div><p id="wordReadOnly" class="wordTip"></p><label><input id="stripHidden" type="checkbox"><span id="stripHiddenLabel"></span></label><div class="row"><button id="wordPreview" type="button"></button><button id="wordDownload" type="button" class="primary"></button></div><p id="wordSafe" class="wordTip"></p>';
+ tool.innerHTML='<h3>DOCX</h3><div class="small" id="wordMeta"></div><p id="wordReadOnly" class="wordTip"></p><label><input id="stripHidden" type="checkbox"><span id="stripHiddenLabel"></span></label><div class="row"><button id="wordPreview" type="button"></button><button id="wordDownload" type="button" class="primary"></button></div><div class="row"><button id="wordCopy" type="button"></button><a id="wordExternal" href="https://quillbot.com/ai-content-detector" target="_blank" rel="noopener noreferrer" style="color:#9bd3ff;font-size:12px"></a></div><p id="wordSafe" class="wordTip"></p>';
  $('source').parentElement.insertBefore(tool,$('source').nextSibling);
  const report=document.createElement('section');report.id='wordReport';report.hidden=true;report.className='panel wordReport';
  report.innerHTML='<h2 id="wordTitle"></h2><div id="wordStats" class="wordStats"></div><p id="wordNote" class="wordTip"></p><details><summary id="wordMore">Sections inspected</summary><ul id="wordDetails"></ul></details><p id="wordWarning" class="wordTip" style="color:#e3be8e"></p>';
  const right=document.querySelector('.workspace > div:last-child');right.insertBefore(report,right.firstChild);
  $('wordPick').onclick=()=>$('file').click();$('wordPreview').onclick=previewWord;$('wordDownload').onclick=downloadWord;
+ $('wordCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('source').value);toast(lang==='ar'?'تم نسخ النص':'Word text copied');}catch(e){toast(lang==='ar'?'انسخ من مربع النص مباشرة':'Select and copy the text manually');}};
  $('wordDrop').addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='#7ce3b6';});
  $('wordDrop').addEventListener('dragleave',()=>drop.style.borderColor='');
  $('wordDrop').addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
