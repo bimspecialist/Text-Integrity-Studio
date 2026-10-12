@@ -18,7 +18,7 @@ class ExperimentTests(unittest.TestCase):
   b[0]["meaning_error"]=1
   result=ab.evaluate(a+b)
   self.assertEqual(result["gates"]["no_meaning_regression"],"FAIL")
-  self.assertEqual(result["release_decision"],"INCONCLUSIVE") # reviewer gate still UNKNOWN
+  self.assertEqual(result["release_decision"],"BLOCKED")
  def test_empty(self):
   self.assertEqual(ab.describe([])["n"],0)
   self.assertIsNone(ab.describe([])["completion_rate"])
