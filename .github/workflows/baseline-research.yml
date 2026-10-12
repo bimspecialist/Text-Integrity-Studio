@@ -1,0 +1,54 @@
+name: Public weak-label research baseline (NOT production calibration)
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/baseline-file-upload-next-integration]
+    paths:
+      - 'backend/hybrid_detector/baseline_data.py'
+      - 'backend/datasets/**'
+      - '.github/workflows/baseline-research.yml'
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - key: hc3_en
+            lang: en
+            limit: 800
+          - key: aya_ar
+            lang: ar
+            limit: 1500
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install constrained research dependencies
+        run: |
+          python -m pip install -r backend/requirements-training.txt
+          python -m pip install 'huggingface_hub>=0.35,<2' 'pyarrow>=18,<30'
+      - name: Resolve source revision and prepare confidential training samples
+        run: |
+          cd backend
+          python -m hybrid_detector.baseline_data --source ${{ matrix.key }} --out "${{ runner.temp }}/tis-baseline" --limit ${{ matrix.limit }}
+      - name: Fit learned baseline and untouched-split diagnostic
+        run: |
+          cd backend
+          python -m hybrid_detector.train --dataset "${{ runner.temp }}/tis-baseline/${{ matrix.key }}.jsonl" --output "${{ runner.temp }}/tis-models" --language ${{ matrix.lang }} --domain general --unit document --version "hf-public-weak-label-${{ matrix.lang }}-v1"
+      - name: Assert no production score can be released from weak labels
+        run: |
+          PYTHONPATH=backend python -c "from pathlib import Path; from hybrid_detector.artifacts import load_artifact; p=load_artifact(Path('${{ runner.temp }}/tis-models'),'document','${{ matrix.lang }}'); assert p is not None; ready, reasons=p.readiness(); assert not ready and any('verification' in x.lower() for x in reasons); print('RESEARCH ONLY: model fitted; independent author labels and release approval not verified')"
+      - name: Save ephemeral model coefficients and source revision manifest
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-baseline-${{ matrix.lang }}
+          path: |
+            ${{ runner.temp }}/tis-models/document.${{ matrix.lang }}.json
+            ${{ runner.temp }}/tis-baseline/${{ matrix.key }}.manifest.json
+          if-no-files-found: ignore
+          retention-days: 1
