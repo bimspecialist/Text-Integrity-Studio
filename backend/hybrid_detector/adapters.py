@@ -9,21 +9,19 @@ from __future__ import annotations
 import ipaddress
 import json
 import math
-import os
-import socket
 import threading
 from pathlib import Path
 from urllib.parse import urlparse
 from urllib.request import Request, build_opener, HTTPHandler, HTTPSHandler, ProxyHandler, HTTPRedirectHandler
 
 
-def _checkpoint(name: str) -> str:
+def _checkpoint(name: str, *, sentence_transformer: bool = False) -> str:
     # No arbitrary Hugging Face repository IDs. Fetch trusted, pinned weights in a
     # separate offline provisioning step and mount the directory read-only.
     directory = Path(name).expanduser().resolve(strict=True)
     if not directory.is_dir():
         raise ValueError("Model checkpoint must be a trusted local directory")
-    if not (directory / "config.json").is_file():
+    if not (directory / "config.json").is_file() and not (sentence_transformer and (directory / "modules.json").is_file()):
         raise ValueError("Checkpoint must contain a model configuration")
     return str(directory)
 
@@ -72,7 +70,7 @@ class LocalEmbeddings:
     def __init__(self, path: str):
         from sentence_transformers import SentenceTransformer
 
-        trusted = _checkpoint(path)
+        trusted = _checkpoint(path, sentence_transformer=True)
         self.model = SentenceTransformer(
             trusted, local_files_only=True, trust_remote_code=False, device="cpu"
         )
