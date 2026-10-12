@@ -140,7 +140,11 @@ function consensus(primary,secondary=null,options={}){
    flags.push('MODELS_DISAGREE');
   }else{
    status='AGREEMENT_UNCALIBRATED';
-   score=round((primary.score+secondary.score)/2,1);
+   // Do NOT average independently uncalibrated models from different
+   // generator eras: their scores do not share a justified probability scale.
+   // Keep the primary as an explicitly uncalibrated signal and display
+   // the secondary separately for disagreement evidence.
+   score=round(primary.score,1);
   }
   if(secondary.coverage<40)flags.push('SECONDARY_LOW_COVERAGE');
   if(secondary.consistency==='MIXED_PASSAGES')flags.push('SECONDARY_MIXED_PASSAGES');
