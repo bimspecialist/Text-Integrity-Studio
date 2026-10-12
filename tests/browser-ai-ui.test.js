@@ -38,7 +38,7 @@ async function run(){
   assert.equal(await page.$('#tisOnDeviceModel'),null,'External model iframe is absent until opt-in');
   assert.equal(await page.$eval('#aiBar',e=>e.hidden),true,'No synthetic score shown by default');
   const layout=await page.evaluate(()=>{
-   const rect=id=>document.getElementById(id).getBoundingClientRect();
+   const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,top:r.top,width:r.width};};
    return {rail:rect('navEditor'),editor:rect('inputPanel'),results:rect('reportPanel')};
   });
   assert(layout.editor.left>layout.rail.left,'Workspace sidebar visible on desktop');
