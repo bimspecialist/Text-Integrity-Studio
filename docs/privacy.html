@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; object-src 'none'; frame-src 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; object-src 'none'; frame-src 'none'; worker-src 'self'">
 <title>Privacy and Security — Text Integrity Studio</title><link rel="stylesheet" href="app.css"></head>
 <body><main class="shell"><header><strong class="brand">Text Integrity Studio</strong><a href="./" class="privacyLink">← Back to studio / العودة للموقع</a></header>
 <section class="hero"><p class="eyebrow">PRIVACY & SECURITY / RELEASE 2026-10</p><h1>Private by design.<br><span>Transparent about limits.</span></h1>
 <p>Privacy information for the free, client-side Text Integrity Studio website. This is a product disclosure, not a legal certification.</p></section>
 <div class="panel"><h2>English</h2>
-<p><strong>Documents:</strong> When you paste text or choose TXT/MD/DOCX, our JavaScript processes the content on your device. The production site contains no document-upload endpoint, analytics script, advertising tracker, or remote model inference API. You can download a cleaned file or report at your direction.</p>
+<p><strong>Documents:</strong> When you paste text or choose TXT/MD/DOCX/PDF, our JavaScript processes the content on your device. The production site contains no document-upload endpoint, analytics script, advertising tracker, or remote inference API. PDF and OCR engines load JavaScript, WebAssembly and language data from this same GitHub Pages origin, not from a third-party API. You can download a cleaned file or report at your direction.</p>
 <p><strong>Retention:</strong> The website does not intentionally save source text to cookies, browser local storage, or a project database. Content held in memory is cleared when you close or refresh the page; downloaded files and content you copied to the clipboard remain under your control.</p>
 <p><strong>Platform hosting:</strong> GitHub Pages serves this public website. GitHub and your network provider may process visitor metadata including IP addresses, request URLs, security logs, and browser information according to their policies. We cannot promise that your visit itself is anonymous.</p>
 <p><strong>External links:</strong> Following a link to an external AI detector is optional. That website has its own terms and may process text only if you choose to paste or send it there. Text Integrity Studio does not automatically submit content externally.</p>
@@ -15,7 +15,7 @@
 <p><strong>AI detection:</strong> No calibrated AI-authorship classifier is deployed on this website, and no AI-written percentage is asserted. Invisible Unicode is not proof of AI generation or a general watermark.</p>
 </div>
 <div class="panel" dir="rtl" lang="ar"><h2>الخصوصية والأمان</h2>
-<p><strong>المستندات:</strong> تتم معالجة النصوص وملفات TXT وMD وDOCX داخل متصفحك. الموقع لا يتضمن واجهة لرفع المستندات إلى خادم أو أدوات تتبع أو خدمة تحليل ذكاء اصطناعي خارجية تلقائية.</p>
+<p><strong>المستندات:</strong> تتم معالجة النصوص وملفات TXT وMD وDOCX وPDF داخل متصفحك، وتُحمّل مكتبات PDF والتعرف الضوئي وبيانات اللغة من نفس موقع GitHub Pages. الموقع لا يتضمن واجهة لرفع المستندات إلى خادم أو أدوات تتبع أو خدمة تحليل ذكاء اصطناعي خارجية تلقائية.</p>
 <p><strong>الاحتفاظ:</strong> لا يحفظ الموقع عمدًا نصك في قاعدة بيانات أو ملفات تعريف الارتباط أو التخزين المحلي للمتصفح. يُمسح المحتوى الموجود في الذاكرة عند تحديث الصفحة أو إغلاقها. الملفات التي تنزّلها والنصوص التي تنسخها تبقى تحت تحكمك.</p>
 <p><strong>الاستضافة:</strong> يستضيف GitHub Pages الموقع العام، وقد تعالج المنصة أو مزود اتصالك بيانات زيارتك مثل عنوان IP وعناوين الصفحات وسجلات الحماية وفق سياساتهم. لا ندّعي أن الزيارة مجهولة بالكامل.</p>
 <p><strong>الخدمات الخارجية:</strong> فتح روابط أدوات كشف AI الخارجية اختياري. لن يرسل الموقع نصك إليها تلقائيًا. راجع سياسة الخدمة الأخرى قبل نسخ نص حساس إليها.</p>
