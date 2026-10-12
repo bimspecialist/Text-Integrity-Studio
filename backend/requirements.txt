@@ -1,0 +1,4 @@
+# Tested Python 3.12 runtime release set. Review transitives and pip-audit alerts on every change.
+fastapi==0.143.0
+pydantic==2.14.1
+uvicorn==0.54.0
