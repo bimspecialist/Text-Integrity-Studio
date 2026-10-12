@@ -10,6 +10,7 @@ const MAX_FILE=18*1024*1024,MAX_UNPACKED=115*1024*1024,MAX_XML=16*1024*1024,MAX_
 // Check inflated sizes BEFORE decompressing ZIP content (CRC checking would decompress too early).
 const TEXT_PART=/^word\/(?:document|header\d+|footer\d+|footnotes|endnotes|comments)\.xml$/i;
 let session=null,busy=false;
+let editorialSelection=new Set(),editorialMode='academic';
 const ui={
 en:{
   pick:'Choose Word document (.docx)',or:'or drag and drop a DOCX into this text box',privacy:'Word stays on your device · no upload',
@@ -111,6 +112,7 @@ async function loadWord(file){
       parts.push({name,xml,text:extract(doc),check});
    }
    session={name:file.name,bytes,parts,hidden,revisions,watermarks,zip};
+   editorialSelection=new Set();editorialMode='academic';
    $('source').readOnly=true;
    history=[];future=[];histButtons();
    $('source').value=parts.map(p=>p.text).filter(Boolean).join('\n\n');
@@ -128,6 +130,27 @@ async function loadWord(file){
  finally{busy=false;document.getElementById('wordDrop').classList.remove('is-loading');}
 }
 function mode(){return $('mode').value;}
+function editorialPlan(requestedMode){
+ if(!session||!globalThis.TextIntegrityDocxEditor||!globalThis.TextIntegrityRules)return {suggestions:[],skipped:0,eligible:0};
+ const editingMode=requestedMode||editorialMode;
+ const suggestions=[];let skipped=0,eligible=0;
+ for(const part of session.parts){
+   const doc=parseXML(part.xml,part.name);
+   const report=globalThis.TextIntegrityDocxEditor.planDocument(doc,globalThis.TextIntegrityRules,{part:part.name,mode:editingMode});
+   skipped+=report.skipped;eligible+=report.eligible;
+   for(const item of report.suggestions){if(suggestions.length<240)suggestions.push(item);}
+ }
+ return {suggestions,skipped,eligible};
+}
+function wordSelect(ids,requestedMode){
+ editorialMode=requestedMode||editorialMode;
+ const valid=new Set(editorialPlan(editorialMode).suggestions.map(s=>s.id));
+ editorialSelection=new Set((ids||[]).filter(id=>valid.has(id)));
+ if($('wordEditorialCount'))$('wordEditorialCount').textContent=(lang==='ar'?'تعديلات Word المحددة: ':'Word edits selected: ')+editorialSelection.size;
+ $('resultbox').hidden=true;
+ return editorialSelection.size;
+}
+globalThis.TextIntegrityWordBridge={isActive:()=>!!session,getSuggestions:editorialPlan,setSelection:wordSelect,getSelectedIds:()=>[...editorialSelection]};
 function cleanWordText(text,mode){
  if(mode!=='safe')return cleanup(text,mode);
  // DOCX safe mode does not change no-break spaces, soft hyphens, word joiners,
@@ -168,14 +191,19 @@ function transformDoc(doc,opt){
 async function prepareWord(){
  if(!session)throw Error('No document loaded');
  const config={mode:mode(),stripHidden:$('stripHidden').checked};
- const next=[];let removed=0,norm=0,hiddenRuns=0;
+ const next=[];let removed=0,norm=0,hiddenRuns=0,editorialApplied=0,editorialSkipped=0;
  for(const part of session.parts){
    const xmlDoc=parseXML(part.xml,part.name);
+   if(editorialSelection.size){
+     const review=globalThis.TextIntegrityDocxEditor.applyDocument(xmlDoc,globalThis.TextIntegrityRules,[...editorialSelection],{
+       part:part.name,mode:editorialMode,track:$('wordTrackEdits').checked,author:'Text Integrity Studio'});
+     editorialApplied+=review.applied;editorialSkipped+=review.skipped;
+   }
    const outcome=transformDoc(xmlDoc,config);
    removed+=outcome.changed;norm+=outcome.normalized;hiddenRuns+=outcome.removedHidden;
-   next.push({name:part.name,xml:outcome.changed||outcome.normalized||outcome.removedHidden?new XMLSerializer().serializeToString(xmlDoc):null,text:outcome.text});
+   next.push({name:part.name,xml:outcome.changed||outcome.normalized||outcome.removedHidden||editorialApplied?new XMLSerializer().serializeToString(xmlDoc):null,text:outcome.text});
  }
- return {next,removed,norm,hiddenRuns,text:next.map(x=>x.text).filter(Boolean).join('\n\n')};
+ return {next,removed,norm,hiddenRuns,editorialApplied,editorialSkipped,text:next.map(x=>x.text).filter(Boolean).join('\n\n')};
 }
 async function previewWord(){
  if(!session||busy)return;
@@ -183,7 +211,7 @@ async function previewWord(){
    const out=await prepareWord();
    cleaned=out.text;$('result').value=cleaned;$('before').textContent=$('source').value.slice(0,400)||'∅';$('after').textContent=cleaned.slice(0,400)||'∅';
    $('resultbox').hidden=false;$('apply').hidden=true;
-   $('changeInfo').textContent=out.removed+' '+tr('count')+' · '+out.hiddenRuns+' '+tr('removedHidden')+' · '+out.norm+' spaces normalized';
+   $('changeInfo').textContent=out.removed+' '+tr('count')+' · '+out.hiddenRuns+' '+tr('removedHidden')+' · '+out.editorialApplied+' '+(lang==='ar'?'تحسينًا تحريريًا':'accepted writing changes')+' · '+out.norm+' spaces normalized';
    if(!out.removed&&!out.hiddenRuns&&!out.norm)toast(tr('noChanges'));
  }catch(e){setNotice(tr('blocked')+' '+e.message,true);}
 }
@@ -204,10 +232,12 @@ async function downloadWord(){
  }catch(e){setNotice(tr('blocked')+' '+e.message,true);console.error('DOCX export:',e);}
  finally{busy=false;$('wordDownload').disabled=false;}
 }
-function resetWord(){session=null;$('source').readOnly=false;$('wordToolbar').hidden=true;$('wordReport').hidden=true;$('apply').hidden=false;$('resultbox').hidden=true;$('source').style.minHeight='';}
+function resetWord(){session=null;editorialSelection=new Set();$('source').readOnly=false;$('wordToolbar').hidden=true;$('wordReport').hidden=true;$('apply').hidden=false;$('resultbox').hidden=true;$('source').style.minHeight='';}
 function updateWord(){
  $('wordPick').textContent=tr('pick');$('wordOr').textContent=tr('or');$('wordPrivate').textContent=tr('privacy');$('wordTitle').textContent=tr('wordTitle');
  $('wordNote').textContent=tr('wordNote');$('stripHiddenLabel').textContent=tr('removeHidden');$('wordDownload').textContent=tr('download');
+ $('wordTrackLabel').textContent=lang==='ar'?'تتبّع تعديلات Word (قابل للمراجعة داخل Microsoft Word)':'Track editorial changes in Word (review/accept in Microsoft Word)';
+ $('wordEditorialCount').textContent=(lang==='ar'?'تعديلات Word المحددة: ':'Word edits selected: ')+editorialSelection.size;
  $('wordPreview').textContent=tr('preview');$('wordCopy').textContent=lang==='ar'?'نسخ نص Word':'Copy Word text';$('wordExternal').textContent=lang==='ar'?'كشف AI خارجي اختياري ↗':'Optional external AI detector ↗';$('wordSafe').textContent=tr('safe');$('wordReadOnly').textContent=tr('readOnly');$('wordWarning').textContent=tr('warning');
  $('loadText').textContent=tr('pick');if(session){
     const list=$('wordStats');list.replaceChildren();
@@ -230,7 +260,7 @@ function setup(){
  drop.innerHTML='<div style="flex:1;min-width:180px"><strong>Word DOCX · Local document scanner</strong><small id="wordOr"></small><small id="wordPrivate"></small><small id="wordStatus" aria-live="polite"></small></div><button id="wordPick" type="button" class="primary"></button>';
  $('source').parentElement.insertBefore(drop,$('source'));
  const tool=document.createElement('div');tool.id='wordToolbar';tool.hidden=true;tool.className='wordTool';
- tool.innerHTML='<h3>DOCX</h3><div class="small" id="wordMeta"></div><p id="wordReadOnly" class="wordTip"></p><label><input id="stripHidden" type="checkbox"><span id="stripHiddenLabel"></span></label><div class="row"><button id="wordPreview" type="button"></button><button id="wordDownload" type="button" class="primary"></button></div><div class="row"><button id="wordCopy" type="button"></button><a id="wordExternal" href="https://quillbot.com/ai-content-detector" target="_blank" rel="noopener noreferrer" style="color:#9bd3ff;font-size:12px"></a></div><p id="wordSafe" class="wordTip"></p>';
+ tool.innerHTML='<h3>DOCX</h3><div class="small" id="wordMeta"></div><p id="wordReadOnly" class="wordTip"></p><label><input id="stripHidden" type="checkbox"><span id="stripHiddenLabel"></span></label><label><input id="wordTrackEdits" type="checkbox" checked><span id="wordTrackLabel"></span></label><p id="wordEditorialCount" class="wordTip"></p><div class="row"><button id="wordPreview" type="button"></button><button id="wordDownload" type="button" class="primary"></button></div><div class="row"><button id="wordCopy" type="button"></button><a id="wordExternal" href="https://quillbot.com/ai-content-detector" target="_blank" rel="noopener noreferrer" style="color:#9bd3ff;font-size:12px"></a></div><p id="wordSafe" class="wordTip"></p>';
  $('source').parentElement.insertBefore(tool,$('source').nextSibling);
  const report=document.createElement('section');report.id='wordReport';report.hidden=true;report.className='panel wordReport';
  report.innerHTML='<h2 id="wordTitle"></h2><div id="wordStats" class="wordStats"></div><p id="wordNote" class="wordTip"></p><details><summary id="wordMore">Sections inspected</summary><ul id="wordDetails"></ul></details><p id="wordWarning" class="wordTip" style="color:#e3be8e"></p>';
@@ -252,6 +282,7 @@ function setup(){
  $('language').addEventListener('click',()=>{updateWord();$('wordMore').textContent=lang==='ar'?'الأقسام التي تم فحصها':'Sections inspected';});
  $('mode').addEventListener('change',()=>{if(session)$('resultbox').hidden=true;});
  $('stripHidden').addEventListener('change',()=>{if(session)$('resultbox').hidden=true;});
+ $('wordTrackEdits').addEventListener('change',()=>{if(session)$('resultbox').hidden=true;});
  $('source').addEventListener('paste',e=>{if(session)e.preventDefault();});
  $('wordMore').textContent=lang==='ar'?'الأقسام التي تم فحصها':'Sections inspected';
  updateWord();
