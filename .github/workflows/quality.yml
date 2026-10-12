@@ -46,3 +46,10 @@ jobs:
           test -s docs/vendor/pdfjs/pdf.worker.mjs
           node --check tests/pdf-browser.test.js
           node tests/pdf-browser.test.js
+      - name: Offline scanned-PDF OCR using vendored Tesseract
+        timeout-minutes: 3
+        run: |
+          test -s docs/vendor/tesseract/lang/eng.traineddata.gz
+          test -s docs/vendor/tesseract/worker.min.js
+          node --check tests/ocr-browser.test.js
+          node tests/ocr-browser.test.js
