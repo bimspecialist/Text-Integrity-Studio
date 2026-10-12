@@ -133,7 +133,7 @@ function set(id,value){if($(id))$(id).textContent=value;}
 function status(value){set('aiStatus',value);}
 function cancel(){
  if(currentRequest&&child?.contentWindow)
-  child.contentWindow.postMessage({channel:'TIS_BROWSER_AI_V1',op:'CANCEL',requestId:currentRequest},location.origin);
+  child.contentWindow.postMessage({channel:'TIS_BROWSER_AI_V1',op:'CANCEL',requestId:currentRequest},'*');
 }
 function reset(reason=''){
  cancel();lastResult=null;currentRequest='';inputSnapshot='';running=false;
@@ -194,7 +194,7 @@ function start(){
   child=document.createElement('iframe');
   child.id='tisOnDeviceModel';
   child.title='Optional, user-triggered AI model runtime';
-  child.setAttribute('sandbox','allow-scripts allow-same-origin');
+  child.setAttribute('sandbox','allow-scripts');
   child.setAttribute('referrerpolicy','no-referrer');
   child.setAttribute('aria-hidden','true');child.hidden=true;
   child.src='ai-runtime.html';$('aiMeter').append(child);
@@ -206,7 +206,7 @@ function postRun(){
   channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,
   text:inputSnapshot,deep:$('aiDeep').checked===true,
   context:$('aiContext').value
- },location.origin);
+ },'*');
 }
 function element(name,className,textContent){
  const e=document.createElement(name);
@@ -297,7 +297,7 @@ function error(code){
  status(message);
 }
 function handleMessage(event){
- if(!child||event.source!==child.contentWindow||event.origin!==location.origin)return;
+ if(!child||event.source!==child.contentWindow||event.origin!=='null')return;
  const data=event.data;
  if(data?.channel!=='TIS_BROWSER_AI_V1')return;
  if(data.op==='READY'){ready=true;postRun();return;}
