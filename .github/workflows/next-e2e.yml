@@ -1,0 +1,84 @@
+name: Authenticated Next.js to FastAPI end-to-end smoke
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - '.github/workflows/next-e2e.yml'
+  push:
+    branches: [main, 'feature/**']
+    paths:
+      - 'backend/examples/next-ui/**'
+      - 'backend/hybrid_detector/api.py'
+      - 'backend/hybrid_detector/file_parsing.py'
+      - '.github/workflows/next-e2e.yml'
+permissions:
+  contents: read
+jobs:
+  end-to-end:
+    runs-on: ubuntu-latest
+    timeout-minutes: 16
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install private detector and Next.js sample
+        run: |
+          python -m pip install -r backend/requirements.txt
+          cd backend/examples/next-ui
+          npm install --ignore-scripts --no-audit --no-fund
+      - name: Validate authenticated proxy, binary TXT upload and closed-calibration response
+        shell: bash
+        run: |
+          set -euo pipefail
+          export TIS_API_KEYS="$(python -c 'import secrets;print(secrets.token_urlsafe(48))')"
+          export TIS_API_KEY="$TIS_API_KEYS"
+          export TIS_SESSION_JWT_SECRET="$(python -c 'import secrets;print(secrets.token_urlsafe(48))')"
+          export TIS_LOCAL_DEV_SETUP_KEY="$(python -c 'import secrets;print(secrets.token_urlsafe(48))')"
+          export TIS_PUBLIC_ORIGIN="http://localhost:3000"
+          export NEXT_TELEMETRY_DISABLED=1
+          PYTHONPATH=backend python -m uvicorn hybrid_detector.serve:app --host 127.0.0.1 --port 8000 --no-access-log > /tmp/tis-python-server.log 2>&1 &
+          FASTPID=$!
+          cd backend/examples/next-ui
+          npm run dev -- --hostname 127.0.0.1 > /tmp/tis-next-server.log 2>&1 &
+          NEXTPID=$!
+          trap 'kill "$FASTPID" "$NEXTPID" 2>/dev/null || true' EXIT
+          for i in $(seq 1 70); do
+            if curl -sf http://127.0.0.1:8000/v1/health > /dev/null &&
+               curl -sf http://localhost:3000 > /dev/null; then break; fi
+            sleep 2
+          done
+          curl -sf http://localhost:3000 > /dev/null
+          printf '%s' 'A manually documented study with real engineering measurements and comparisons.' > /tmp/tis-fixture.txt
+          # No signed session -> 401
+          CODE=$(curl -s -o /tmp/tis-noauth.json -w '%{http_code}' -X POST \
+            -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' \
+            --data '{"text":"test"}' http://localhost:3000/api/analyze)
+          test "$CODE" = 401
+          # Developer session (never available in production)
+          curl -sf -c /tmp/tis-cookies.txt -X POST \
+            -H 'Origin: http://localhost:3000' \
+            -H "X-Dev-Setup-Key: $TIS_LOCAL_DEV_SETUP_KEY" \
+            http://localhost:3000/api/dev-session > /tmp/tis-login.json
+          python -c 'import json; assert json.load(open("/tmp/tis-login.json"))["status"]=="DEVELOPMENT_SESSION_READY"'
+          # Wrong Origin -> 403
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' -b /tmp/tis-cookies.txt -X POST \
+            -H 'Origin: https://attacker.invalid' -H 'Content-Type: application/json' \
+            --data '{"text":"test"}' http://localhost:3000/api/analyze)
+          test "$CODE" = 403
+          # Positive authenticated JSON path, still no invented probability
+          curl -sf -b /tmp/tis-cookies.txt -X POST \
+            -H 'Origin: http://localhost:3000' -H 'Content-Type: application/json' \
+            --data '{"text":"We collected the test measurements and documented each experimental procedure.","language":"auto"}' \
+            http://localhost:3000/api/analyze > /tmp/tis-text.json
+          python -c 'import json; d=json.load(open("/tmp/tis-text.json")); assert d["analysis_status"]=="INCONCLUSIVE" and d["document"]["ai_probability_percent"] is None'
+          # Authenticated binary TXT round-trip opt-in
+          curl -sf -b /tmp/tis-cookies.txt -X POST \
+            -H 'Origin: http://localhost:3000' \
+            -F 'file=@/tmp/tis-fixture.txt;filename=fixture.txt' -F 'language=auto' \
+            http://localhost:3000/api/analyze-file > /tmp/tis-file.json
+          python -c 'import json; d=json.load(open("/tmp/tis-file.json")); assert d["analysis_status"]=="INCONCLUSIVE" and d["input_file"]["format"]=="txt" and "engineering measurements" in d["extracted_text"]'
+          echo 'PASS real Next JWT session -> private FastAPI JSON+TXT upload -> INCONCLUSIVE, and auth/Origin denials'
