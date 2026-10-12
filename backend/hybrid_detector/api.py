@@ -181,7 +181,8 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
 
         return await _run_analysis(payload)
 
-    async def _run_analysis(payload: AnalyzeRequest, file_meta: dict | None = None):
+    async def _run_analysis(payload: AnalyzeRequest, file_meta: dict | None = None,
+                            extracted_text: str | None = None):
         if not slots.acquire(blocking=False):
             raise HTTPException(status_code=503, detail="All inference workers are busy")
 
@@ -199,6 +200,10 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
             result = await asyncio.wait_for(asyncio.to_thread(compute), timeout=TIMEOUT_SECONDS)
             if file_meta:
                 result["input_file"] = file_meta
+            if extracted_text is not None:
+                # Explicit authenticated round-trip only; no server persistence.
+                result["extracted_text"] = extracted_text
+                result["privacy"]["raw_text_returned"] = True
             return JSONResponse(result, headers={
                 "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
             })
@@ -216,6 +221,7 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
         writing_context: Literal["general", "formal", "non_native", "academic"] = Form("general"),
         segment_by: Literal["paragraph", "sentence"] = Form("paragraph"),
         include_segments: bool = Form(True),
+        return_extracted_text: bool = Form(False),
         _key: str = Depends(authorize),
     ):
         # Fail early on a declared length, but reverse-proxy/gateway limits must
@@ -258,7 +264,7 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
             "page_count": parsed.page_count,
             "warnings": parsed.warnings,
             "bytes_received": len(raw),
-        })
+        }, extracted_text=parsed.text if return_extracted_text else None)
 
     @router.get("/health")
     def health():
