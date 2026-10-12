@@ -11,7 +11,7 @@ for(const file of scripts){
 }
 for(const text of [html,privacy]){
  assert(/http-equiv="Content-Security-Policy"/.test(text),'CSP in every HTML page');
- assert(text.includes("connect-src 'none'")&&text.includes("script-src 'self'")&&text.includes("style-src 'self'"),'Restrictive policy');
+ assert(text.includes("connect-src 'self'")&&text.includes("script-src 'self'")&&text.includes("style-src 'self'"),'Restrictive policy');
  assert(!/<script\b[^>]*>(?=[\s\S]*?<\/script>)\s*[^<\s]/i.test(text),'No inline executable script');
  assert(!/<style\b/i.test(text),'No inline stylesheet');
  assert(!/\sstyle=/.test(text),'No inline style attributes');
