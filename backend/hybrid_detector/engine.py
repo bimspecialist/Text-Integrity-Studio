@@ -195,19 +195,20 @@ class HybridEngine:
         segment_results = []
         artifact = self.artifacts[segment_by].get(actual_language)
         for span in visible:
+            seg_model = self.artifacts[segment_by].get(span.language)
             # Not enough text for a segment classifier: show an unassessed overlay.
-            if span.words < 75 or artifact is None:
+            if span.words < 75 or seg_model is None:
                 segment_results.append({
                     "start": span.start, "end": span.end, "word_count": span.words,
                     "language": span.language, "tier": "UNASSESSED", "color": "gray",
                     "ai_probability_percent": None, "confidence_level": "LOW",
                     "status": "INCONCLUSIVE",
-                    "reasons": ["No independent segment calibrator" if artifact is None else "Segment too short"],
+                    "reasons": ["No independent segment calibrator" if seg_model is None else "Segment too short"],
                 })
                 continue
             result = self._evaluate(
                 span, language=span.language, domain=domain, context=writing_context,
-                artifact=self.artifacts[segment_by].get(span.language), min_words=75
+                artifact=seg_model, min_words=75
             )
             segment_results.append({
                 "start": span.start, "end": span.end, "word_count": span.words,
@@ -232,7 +233,7 @@ class HybridEngine:
             },
             "calibration": {
                 "document_artifact_present": self.artifacts["document"].get(actual_language) is not None,
-                "segment_artifact_present": artifact is not None,
+                "segment_artifact_present": any(self.artifacts[segment_by].get(s.language) is not None for s in visible),
                 "production_scores_enabled": self.allow_calibrated_results,
                 "feature_version": VERSION,
                 "scope": "Validated dataset distribution only; cannot prove authorship or text fraction",
