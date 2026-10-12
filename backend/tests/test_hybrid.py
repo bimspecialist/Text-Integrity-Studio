@@ -59,6 +59,7 @@ def artifact(unit="document", lang="en", approved=True):
             "human_test_n": 1000 if approved else 9, "ai_test_n": 1000 if approved else 9,
             "fpr_wilson_upper_95": 0.005 if approved else 0.8, "brier": 0.12, "ece": 0.03,
             "coverage": 0.98, "tpr_at_high_alert_threshold": 0.8 if approved else 0.1,
+            "independent_label_verification_passed": approved,
             "held_out_model_families_checked": approved, "group_audits_passed": approved,
         },
         "governance": {

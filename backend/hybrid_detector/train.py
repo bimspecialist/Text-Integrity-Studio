@@ -208,6 +208,8 @@ def fit(dataset: dict[str, list[dict]], *, language: str, domain: str, unit: str
         "held_out_model_families_checked": bool(unseen_models),
         "group_audits_passed": groups_passed,
         "subgroup_human_false_positive_audit": subgroup_metrics,
+        "independent_label_verification_passed": all(r.get("independent_verified") is True for r in dataset["test"]),
+        "label_provenance_status": "INDEPENDENTLY_VERIFIED" if all(r.get("independent_verified") is True for r in dataset["test"]) else "UNVERIFIED_DATASET_CLAIMS",
         "test_prevalence_ai": counts["ai"] / len(test_y),
     }
     return {

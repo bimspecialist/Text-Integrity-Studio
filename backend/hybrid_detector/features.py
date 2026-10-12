@@ -193,9 +193,11 @@ class Extractor:
                 mean = values["semantic_coherence"]
                 values["semantic_coherence_variance"] = sum((v - mean) ** 2 for v in similarities) / len(similarities)
         if self.transformer is not None:
-            result = float(self.transformer.logit(text))
-            if math.isfinite(result):
-                values["transformer_raw_logit"] = result
+            raw = self.transformer.logit(text)
+            if raw is not None:
+                result = float(raw)
+                if math.isfinite(result):
+                    values["transformer_raw_logit"] = result
 
         for key in FEATURE_NAMES:
             if values[key] is not None and not math.isfinite(values[key]):

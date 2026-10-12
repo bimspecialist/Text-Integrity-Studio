@@ -16,12 +16,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.responses import JSONResponse
 from fastapi.security import APIKeyHeader
 from pydantic import BaseModel, ConfigDict, Field
 
 from .engine import HybridEngine
+from .file_parsing import DocumentParseError, MAX_UPLOAD_BYTES, extract_upload
 
 BODY_LIMIT = 135_000
 TIMEOUT_SECONDS = 30
@@ -83,13 +84,45 @@ class SlidingWindowLimiter:
 
 
 def _local_adapters() -> dict:
-    from .adapters import CausalLanguageModel, LocalEmbeddings, LocalSequenceClassifier
+    from .adapters import CausalLanguageModel, LocalEmbeddings, LocalSequenceClassifier, LanguageRoutedClassifier
+    from .provision_models import inspect_label_map
+    import json
+    from pathlib import Path
+
     result = {}
     if path := os.getenv("TIS_LOCAL_CAUSAL_LM_DIR"):
         result["language_model"] = CausalLanguageModel(path)
     if path := os.getenv("TIS_LOCAL_EMBEDDINGS_DIR"):
         result["embeddings"] = LocalEmbeddings(path)
-    if path := os.getenv("TIS_LOCAL_CLASSIFIER_DIR"):
+
+    # Per-language opt-in classifiers are verified against an exact local,
+    # provider-revision-pinned provisioning manifest before loading weights.
+    per_locale = {}
+    for language in ("en", "ar"):
+        path = os.getenv(f"TIS_LOCAL_{language.upper()}_CLASSIFIER_DIR")
+        if not path:
+            continue
+        index = os.getenv(f"TIS_LOCAL_{language.upper()}_AI_CLASS_INDEX")
+        if index != "1":
+            raise RuntimeError("The reviewed English and Arabic checkpoints require explicit AI class index 1")
+        manifest_path = Path(path).expanduser().resolve() / "tis-model-manifest.json"
+        config_path = manifest_path.parent / "config.json"
+        if not manifest_path.is_file() or not config_path.is_file():
+            raise RuntimeError("Run hybrid_detector.provision_models before enabling the local classifier")
+        meta = json.loads(manifest_path.read_text(encoding="utf-8"))
+        from .provision_models import MODELS
+        expected = MODELS[language]
+        if (meta.get("language") != language or meta.get("repo") != expected["repo"]
+                or meta.get("ai_class_index") != 1 or meta.get("downstream_approval") is not False
+                or len(str(meta.get("revision", ""))) != 40):
+            raise RuntimeError("Model provenance/label mapping is not approved for this locale")
+        inspect_label_map(json.loads(config_path.read_text(encoding="utf-8")), language)
+        per_locale[language] = LocalSequenceClassifier(path, ai_class_index=1)
+    if per_locale:
+        result["transformer"] = LanguageRoutedClassifier(
+            english=per_locale.get("en"), arabic=per_locale.get("ar")
+        )
+    elif path := os.getenv("TIS_LOCAL_CLASSIFIER_DIR"):
         raw_index = os.getenv("TIS_LOCAL_AI_CLASS_INDEX")
         if raw_index not in ("0", "1"):
             raise RuntimeError("Set TIS_LOCAL_AI_CLASS_INDEX to a verified model label index (0 or 1)")
@@ -146,8 +179,13 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
             # Never include body or raw Pydantic validation messages, which can echo source text.
             raise HTTPException(status_code=422, detail="Invalid analysis JSON payload") from None
 
+        return await _run_analysis(payload)
+
+    async def _run_analysis(payload: AnalyzeRequest, file_meta: dict | None = None,
+                            extracted_text: str | None = None):
         if not slots.acquire(blocking=False):
             raise HTTPException(status_code=503, detail="All inference workers are busy")
+
         def compute():
             try:
                 return api.state.engine.analyze(
@@ -157,13 +195,76 @@ def create_app(settings: APISettings | None = None, engine: HybridEngine | None 
                 )
             finally:
                 slots.release()
+
         try:
             result = await asyncio.wait_for(asyncio.to_thread(compute), timeout=TIMEOUT_SECONDS)
-            return JSONResponse(result, headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+            if file_meta:
+                result["input_file"] = file_meta
+            if extracted_text is not None:
+                # Explicit authenticated round-trip only; no server persistence.
+                result["extracted_text"] = extracted_text
+                result["privacy"]["raw_text_returned"] = True
+            return JSONResponse(result, headers={
+                "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff",
+            })
         except asyncio.TimeoutError:
             raise HTTPException(status_code=504, detail="Analysis timeout; worker may still be finishing")
-        except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc))
+        except ValueError:
+            raise HTTPException(status_code=422, detail="Analysis failed input validation") from None
+
+    @router.post("/analyze-file")
+    async def analyze_file(
+        request: Request,
+        file: UploadFile = File(...),
+        language: Literal["auto", "en", "ar", "mixed"] = Form("auto"),
+        domain: str = Form("general"),
+        writing_context: Literal["general", "formal", "non_native", "academic"] = Form("general"),
+        segment_by: Literal["paragraph", "sentence"] = Form("paragraph"),
+        include_segments: bool = Form(True),
+        return_extracted_text: bool = Form(False),
+        _key: str = Depends(authorize),
+    ):
+        # Fail early on a declared length, but reverse-proxy/gateway limits must
+        # also block huge multipart bodies before Starlette's spooling begins.
+        length = request.headers.get("content-length")
+        if length is not None:
+            try:
+                if int(length) > MAX_UPLOAD_BYTES + 250_000:
+                    raise HTTPException(status_code=413, detail="Multipart upload exceeds size limit")
+            except ValueError:
+                raise HTTPException(status_code=400, detail="Malformed upload content length")
+        try:
+            raw = await file.read(MAX_UPLOAD_BYTES + 1)
+        finally:
+            await file.close()
+        if len(raw) > MAX_UPLOAD_BYTES:
+            raise HTTPException(status_code=413, detail="File exceeds 6 MiB")
+        try:
+            parsed = await asyncio.wait_for(
+                asyncio.to_thread(extract_upload, file.filename or "", raw),
+                timeout=TIMEOUT_SECONDS,
+            )
+        except DocumentParseError as error:
+            code = 413 if error.code in ("FILE_TOO_LARGE", "DOCX_LIMIT", "PDF_LIMIT", "TEXT_TOO_LONG") else 422
+            raise HTTPException(status_code=code, detail={
+                "code": error.code, "message": str(error),
+            }) from None
+        except asyncio.TimeoutError:
+            raise HTTPException(status_code=504, detail="Document extraction timed out") from None
+        try:
+            payload = AnalyzeRequest(
+                text=parsed.text, language=language, domain=domain,
+                writing_context=writing_context, segment_by=segment_by,
+                include_segments=include_segments,
+            )
+        except Exception:
+            raise HTTPException(status_code=422, detail="Extracted text/options failed validation") from None
+        return await _run_analysis(payload, {
+            "format": parsed.extension,
+            "page_count": parsed.page_count,
+            "warnings": parsed.warnings,
+            "bytes_received": len(raw),
+        }, extracted_text=parsed.text if return_extracted_text else None)
 
     @router.get("/health")
     def health():

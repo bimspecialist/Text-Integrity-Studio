@@ -1,0 +1,46 @@
+name: Public weak-label research baseline (NOT production calibration)
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Public weak-label corpus (Arabic Aya is currently blocked by minimum-length data)"
+        required: true
+        default: hc3_en
+        type: choice
+        options:
+          - hc3_en
+          - aya_ar
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install constrained research dependencies
+        run: |
+          python -m pip install -r backend/requirements-training.txt
+          python -m pip install 'huggingface_hub>=0.35,<2' 'pyarrow>=18,<30'
+      - name: Resolve public corpus and train experimental classifier
+        env:
+          SOURCE: ${{ inputs.source }}
+        run: |
+          set -eu
+          if [ "$SOURCE" = hc3_en ]; then LANGUAGE=en; PAIRS=800; else LANGUAGE=ar; PAIRS=1500; fi
+          cd backend
+          python -m hybrid_detector.baseline_data --source "$SOURCE" --out "${{ runner.temp }}/tis-baseline" --limit "$PAIRS"
+          python -m hybrid_detector.train --dataset "${{ runner.temp }}/tis-baseline/$SOURCE.jsonl" --output "${{ runner.temp }}/tis-models" --language "$LANGUAGE" --domain general --unit document --version "hf-weak-label-$LANGUAGE-v1"
+          PYTHONPATH=. python -c "from hybrid_detector.artifacts import load_artifact; from pathlib import Path; p=load_artifact(Path('${{ runner.temp }}/tis-models'), 'document', '$LANGUAGE'); assert p is not None; ok,why=p.readiness(); assert not ok and any('verification' in w.lower() for w in why); print('UNVERIFIED RESEARCH BASELINE ONLY', why)"
+      - name: Retain research artifact for 24 hours only
+        uses: actions/upload-artifact@v4
+        with:
+          name: hf-public-weak-label-${{ inputs.source }}
+          path: |
+            ${{ runner.temp }}/tis-models/document.*.json
+            ${{ runner.temp }}/tis-baseline/*.manifest.json
+          retention-days: 1
+          if-no-files-found: ignore
