@@ -21,6 +21,9 @@ const languages={
   deep:'Compare with a second detector (more data and memory)',
   deepHelp:'Optional model checks disagreement. It was trained on GPT-2 (2019), so its result is not a modern accuracy guarantee; disagreement blocks the combined number.',
   contextLabel:'Writing context',
+  pilotTitle:'Observed false-alert risk:',
+  pilotText:'In one small HC3 public benchmark, 13 of 24 human-labeled texts scored at least 80% with the main model. Labels were not independently verified. Do not treat high scores as authorship proof.',
+  pilotLink:'View test',
   evidenceTitle:'View model comparison and analyzed passages',
   noText:'Paste text or open a document before running analysis.',
   short:'120 or more words of English text are required for this analysis.',
@@ -76,6 +79,9 @@ const languages={
   deep:'قارن مع نموذج ثانٍ (يستهلك تنزيلًا وذاكرة أكبر)',
   deepHelp:'خيار مستقل لكشف الاختلاف. النموذج الإضافي دُرّب على GPT-2 عام 2019، فلا يضمن كشف النماذج الحديثة. عند التعارض لا نعرض نسبة موحدة.',
   contextLabel:'نوع الكتابة',
+  pilotTitle:'خطر الخطأ في التنبيه:',
+  pilotText:'في اختبار محدود على مجموعة HC3 العامة، حصل 13 من أصل 24 نصًا مصنفًا بشريًا على إشارة 80% أو أكثر من النموذج الأساسي. تسميات المصدر لم تُراجع بشكل مستقل. لا تستخدم النتيجة لإثبات هوية الكاتب.',
+  pilotLink:'عرض الاختبار',
   evidenceTitle:'مقارنة النماذج والمقاطع التي تم فحصها',
   noText:'الصق النص أو افتح مستندًا أولًا.',
   short:'يتطلب التحليل 120 كلمة إنجليزية على الأقل.',
@@ -143,7 +149,8 @@ function translate(){
   aiMeterExplanation:'explanation',aiRun:'run',aiConsent:'consent',
   aiLegal:'legal',aiExport:'export',aiAdvancedSummary:'advanced',
   aiDeepLabel:'deep',aiDeepHelp:'deepHelp',aiContextLabel:'contextLabel',
-  aiEvidenceTitle:'evidenceTitle'
+  aiEvidenceTitle:'evidenceTitle',
+  aiPilotRisk:'pilotTitle',aiPilotRiskText:'pilotText',aiPilotLink:'pilotLink'
  };
  for(const [id,key] of Object.entries(fields))set(id,t()[key]);
  // These values affect warnings, never modify classifier outputs.
