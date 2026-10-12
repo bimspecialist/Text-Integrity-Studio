@@ -21,6 +21,8 @@ jobs:
           node --check tests/word-docx.test.js
       - name: Install test XML parser
         run: npm install --no-save --no-package-lock --ignore-scripts @xmldom/xmldom@latest puppeteer-core@latest
+      - name: Detector evaluation framework tests
+        run: python3 -m unittest discover -s tests -p 'test_eval*.py' -v
       - name: Bilingual writing engine tests
         run: |
           node --check docs/writing-rules.js
