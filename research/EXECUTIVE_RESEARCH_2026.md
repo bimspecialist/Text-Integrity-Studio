@@ -19,7 +19,7 @@
 ## 1. Scope and methodology
 This report reviews (a) peer-reviewed and official academic literature, (b) vendors' published operating constraints, (c) practitioner narratives, and (d) the actual deployed GitHub repository. Retrieval period: October 2026; published materials cited by year below. Unverified vendor marketing claims and unverified online anecdotes are not treated as experimental results. The immediate product baseline is the owner-managed public repository https://github.com/bimspecialist/Text-Integrity-Studio and its GitHub Pages site.
 
-**Observed baseline (repository audit):** bilingual Arabic/English page; Unicode and writing-quality checks; DOCX Open XML local extraction; preview and safe Unicode cleanup; Word download; GitHub Actions DOCX roundtrip/Chrome smoke tests. It does not yet ship a calibrated AI classifier, professional end-to-end grammar engine, fully editable DOCX redlining, or true graphical watermark removal.
+**Observed baseline (repository audit):** bilingual Arabic/English page; Unicode and writing-quality checks; DOCX Open XML local extraction; preview and safe Unicode cleanup; Word download; GitHub Actions DOCX roundtrip/Chrome smoke tests. The current implementation now supports **reviewable tracked Word edits for simple main-document text runs**, but not complex OOXML redlining. It does not ship a calibrated AI classifier, a full contextual grammar engine, or true graphical/statistical watermark removal. A separate offline classifier-training research pipeline exists but no pretrained model is deployed.
 
 **Assumptions:** One maintainable product; English and Arabic are priority; hosting should remain free where feasible; academic writers, engineers and document authors are primary users; confidential document text must not silently leave the user's browser. Vendor availability, prices, model licenses, and rules may change.
 
@@ -205,7 +205,10 @@ A = raw cleanup only; B = opt-in Writing Lab. Randomize consented users by sessi
 | Detector scoring framework | evaluation/score_detector.py | Implemented; NOT an AI model |
 | Measurement protocol | evaluation/README.md | Proposed release gates |
 | Working model + validated AI probability | Future work | NOT IMPLEMENTED — explicitly NOT EVALUATED |
-| Fully editable/rewrite-preserving DOCX | Future work | NOT IMPLEMENTED |
+| Word Track Changes for eligible simple text runs | docs/docx-editor.js + docs/writing-lab.js | IMPLEMENTED / BROWSER QA; limited scope |
+| Rich editorial support for hyperlinks, field-coded paragraphs, existing revisions and all OOXML structures | Future work | NOT IMPLEMENTED |
+| Local optional baseline classifier training, calibration and A/B metrics | evaluation/train_baseline.py + evaluation/ab_editor.py | IMPLEMENTED as research utilities; no model released |
+| No-network CSP and privacy disclosure | docs/index.html + docs/privacy.html + SECURITY.md | IMPLEMENTED; header-level protections unavailable on GitHub Pages |
 
 ## 13. References and evidence register
 - **[S1] OpenAI (2023).** New AI classifier for indicating AI-written text; discontinued July 20, 2023. https://openai.com/index/new-ai-classifier-for-indicating-ai-written-text/
