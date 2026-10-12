@@ -157,6 +157,11 @@ function setup(){
  pdfTools=disclosure(pdf,'pdfTools',copy.en.pdfSummary,copy.en.pdfHint);
  wordReportTools=disclosure(wordReport,'wordReportTools',copy.en.wordReportSummary,'',{hidden:true});
  researchTools=disclosure(research,'researchTools',copy.en.aiSummary,copy.en.aiHint);
+ // Preserve module event handlers, but put results first and the least-used tools last.
+ const results=document.querySelector('.workspace > div:last-child');
+ if(results && $('reportPanel'))results.prepend($('reportPanel'));
+ if(writingTools && $('cleanupTools'))main.insertBefore(writingTools,$('cleanupTools'));
+ if(wordPickTools)main.append(wordPickTools);
  setupWordOptions();
  // A small textual filename hint avoids requiring a second document picker.
  const hint=document.createElement('span');
