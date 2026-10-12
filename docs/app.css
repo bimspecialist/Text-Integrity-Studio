@@ -277,3 +277,10 @@ main{grid-column:2;grid-row:1;min-width:0;padding:25px clamp(20px,3.3vw,49px) 24
 .ai-segment small{color:#9fb8d0;font-size:10px}
 #aiRun:disabled{cursor:progress;opacity:.7}
 @media(max-width:550px){.ai-segment{padding:8px}.ai-model-summary{gap:1px}}
+
+/* Measured false-positive warning visible at the point of interpretation. */
+.ai-pilot-risk{background:#37291c;border:1px solid #8b663b;border-radius:8px;padding:10px 11px;
+ line-height:1.62;font-size:10.7px;color:#f4d5a6;margin:12px 0}
+.ai-pilot-risk strong{display:inline;color:#ffe3b7;margin-inline-end:5px}
+.ai-pilot-risk a{display:inline-block;color:#a8dcff;text-decoration:underline;text-underline-offset:3px;margin-inline-start:5px}
+.ai-pilot-risk a:focus-visible{outline:2px solid #89cfff;outline-offset:3px}
