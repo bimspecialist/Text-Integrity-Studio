@@ -172,16 +172,33 @@ def fit(dataset: dict[str, list[dict]], *, language: str, domain: str, unit: str
         r.get("model_family") for r in dataset["test"]
         if r["label"] == "ai" and r.get("model_family") not in train_models
     }
-    contexts = {
+    contexts = sorted({
         r.get("writing_context", "general") for r in dataset["test"]
-        if r["label"] == "human" and r.get("writing_context", "general") in ("general", "formal", "non_native", "academic")
-    }
-    # Group review requires enough independently verified human cases per named
-    # writing context, not just a pooled FPR score.
-    groups_passed = bool(contexts) and all(
-        len([r for r in dataset["test"] if r["label"] == "human" and r.get("writing_context", "general") == context]) >= 100
-        for context in contexts
+        if r["label"] == "human"
+        and r.get("writing_context", "general") in ("general", "formal", "non_native", "academic")
+    })
+    subgroup_metrics = {}
+    for context in contexts:
+        group = [
+            (row, score)
+            for row, score in zip(dataset["test"], test_scores)
+            if row["label"] == "human" and row.get("writing_context", "general") == context
+        ]
+        false_positives = sum(score >= high for _row, score in group)
+        subgroup_metrics[context] = {
+            "verified_human_n": len(group),
+            "false_positive_n": false_positives,
+            "false_positive_wilson_upper_95": wilson(false_positives, len(group)),
+        }
+    # For every declared context, check its actual FPR uncertainty.
+    # At 100 cases, even zero errors yields ~3.7% upper bound, so merely
+    # counting 100 samples is not sufficient for a 2% subgroup target.
+    groups_passed = bool(subgroup_metrics) and all(
+        item["verified_human_n"] >= 200
+        and item["false_positive_wilson_upper_95"] <= 0.02
+        for item in subgroup_metrics.values()
     )
+
     test_stats = {
         "human_test_n": counts["human"], "ai_test_n": counts["ai"],
         "fpr_at_high_alert_threshold": fp / counts["human"],
@@ -190,6 +207,7 @@ def fit(dataset: dict[str, list[dict]], *, language: str, domain: str, unit: str
         "brier": brier, "ece": error, "coverage": coverage,
         "held_out_model_families_checked": bool(unseen_models),
         "group_audits_passed": groups_passed,
+        "subgroup_human_false_positive_audit": subgroup_metrics,
         "test_prevalence_ai": counts["ai"] / len(test_y),
     }
     return {
@@ -197,7 +215,7 @@ def fit(dataset: dict[str, list[dict]], *, language: str, domain: str, unit: str
         "unit": unit, "version": version,
         "eligibility": {
             "languages": [language], "domains": [domain],
-            "contexts": sorted(contexts) if contexts else ["general"],
+            "contexts": contexts if contexts else ["general"],
             "min_words": 180 if unit == "document" else 75,
         },
         "predictor": {
