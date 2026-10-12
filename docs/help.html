@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; object-src 'none'; frame-src 'none'; worker-src 'self'">
+<title>How to use Text Integrity Studio</title><link rel="stylesheet" href="app.css"><link rel="icon" type="image/svg+xml" href="favicon.svg"></head>
+<body><main class="shell"><header><strong class="brand">Text Integrity Studio</strong><a class="privacyLink" href="./">← Back / العودة</a></header>
+<section class="hero"><p class="eyebrow">USER GUIDE · FREE · PRIVATE</p><h1>Inspect, improve, and export.<br><span>Review every change.</span></h1></section>
+<section class="panel"><h2>Word DOCX</h2>
+<ol><li>Select <strong>Choose Word document (.docx)</strong>.</li><li>Review the Unicode and Word inspection reports, including explicitly hidden runs and tracked changes.</li><li>In <strong>Writing Improvement Lab</strong>, select the individual grammar/clarity changes you approve.</li><li>Leave <strong>Track Changes</strong> enabled and use <strong>Download cleaned Word (.docx)</strong>. Open the new copy in Microsoft Word and review tracked revisions.</li></ol>
+<p class="notice">The original is never overwritten. Complex fields, existing revisions, drawings, linked text, images and some Word structures are deliberately not edited.</p>
+</section>
+<section class="panel"><h2>PDF & OCR</h2>
+<ol><li>Choose <strong>PDF</strong> from either document picker.</li><li>The site extracts accessible PDF text in your browser and displays it in the editor.</li><li>If the report identifies scanned/image-only pages, select a page range (up to 12 per OCR run) and an OCR language: English, Arabic, or both.</li><li>Choose <strong>Run OCR</strong> and review the recognized text. The OCR engine may take additional memory and processing time, especially on mobile devices.</li><li>Use <strong>Export extracted TXT</strong> or the Writing Lab. The original PDF is not rewritten.</li></ol>
+<p class="notice">PDF reading order, Arabic glyph recognition, math and scanned diagrams may be inaccurate. Check the source file.</p>
+</section>
+<section class="panel"><h2>Experimental AI research</h2>
+<p>There is <strong>no preinstalled, independently validated AI authorship detector</strong>. An optional research panel can load a model you have trained yourself on appropriately licensed, independently labeled data. Scores are explicitly marked experimental, and ineligible text is classified <strong>inconclusive</strong>. The research model is not a percentage of AI-written words or proof of authorship.</p>
+<p>Researchers can follow the model and benchmark documentation in <a class="privacyLink" href="https://github.com/bimspecialist/Text-Integrity-Studio/tree/main/evaluation">GitHub evaluation/</a>.</p>
+</section>
+<section class="panel" lang="ar" dir="rtl"><h2>دليل الاستخدام بالعربية</h2>
+<h3>فحص Word</h3><p>ارفع ملف <strong>DOCX</strong>، وراجع التقرير، واختر اقتراحات التحسين من مختبر الكتابة. اترك تعقّب التعديلات مفعّلًا ثم نزّل نسخة Word جديدة. افتحها في Microsoft Word وراجع التعديلات قبل اعتمادها.</p>
+<h3>فحص PDF والتعرف الضوئي</h3><p>ارفع ملف PDF؛ يتم استخراج النص محليًا في متصفحك. إن كانت بعض الصفحات صورًا، حدد نطاق الصفحات واللغة العربية أو الإنجليزية ثم اضغط زر OCR. بعد اكتماله راجع النص وصدّره بصيغة TXT.</p>
+<h3>نسبة AI</h3><p>لا توجد نسبة موثوقة يمكنها وحدها إثبات كاتب النص. لا يعرض الموقع درجة بحثية إلا عندما ترفع بنفسك نموذجًا تجريبيًا، مع توضيح أن النتيجة غير معتمدة علميًا خارج نطاق اختبار النموذج.</p>
+<h3>الخصوصية</h3><p>الملفات تُعالج على جهازك. لا يتم إرسال النص تلقائيًا إلى أدوات خارجية. يمكنك استخدام نسخة Python المحلية لمراجعة لغوية متقدمة بموديل Ollama محلي بشرط تثبيته على جهازك.</p>
+</section>
+<footer class="footer"><span>Text Integrity Studio</span><a class="privacyLink" href="privacy.html">Privacy / الخصوصية</a></footer>
+</main></body></html>
