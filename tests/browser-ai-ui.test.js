@@ -75,7 +75,7 @@ async function run(){
   assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
   assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('15.5%'),'Second independent model remains inspectable');
 
-  assert((await page.$eval('#aiShort',n=>n.textContent)).includes('not authorship probability'),'Uncalibrated research interpretation always visible');
+  assert((await page.$eval('#aiLegal',n=>n.textContent)).includes('not a percentage of AI-authored words'),'Explicit uncalibrated-model disclaimer remains visible regardless of result wording');
   assert.equal(thirdParty.length,0,'No remote executable/model fetch in mock before live model download');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
