@@ -21,6 +21,11 @@ jobs:
           node --check tests/word-docx.test.js
       - name: Install test XML parser
         run: npm install --no-save --no-package-lock --ignore-scripts @xmldom/xmldom@latest puppeteer-core@latest
+      - name: Bilingual writing engine tests
+        run: |
+          node --check docs/writing-rules.js
+          node --check docs/writing-lab.js
+          node tests/writing-rules.test.js
       - name: Word DOCX safe-clean integration tests
         run: node tests/word-docx.test.js
       - name: Real browser Word workflow smoke test
