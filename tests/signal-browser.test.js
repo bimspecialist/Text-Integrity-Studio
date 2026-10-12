@@ -20,6 +20,7 @@ async function run(){
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
   await page.waitForSelector('#researchSignal');
   assert(await page.$eval('#signalGo',e=>e.disabled),'No model, so AI score unavailable');
+  await page.click('#researchTools > summary');
   await (await page.$('#signalModelFile')).uploadFile(file);
   await page.waitForFunction(()=>!document.getElementById('signalGo').disabled);
   await page.$eval('#source',el=>{el.value='the '.repeat(95);el.dispatchEvent(new Event('input',{bubbles:true}));});

@@ -21,6 +21,8 @@ jobs:
           node --check docs/pdf-support.js
           node --check docs/experimental-signal.js
           node --check docs/experimental-signal-ui.js
+          node --check docs/simple-ui.js
+          node --check tests/simple-ui-browser.test.js
           node --check docs/vendor/jszip.min.js
           node --check tests/word-docx.test.js
       - name: Install test XML parser
@@ -42,6 +44,8 @@ jobs:
         run: |
           node --check tests/browser-smoke.test.js
           node tests/browser-smoke.test.js
+      - name: Simplified front page progressive disclosure regression
+        run: node tests/simple-ui-browser.test.js
       - name: Real Chrome PDF.js parsing, privacy and responsive workflow
         run: |
           test -s docs/vendor/pdfjs/pdf.mjs

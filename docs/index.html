@@ -1,24 +1,129 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self'"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="Free private text integrity audit, Unicode forensic scan, cleanup and writing-quality analysis"><title>Text Integrity Studio — Private Text Workbench</title><link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="app.css"></head>
-<body><div class="shell">
-<header><div class="brand"><span class="logo">T.</span><span>Text Integrity Studio</span></div><div class="top"><span class="tag" id="localtag">● Local & private</span><button type="button" id="language" aria-label="Change interface language">العربية / EN</button></div></header>
-<main><section class="hero"><div class="eyebrow">TEXT FORENSICS / CLEANUP / WRITING QUALITY</div><h1 id="heading">Understand your text.<br><span>Make every character count.</span></h1><p id="subtitle">An advanced, transparent text workbench: inspect invisible characters, audit writing quality, preview cleanup, and export documented findings. No upload server. No invented AI percentages.</p><div class="chips"><span id="chip1">Free forever</span><span id="chip2">Works inside your browser</span><span id="chip3">Arabic + English</span><span id="chip4">No accounts or API keys</span></div></section>
-<div class="workspace"><div>
-<section class="panel"><div class="panel-heading"><h2 id="titleInput">01 · Your text</h2><label><span id="loadText">Open TXT / MD</span> <input type="file" id="file" accept=".txt,.md,.csv,.json,text/plain"></label></div>
-<textarea id="source" placeholder="Paste your text here, or drag a TXT / MD file into this area." aria-label="Text input" spellcheck="true"></textarea>
-<div class="metrics"><div class="metric"><small id="m1">Words</small><b id="words">0</b></div><div class="metric"><small id="m2">Characters</small><b id="chars">0</b></div><div class="metric"><small id="m3">Sentences</small><b id="sentences">0</b></div><div class="metric"><small id="m4">Flags</small><b id="flags">0</b></div></div>
-<div class="row"><button class="primary" id="scan">Analyze text</button><button id="sample">Try sample</button><button id="clear">Clear</button><button id="undo" disabled>Undo</button><button id="redo" disabled>Redo</button></div></section>
-<section class="panel"><div class="panel-heading"><h2 id="titleClean">02 · Cleanup studio</h2><span class="small safe" id="previewOnly">Preview first · No original overwritten</span></div>
-<div class="row between"><label id="modeLabel" for="mode">Cleaning mode</label><select id="mode"><option value="safe">Safe · recommended</option><option value="thorough">Thorough · check Arabic/emoji</option></select></div>
-<p class="notice" id="modeNotice">Safe mode removes selected invisible characters while retaining bidirectional markers used in Arabic/English and emoji joiners. Thorough mode may change appearance.</p>
-<div class="row"><button id="preview" class="primary">Preview cleanup</button><button id="copy">Copy result</button><button id="download">Export clean TXT</button></div>
-<div id="resultbox" hidden><div class="diff"><div><label id="beforeLabel">Original fragment</label><div class="before" id="before"></div></div><div><label id="afterLabel">Cleaned fragment</label><div class="after" id="after"></div></div></div><textarea class="result" id="result" readonly aria-label="Cleaned text"></textarea><div class="row"><button class="primary" id="apply">Apply cleanup</button><span id="changeInfo" class="small"></span></div></div></section>
-</div><div>
-<section class="panel"><div class="panel-heading"><h2 id="titleAudit">03 · Inspection report</h2><span id="checkedLabel" class="small">No scan yet</span></div>
-<div class="tabs" role="group" aria-label="Inspection categories"><button id="tabUnicode" class="active" data-tab="unicode">Unicode</button><button id="tabQuality" data-tab="quality">Writing quality</button><button id="tabSecurity" data-tab="security">Security</button></div>
-<div id="findingList" aria-live="polite"><p class="empty">Paste text and press Analyze to see your report.</p></div><div class="row"><button id="json">Export JSON</button><button id="markdown">Export Markdown</button></div></section>
-<section class="panel"><h3 id="limitationsTitle">AI origin & watermarks</h3><p class="notice" id="limitations">Hidden Unicode is not proof of an AI watermark. AI detector scores, when provided by classifiers, are uncertain and are not percentages of text written by AI. This website does not fabricate such a score or remove statistical watermarks.</p><div class="mini" id="privacyNote">Your text is processed locally on this page; no remote APIs or analytics scripts are used.</div></section>
-</div></div></main>
-<footer class="footer"><span>Text Integrity Studio · Open-source tools for inspecting documents</span><span id="footerText">Private by design · Verify changes before applying</span><a class="privacyLink" href="help.html">Help / المساعدة</a><a class="privacyLink" href="privacy.html">Privacy / الخصوصية</a></footer></div><div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js"></script><script src="vendor/jszip.min.js"></script><script src="writing-rules.js"></script><script src="docx-editor.js"></script><script src="word-docx.js"></script><script src="writing-lab.js"></script><script src="pdf-support.js"></script><script src="experimental-signal.js"></script><script src="experimental-signal-ui.js"></script></body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'none'; worker-src 'self'">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
+<title>Text Integrity Studio — Check and Improve Documents</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<div class="shell">
+<header>
+  <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity Studio</span></div>
+  <div class="top"><span class="tag" id="localtag">● Private · On your device</span><button type="button" id="language" aria-label="Change interface language">العربية</button></div>
+</header>
+<main>
+  <section class="hero" aria-labelledby="heading">
+    <h1 id="heading">Check and improve your text.</h1>
+    <p id="subtitle">Paste text or upload a Word, PDF, or TXT file. Check it, review improvements, then save a copy.</p>
+  </section>
+  <div class="steps" aria-label="Three easy steps">
+    <span id="stepInput">1 · Add text</span>
+    <span id="stepScan">2 · Check</span>
+    <span id="stepSave">3 · Review and save</span>
+  </div>
+  <div class="workspace">
+    <div class="workspace-main">
+      <section class="panel input-panel" id="inputPanel" aria-labelledby="titleInput">
+        <div class="panel-heading">
+          <h2 id="titleInput">1 · Add your text or file</h2>
+        </div>
+        <label class="file-input" for="file">
+          <span class="file-icon" aria-hidden="true">↥</span>
+          <span class="file-input-description">
+            <strong id="loadText">Choose a Word, PDF, or text file</strong>
+            <small id="fileDescription">or paste text in the box below · stays on this device</small>
+          </span>
+          <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.json,text/plain" aria-describedby="fileDescription">
+        </label>
+        <label for="source" class="source-label" id="sourceLabel">Text to check</label>
+        <textarea id="source" placeholder="Paste your text here…" aria-label="Text input" spellcheck="true"></textarea>
+        <div class="input-summary" aria-live="polite" id="quickInputState">0 words · Ready to check</div>
+        <div class="row main-actions">
+          <button class="primary" id="scan" type="button">Check my text</button>
+          <button id="sample" type="button">Try an example</button>
+          <button id="clear" type="button">Clear</button>
+        </div>
+        <details class="tool-details editor-options" id="editorOptions">
+          <summary id="editorMore">Text statistics and undo / redo</summary>
+          <div class="metrics">
+            <div class="metric"><small id="m1">Words</small><b id="words">0</b></div>
+            <div class="metric"><small id="m2">Characters</small><b id="chars">0</b></div>
+            <div class="metric"><small id="m3">Sentences</small><b id="sentences">0</b></div>
+            <div class="metric"><small id="m4">Flags</small><b id="flags">0</b></div>
+          </div>
+          <div class="row"><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
+        </details>
+      </section>
+
+      <details class="tool-details tool-disclosure" id="cleanupTools">
+        <summary><span id="cleanupSummary">Clean hidden characters</span><small id="cleanupDescription">Preview before changing anything</small></summary>
+        <section class="panel" aria-labelledby="titleClean">
+          <div class="panel-heading"><h2 id="titleClean">Cleanup</h2><span class="small safe" id="previewOnly">Preview first · Original preserved</span></div>
+          <div class="row between"><label id="modeLabel" for="mode">Cleaning mode</label><select id="mode"><option value="safe">Safe · recommended</option><option value="thorough">Thorough · review Arabic and emoji</option></select></div>
+          <p class="notice" id="modeNotice">Safe mode removes selected invisible characters. Thorough mode can affect Arabic and emoji.</p>
+          <div class="row"><button id="preview" class="primary" type="button">Preview cleanup</button><button id="copy" type="button">Copy result</button><button id="download" type="button">Save clean TXT</button></div>
+          <div id="resultbox" hidden>
+            <div class="diff">
+              <div><label id="beforeLabel">Before</label><div class="before" id="before"></div></div>
+              <div><label id="afterLabel">After</label><div class="after" id="after"></div></div>
+            </div>
+            <textarea class="result" id="result" readonly aria-label="Cleaned text"></textarea>
+            <div class="row"><button class="primary" id="apply" type="button">Apply cleanup</button><span id="changeInfo" class="small"></span></div>
+          </div>
+        </section>
+      </details>
+    </div>
+    <div class="workspace-results">
+      <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
+        <div class="panel-heading"><h2 id="titleAudit">2 · Your results</h2><span id="checkedLabel" class="small">No check yet</span></div>
+        <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <div class="report-actions">
+          <button id="quickReview" class="primary" type="button" hidden>Review writing suggestions</button>
+          <button id="quickClean" type="button">Preview cleanup</button>
+        </div>
+        <details class="tool-details" id="reportMore">
+          <summary id="reportMoreLabel">View detailed findings</summary>
+          <div class="tabs" role="group" aria-label="Inspection categories">
+            <button id="tabUnicode" class="active" data-tab="unicode" type="button">Unicode</button>
+            <button id="tabQuality" data-tab="quality" type="button">Writing quality</button>
+            <button id="tabSecurity" data-tab="security" type="button">Security</button>
+          </div>
+          <div id="findingList" aria-live="polite"><p class="empty">Check text to see your report.</p></div>
+          <div class="row"><button id="json" type="button">Export JSON</button><button id="markdown" type="button">Export Markdown</button></div>
+        </details>
+      </section>
+      <details class="tool-details tool-disclosure" id="aboutResults">
+        <summary id="aboutSummary">About privacy and AI scores</summary>
+        <section class="panel">
+          <h3 id="limitationsTitle">AI origin and watermarks</h3>
+          <p class="notice" id="limitations">Invisible text is not proof of an AI watermark. The website does not invent AI authorship percentages or remove statistical watermarks.</p>
+          <p class="mini" id="privacyNote">The document is processed in your browser. No remote analysis service receives your text.</p>
+        </section>
+      </details>
+    </div>
+  </div>
+</main>
+<footer class="footer">
+  <span>Text Integrity Studio</span>
+  <span id="footerText">Review changes before saving</span>
+  <a class="privacyLink" href="help.html">Help / المساعدة</a>
+  <a class="privacyLink" href="privacy.html">Privacy / الخصوصية</a>
+</footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+<script src="vendor/jszip.min.js"></script>
+<script src="writing-rules.js"></script>
+<script src="docx-editor.js"></script>
+<script src="word-docx.js"></script>
+<script src="writing-lab.js"></script>
+<script src="pdf-support.js"></script>
+<script src="experimental-signal.js"></script>
+<script src="experimental-signal-ui.js"></script>
+<script src="simple-ui.js"></script>
+</body>
+</html>

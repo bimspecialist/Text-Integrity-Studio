@@ -12,3 +12,62 @@ button{border:none;border-radius:9px;padding:11px 16px;font-weight:650;cursor:po
 @media(max-width:840px){.columns{grid-template-columns:1fr}.shell{padding:15px 12px 35px}.panel{padding:16px}.hero{padding:24px 0 16px}}
 @media(max-width:460px){.selectors{grid-template-columns:1fr}.metrics{grid-template-columns:1fr}button{width:100%}.actions{flex-direction:column}}
 @media(prefers-reduced-motion:no-preference){button{transition:filter .15s ease}}
+
+
+/* Single-action document UI; optional settings are progressively disclosed. */
+.simple-mode .shell{max-width:1160px}
+.simple-mode .hero{padding:31px 0 18px}
+.simple-mode .hero h1{font-size:clamp(26px,3.8vw,42px);letter-spacing:-.7px;margin:0 0 9px}
+.simple-mode .hero p{line-height:1.65}
+.simple-mode .steps{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
+.simple-mode .steps span{background:#183149;border:1px solid #355774;border-radius:8px;padding:8px 11px;font-size:12px;font-weight:650;color:#d4e8fd}
+.simple-mode .top-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.simple-mode .top-actions .tool-link{color:#aed7f7;font-weight:600;font-size:13px;line-height:1.4;text-underline-offset:3px}
+.simple-mode .topbar{gap:18px;flex-wrap:wrap}
+.simple-mode .columns{grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr)}
+.simple-mode .panel{padding:21px;box-shadow:none;border-radius:14px}
+.simple-mode .panel h2{font-size:19px;margin-bottom:12px}
+.simple-mode .source-field{margin:10px 0}
+.simple-mode textarea{min-height:230px;height:230px}
+.simple-mode .file-picker{padding:13px;border:1px dashed #6993be;border-radius:10px;background:#183047;color:#e1f0ff}
+.simple-mode .file-picker input{padding:9px 0}
+.simple-mode .file-selection{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;background:#102b40;border:1px solid #38618b;border-radius:9px;padding:10px 12px;font-size:12px;overflow-wrap:anywhere}
+.simple-mode .file-selection .secondary{font-size:12px;padding:7px 10px}
+.simple-mode .advanced-options{border-top:1px solid #314e69;margin:15px 0 0}
+.simple-mode .advanced-options>summary{font-size:13px;font-weight:650;color:#bbd6f0;cursor:pointer;list-style:none;display:flex;align-items:center;min-height:42px;gap:9px}
+.simple-mode .advanced-options>summary::after{content:"+";margin-inline-start:auto;font-size:20px;font-weight:400;color:#89bff1}
+.simple-mode .advanced-options[open]>summary::after{content:"−"}
+.simple-mode .advanced-options>summary::-webkit-details-marker{display:none}
+.simple-mode .advanced-options .selectors{padding:6px 0;gap:0 12px}
+.simple-mode .advanced-options h3{margin-top:15px}
+.simple-mode .actions{margin:16px 0 8px}
+.simple-mode .actions .primary{min-width:168px}
+.simple-mode .score-banner{box-shadow:none;padding:19px}
+.simple-mode .score-banner strong{font-size:clamp(18px,2.6vw,25px)}
+.simple-mode .result-panel .notice{margin:12px 0}
+.simple-mode .result-panel .caution{margin:17px 0 0}
+.simple-mode .result-panel .metrics{margin:10px 0 18px}
+.simple-mode .preview-panel{margin-top:3px}
+.simple-mode .text-preview{max-height:540px}
+.simple-mode .notice.error{color:#ffe0e0;background:#502631;border:1px solid #c86f83}
+.simple-mode .footer{line-height:1.6}
+.simple-mode button:focus-visible,.simple-mode a:focus-visible,
+.simple-mode input:focus-visible,.simple-mode textarea:focus-visible,
+.simple-mode select:focus-visible,.simple-mode summary:focus-visible{
+ outline:3px solid #8cc8ff;outline-offset:3px
+}
+@media(max-width:840px){
+ .simple-mode .columns{grid-template-columns:1fr}
+ .simple-mode .panel{padding:16px}
+ .simple-mode .hero{padding:24px 0 15px}
+}
+@media(max-width:460px){
+ .simple-mode .steps{gap:5px}
+ .simple-mode .steps span{font-size:10px;padding:6px 7px}
+ .simple-mode .top-actions{gap:9px}
+ .simple-mode .top-actions .tool-link{font-size:12px}
+ .simple-mode .actions{display:grid;grid-template-columns:1fr 1fr}
+ .simple-mode .actions .primary{grid-column:1/-1}
+ .simple-mode .actions .secondary{grid-column:1/-1}
+ .simple-mode .result-panel .metrics{grid-template-columns:1fr}
+}
