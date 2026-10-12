@@ -68,8 +68,9 @@ def artifact(unit="document", lang="en", approved=True):
 
 
 def long_en(n=70):
-    return ("This controlled experiment reports how students examined water pressure, "
-            "compared documented values, and discussed engineering observations. " * n)
+    return (("This controlled experiment reports how students examined water pressure, compared documented values, and discussed engineering observations. "
+             "The result was reviewed. "
+             "In this detailed analysis, the instructors also checked different instrument readings and explained why supporting references should be retained. ") * n)
 
 
 def test_language_offsets_and_normalization():
