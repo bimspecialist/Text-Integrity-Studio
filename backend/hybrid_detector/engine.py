@@ -115,7 +115,7 @@ class HybridEngine:
         if len(families) < 3:
             reasons.append("Insufficient independent signal families; at least three required")
         variation = features.values.get("sentence_length_variation")
-        if variation is None or variation < 0.05:
+        if (artifact is None or artifact.unit != "sentence") and (variation is None or variation < 0.05):
             reasons.append("Insufficient within-text variation for a confident classification")
         if context in ("non_native", "formal") and (not artifact or not artifact.raw["validation"].get("group_audits_passed", False)):
             reasons.append("High false-positive-risk writing context lacks validated subgroup coverage")
@@ -127,7 +127,7 @@ class HybridEngine:
         if not reasons and artifact is not None:
             probability = artifact.score(features.values)
             confidence = (
-                "HIGH" if features.word_count >= 400 and len(families) >= 4
+                "HIGH" if artifact.unit == "document" and features.word_count >= 400 and len(families) >= 4
                 and variation is not None and variation >= 0.12
                 and context == "general" else "MEDIUM"
             )
