@@ -244,7 +244,7 @@ function updateWord(){
  $('wordTrackLabel').textContent=lang==='ar'?'تتبّع تعديلات Word (قابل للمراجعة داخل Microsoft Word)':'Track editorial changes in Word (review/accept in Microsoft Word)';
  $('wordEditorialCount').textContent=(lang==='ar'?'تعديلات Word المحددة: ':'Word edits selected: ')+editorialSelection.size;
  $('wordPreview').textContent=tr('preview');$('wordCopy').textContent=lang==='ar'?'نسخ نص Word':'Copy Word text';$('wordExternal').textContent=lang==='ar'?'كشف AI خارجي اختياري ↗':'Optional external AI detector ↗';$('wordSafe').textContent=tr('safe');$('wordReadOnly').textContent=tr('readOnly');$('wordWarning').textContent=tr('warning');
- $('loadText').textContent=tr('pick');if(session){
+ $('loadText').textContent=lang==='ar'?'اختر Word أو PDF أو TXT':'Choose Word, PDF, or TXT';if(session){
     const list=$('wordStats');list.replaceChildren();
     const stats=[
        [tr('parts'),session.parts.length],[tr('hidden'),session.hidden],[tr('revision'),session.revisions],[tr('watermark'),session.watermarks]
