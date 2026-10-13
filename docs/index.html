@@ -124,16 +124,27 @@
     </div>
     <div class="workspace-results">
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
-        <div class="panel-heading"><h2 id="titleAudit">AI detector</h2><span id="checkedLabel" class="small">Waiting for a scan</span></div>
+        <div class="panel-heading v5-results-heading">
+          <div><h2 id="titleAudit">Analysis Results</h2><p id="v5ResultsSubtitle">AI model evidence and writing insights</p></div>
+          <span id="checkedLabel" class="small">Waiting for analysis</span>
+        </div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
         <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
-          <div class="studio-ai-quick-top">
-            <div class="studio-ai-quick-result"><small id="studioAiQuickLabel">AI model signal · research only</small><strong id="studioAiQuickValue" aria-live="polite">—</strong><span id="studioAiConfidence">Research model · not calibrated</span></div>
-            <span id="studioAiQuickBadge">EXPERIMENTAL</span>
+          <div class="v5-signal-heading">
+            <strong id="studioAiQuickLabel">AI model signal</strong><span id="studioAiQuickBadge">EXPERIMENTAL</span>
+          </div>
+          <div class="v5-signal-layout">
+            <div id="v5SignalRing" class="v5-signal-ring">
+              <div class="v5-ring-inner"><strong id="studioAiQuickValue" aria-live="polite">—</strong><span id="v5RingCaption">Research signal</span></div>
+            </div>
+            <div class="v5-signal-description">
+              <strong id="v5ResultHeadline">Ready to analyze</strong>
+              <p id="studioAiQuickNote">Paste English text of at least 120 words to run the optional research model.</p>
+              <span id="studioAiConfidence">Not a calibrated authorship probability</span>
+            </div>
           </div>
           <button id="studioAiQuickRun" type="button">Analyze with on-device model</button>
           <progress id="studioAiQuickProgress" max="100" hidden aria-label="Actual model download progress"></progress>
-          <p id="studioAiQuickNote">English text, 120+ words. Model downloads only when requested; scores are not authorship probabilities.</p>
           <p id="studioAiQuickStatus" role="status" aria-live="polite" class="studio-ai-status"></p>
         </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
