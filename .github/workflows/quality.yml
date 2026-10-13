@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Source-accurate local bilingual Humanize advice
+        run: |
+          node --check tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/natural-writing-advisor.test.js
       - name: One canonical browser Analyze lifecycle and secure evidence
         run: |
           node --check tests/analysis/analysis-integration-browser.test.cjs
