@@ -131,10 +131,12 @@ function summarizeWindows(windows,values,options={}){
 function consensus(primary,secondary=null,options={}){
  if(!primary||!Number.isFinite(primary.score))throw new TypeError('Primary model output required');
  const flags=[];
- const primaryCoverage=Number.isFinite(primary.coverageRawPercent)?primary.coverageRawPercent:primary.coverage;
- const secondaryCoverage=secondary&&(Number.isFinite(secondary.coverageRawPercent)?secondary.coverageRawPercent:secondary.coverage);
- const primaryDispersion=Number.isFinite(primary.dispersionRaw)?primary.dispersionRaw:primary.dispersion;
- const secondaryDispersion=secondary&&(Number.isFinite(secondary.dispersionRaw)?secondary.dispersionRaw:secondary.dispersion);
+ const exactOrDisplayed=(displayed,raw,decimals)=>
+  Number.isFinite(raw)&&Number.isFinite(displayed)&&round(raw,decimals)===displayed?raw:displayed;
+ const primaryCoverage=exactOrDisplayed(primary.coverage,primary.coverageRawPercent,1);
+ const secondaryCoverage=secondary&&exactOrDisplayed(secondary.coverage,secondary.coverageRawPercent,1);
+ const primaryDispersion=exactOrDisplayed(primary.dispersion,primary.dispersionRaw,3);
+ const secondaryDispersion=secondary&&exactOrDisplayed(secondary.dispersion,secondary.dispersionRaw,3);
  if(primaryCoverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('LOW_DOCUMENT_COVERAGE');
  if(primary.consistency==='MIXED_PASSAGES')flags.push('CONFLICTING_PASSAGES');
  if(primaryDispersion>.25)flags.push('HIGH_SEGMENT_VARIANCE');
