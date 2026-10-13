@@ -108,6 +108,7 @@ async function run(){
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.$eval('#aiBadge',n=>n.textContent)).includes('تجريبي'));
   await page.setViewport({width:390,height:844});
+  await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:path.join(output,'workspace-mobile-rtl.png'),fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
   assert(overflow<=8,'Arabic phone viewport fits without horizontal scrolling');
