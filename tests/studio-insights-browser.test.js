@@ -75,6 +75,19 @@ async function run(){
   assert((await page.$eval('#studioReviewTitle',n=>n.textContent)).includes('اقتراح'));
   await page.setViewport({width:390,height:844});
   await page.evaluate(()=>window.scrollTo(0,0));
+  const mobileGeometry=await page.evaluate(()=>{
+   const box=id=>{const r=document.getElementById(id).getBoundingClientRect();
+    return {top:r.top+scrollY,bottom:r.bottom+scrollY,width:r.width};};
+   return {input:box('inputPanel'),report:box('reportPanel'),writing:box('writingTools'),
+    overflow:document.documentElement.scrollWidth-innerWidth};
+  });
+  assert(mobileGeometry.input.top<mobileGeometry.report.top,
+   'Editor must precede detector on every phone viewport: '+JSON.stringify(mobileGeometry));
+  assert(mobileGeometry.input.bottom<=mobileGeometry.report.top+5,
+   'Editor must not overlap AI detector on phone: '+JSON.stringify(mobileGeometry));
+  assert(mobileGeometry.report.bottom<=mobileGeometry.writing.top+5,
+   'Optional writing tools follow the AI results without overlap: '+JSON.stringify(mobileGeometry));
+
   await page.screenshot({path:path.join(output,'studio-v4-mobile-rtl.png'),fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
   assert(overflow<=8,'Mobile right-to-left editor fits narrow screens');
