@@ -249,3 +249,12 @@ html[dir="rtl"] .v5-brand-text{text-align:start}
 html[dir="rtl"] .v5-signal-description{text-align:start}
 html[dir="rtl"] .v5-breakdown-row{direction:rtl}
 @media(prefers-reduced-motion:reduce){#scanAI{transition:none!important}}
+
+/* Desktop navigation labels stay visible, matching the approved wide layout. */
+@media(min-width:1151px){
+ .side-navigation .nav-item>span:last-child{
+  position:static!important;clip:auto!important;width:auto!important;
+  height:auto!important;overflow:visible!important;white-space:normal!important
+ }
+ #studioReviewCards{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
