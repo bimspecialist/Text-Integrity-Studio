@@ -97,11 +97,17 @@ function expectRejected(raw,meta=makeMeta(),document=snapshot){
 
 (function test_conflicting_score_status_and_coverage(){
  const conflicting=makeRaw();conflicting.status='MODEL_DISAGREEMENT';expectRejected(conflicting);
+ const missingModel=makeRaw();missingModel.status='MODEL_DISAGREEMENT';missingModel.score=null;expectRejected(missingModel);
  const nonfinite=makeRaw();nonfinite.score=null;expectRejected(nonfinite);
  const below=makeRaw();below.primary.coverageRawPercent=59.9;below.primary.coverage=59.9;
  expectRejected(below);
- const disagreement=makeRaw();disagreement.status='MODEL_DISAGREEMENT';disagreement.score=null;
- const abstained=validateEvidence(disagreement,snapshot,makeMeta());
+ const disagreement=makeRaw();
+ disagreement.secondary={...makePrimary(),model_id:SECONDARY,revision:SECONDARY_REV,score:5};
+ disagreement.models=[disagreement.primary,disagreement.secondary];
+ disagreement.deepRequested=true;disagreement.status='MODEL_DISAGREEMENT';disagreement.score=null;
+ const disagreementMeta={...makeMeta(),expectedSecondaryId:SECONDARY,expectedSecondaryRevision:SECONDARY_REV,
+  scanOptions:{deep:true,full:false,context:'general'}};
+ const abstained=validateEvidence(disagreement,snapshot,disagreementMeta);
  assert.equal(abstained.ok,true);
  assert.equal(abstained.outcome.kind,'INCONCLUSIVE');
  assert.equal(abstained.outcome.signal,null);
