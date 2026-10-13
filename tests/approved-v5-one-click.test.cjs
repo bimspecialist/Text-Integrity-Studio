@@ -46,7 +46,7 @@ async function run(){
   assert((await page.$eval('.v5-topbar',n=>n.textContent)).includes('Text Integrity Studio'));
   assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'—');
   const initial=await page.evaluate(()=>{
-   const visible=id=>{const el=document.getElementById(id);return el&&getComputedStyle(el).display!=='none'&&el.getClientRects().length>0;};
+   const visible=id=>{const el=document.getElementById(id);return !!el&&!el.closest('details:not([open])')&&getComputedStyle(el).display!=='none'&&el.getClientRects().length>0;};
    return {
     actionButtons:['scanAI','scan','sample','clear','studioAiQuickRun','studioOpenWritingLab','studioExportTop','quickClean','aiRun']
       .filter(visible),
