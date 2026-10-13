@@ -330,8 +330,9 @@
   $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
   // A single explicit user action runs safe writing review first, then the
   // optional English model only when eligibility checks in ai-score-ui pass.
+  // The one AnalysisController runs local writing review first, then the
+  // optional eligible English detector. Never start two competing scans.
   $('scanAI').addEventListener('click',()=>{
-   if(!state.aiRunning)$('scan')?.click();
    $('aiRun')?.click();
   });
   $('studioExportTop').addEventListener('click',()=>{$('studioExportReview')?.click();});
