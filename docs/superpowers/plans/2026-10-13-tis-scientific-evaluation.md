@@ -97,9 +97,9 @@
 - Modify: backend/requirements-research.txt only if necessary (prefer pinned existing scikit-learn 1.9.1)
 
 **Interfaces:**
-- Produces fit_research_calibrator(calibration_rows:list[dict],method:'platt'|'isotonic'='platt')->CalibratorArtifact and evaluate_calibration(artifact,validation_rows:list[dict])->dict.
+- Produces fit_research_calibrator(calibration_rows:list[dict],split_manifest:dict,method:'platt'|'isotonic'='platt')->CalibratorArtifact and evaluate_calibration(artifact,validation_rows:list[dict],split_manifest:dict)->dict.
 - Artifact holds model revision, calibration split hash, fitting method, library revision and aggregate metadata. It does NOT overwrite browser ONNX weights, thresholds or frontend signal display.
-- Fitting must reject any record sharing author/source/article/prompt/content group with VALIDATION or RELEASE_TEST or having uncertain labels; never read the RELEASE_TEST manifest in fit_research_calibrator.
+- Fitting must reject any record sharing author/source/article/prompt/content group with VALIDATION or RELEASE_TEST or having uncertain labels, based on non-text group hashes in split_manifest. The fitter must not receive RELEASE_TEST source text, labels or prediction scores.
 
 - [ ] **Step 1: Write failing tests** calibration_disjoint_from_release_test, reused_prompt_group_rejected, insufficient_labels_blocks_fit, calibrated_brier_ece_are_labeled_research, no_implicit_ui_deployment and unchanged_raw_model_signal. Use synthetic logistic/isotonic fixtures with known scores and splits.
 - [ ] **Step 2: Run** python3 -m unittest discover -s tests -p 'test_calibration_validation.py' -v. Expected: FAIL because calibration_validation.py is missing.
