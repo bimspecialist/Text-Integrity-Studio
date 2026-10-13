@@ -56,6 +56,27 @@ Generator breakdown (8 claimed samples per generator):
 
 These numbers are far too small and prompt-correlated to justify a generator leaderboard or a general sensitivity claim.
 
+## What the public UI actually shows — selective evidence audit
+
+A second **real browser ONNX inference run** now records the browser's *actual report status and visible research signal*, in addition to the original raw TMR classifier output. Source and model revisions are unchanged. This does not create new ground-truth labels or prove a better detector.
+
+Evidence: [real GitHub Actions research run 38356572613](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38356572613), 104 source-documented public examples. Benchmark records contain numeric diagnostics and provenance only, **not document text**.
+
+| Browser outcome | Human source-labeled (64) | AI source-labeled (40) | Total |
+|---|---:|---:|---:|
+| Uncalibrated research signal displayed | 61 | 33 | **94** |
+| Whole-document signal withheld / inconclusive | 3 | 7 | **10** |
+| Displayed raw signal >=80% | 5 | 29 | **34** |
+
+- **Selective abstention:** 10/104 (9.6%) texts withheld an overall score; 3/64 human-labeled and 7/40 AI-labeled. They are **not** classified as human or treated as correct negatives.
+- **Visible high-signal alerts:** 5/64 human-labeled texts (7.8%) and 29/40 AI-labeled texts (72.5%) from the *whole* external cohort. These happened to equal the previous raw model threshold counts on this corpus; **no lower false-positive count was demonstrated**.
+- **Conditional-on-displaying rates:** 5/61 (8.2%) of assessed human texts and 29/33 (87.9%) of assessed AI texts. These denominators are selected by the model's own abstention rules and **must not** be promoted as overall sensitivity, calibration or fairness.
+- **95% Wilson upper bound for visible human high alerts:** 17.0% for all 64 labeled human texts; 17.8% if restricted to the 61 non-abstained texts. Neither meets a low false-alarm release gate.
+- **Domain disparities:** academic cohort had 3/53 withheld overall; encyclopedic cohort had 7/51 withheld. Model-family abstentions are especially high for the publisher-labeled Claude Opus 5 subset (5/8), while the Qwen 3.8 subset had 2/8 withheld. Each family contains only eight source-labeled cases; no generator ranking is justified.
+- **Scientific conclusion:** the UI's conservative guardrails make unresolved evidence explicit. This evaluation cannot establish that abstention improves discrimination or reduces false positives, and does not authorize calibrated AI authorship percentages.
+
+The benchmark now fails closed on partial or contradictory reported UI evidence, keeps historical raw-only corpora explicitly marked `NOT_RECORDED`, and independently verifies every recorded model checkpoint revision against the pinned evaluation revision. Actual raw score distributions, uncertainty, sampling coverage, and abstention must be interpreted separately.
+
 ## Interpretation and comparison with HC3
 
 The earlier weak-label HC3 sample produced **13/24 human false high-alerts (54.2%)**, versus 5/64 (7.8%) on this unrelated 2026 corpus. These data were sampled from different distributions, with different writing genres and source conventions. It is **not evidence that the underlying classifier became more accurate** between tests. The difference illustrates precisely why training-set and domain shifts undermine simplistic percentage comparisons.
