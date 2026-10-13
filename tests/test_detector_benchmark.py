@@ -29,6 +29,14 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(report["observed_fpr_at_80"],0)
         self.assertGreater(report["upper_95_fpr_at_80"],0.1)
         self.assertEqual(report["observed_tpr_at_80"],1)
+        self.assertEqual(report["confusion_matrix_at_80"],{
+            "true_positive":20,"false_positive":0,"true_negative":20,"false_negative":0})
+        self.assertEqual(report["precision_at_80"],1)
+        self.assertEqual(report["recall_at_80"],1)
+        self.assertEqual(report["f1_at_80"],1)
+        self.assertEqual(report["observed_fnr_at_80"],0)
+        self.assertLess(report["precision_wilson_95_interval_at_80"][0],1)
+        self.assertLess(report["recall_wilson_95_interval_at_80"][0],1)
         self.assertEqual(report["domain_audit"]["engineering"]["ai"],20)
         self.assertEqual(report["domain_audit"]["engineering"]["human"],20)
         self.assertEqual(report["domain_audit"]["engineering"]["observed_tpr_at_80"],1)
@@ -37,6 +45,20 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(report["release_readiness"],"NOT_APPROVED")
         self.assertAlmostEqual(ece([0,1],[.1,.9]),.1)
         self.assertEqual(auc([0,1],[.5,.5]),.5)
+
+    def test_partial_errors_have_correct_confusion_and_uncertainty(self):
+        rows=self.samples()
+        rows[0]["score"]=95   # one false alert on a human text
+        rows[20]["score"]=5   # one missed AI text
+        report=evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        self.assertEqual(report["confusion_matrix_at_80"],{
+            "true_positive":19,"false_positive":1,"true_negative":19,"false_negative":1})
+        self.assertAlmostEqual(report["precision_at_80"],19/20)
+        self.assertAlmostEqual(report["recall_at_80"],19/20)
+        self.assertAlmostEqual(report["f1_at_80"],19/20)
+        self.assertAlmostEqual(report["observed_fnr_at_80"],1/20)
+        self.assertLess(report["fnr_wilson_95_interval_at_80"][0],1/20)
+        self.assertGreater(report["fnr_wilson_95_interval_at_80"][1],1/20)
 
     def test_generator_family_audit_keeps_small_sample_uncertainty(self):
         rows=self.samples()
