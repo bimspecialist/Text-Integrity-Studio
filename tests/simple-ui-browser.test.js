@@ -29,9 +29,11 @@ async function run(){
    await page.$eval('#scan',button=>button.click());
    await page.waitForFunction(()=>document.querySelectorAll('#labResults .writing-card').length>0 && !document.getElementById('quickReview').hidden);
    assert.equal(await page.$eval('#reportMore',el=>el.open),false,'Detailed report remains optional after check');
+   await page.$eval('#aiDetectorTechnical',el=>{el.open=true;});
    await page.click('#reportMore > summary');
    assert.equal(await page.$eval('#reportMore',el=>el.open),true,'Users can reveal every detailed finding on demand');
    assert((await page.$eval('#quickReport',el=>el.textContent)).includes('suggestions'),'One action checks spelling/clarity');
+   await page.$eval('#v5Toolbox',el=>{el.open=true;});
    await page.$eval('#quickReview',button=>button.click());
    assert.equal(await page.$eval('#writingTools',el=>el.open),true,'Review opens only on demand');
    await page.click('#labPreview');
