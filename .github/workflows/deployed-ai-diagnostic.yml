@@ -10,14 +10,18 @@ on:
       - 'docs/index.html'
       - 'docs/studio-insights-ui.js'
   workflow_dispatch:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
 permissions:
   contents: read
 jobs:
   production-baseline:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     # The public GitHub Pages site remains on main until the PR is merged.
     # This checks the old live build for root-cause information, not the PR's preview.
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
     timeout-minutes: 9
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +33,7 @@ jobs:
       - name: Exercise published domain and save runtime status
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ai-production
+          TIS_REQUIRE_V4: ${{ github.event_name != 'pull_request' }}
         run: node tests/deployed-ai-runtime.test.cjs
       - name: Preserve sanitized diagnostics and screenshot
         if: always()
