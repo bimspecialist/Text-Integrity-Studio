@@ -150,6 +150,14 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
         if group in groups and groups[group]!=str(row.get("split","test")):
             raise ValueError("Group leakage across test splits")
         groups[group]=str(row.get("split","test"))
+    revisions_present = ["model_revision" in row for row in rows]
+    if any(revisions_present) and not all(revisions_present):
+        raise ValueError("Partial model revision evidence: each record must identify the inference checkpoint")
+    revision_audit = "NOT_RECORDED"
+    if all(revisions_present):
+        if any(not isinstance(row["model_revision"], str) or row["model_revision"] != revision for row in rows):
+            raise ValueError("Model revision mismatch: cannot aggregate unpinned or mixed checkpoints")
+        revision_audit = "ALL_RECORDS_MATCH"
     y=[int(row["label"]=="ai") for row in rows]
     predictions=[float(row["score"])/100 for row in rows]
     human=sum(v==0 for v in y);machine=sum(y)
@@ -188,7 +196,7 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
         }
     result={
       "system":"TIS browser TMR model",
-      "model_revision":revision,"benchmark":expected_benchmark,
+      "model_revision":revision,"model_revision_audit":revision_audit,"benchmark":expected_benchmark,
       "ground_truth":"PUBLIC_DATASET_AUTHORSHIP_CLAIMS_NOT_INDEPENDENTLY_VERIFIED",
       "license_audit":"REQUIRED",
       "samples":len(rows),"human_n":human,"ai_n":machine,
