@@ -131,9 +131,12 @@ function result(snapshot,{lowCoverage=false,deep=false,full=false}={}){
  h.clock.advance(150000);
  h.bridge.emit('PROGRESS',third,{stage:'DOWNLOADING',percent:10});
  h.clock.advance(150000);
- assert.notEqual(h.controller.getState().status,'ERROR','progress extends inactivity only');
- h.clock.advance(240000);
- assert.equal(h.controller.getState().status,'ERROR','absolute cap cannot be defeated by progress');
+ h.bridge.emit('PROGRESS',third,{stage:'ANALYZING',percent:35});
+ h.clock.advance(150000);
+ h.bridge.emit('PROGRESS',third,{stage:'ANALYZING',percent:60});
+ assert.notEqual(h.controller.getState().status,'ERROR','progress can extend inactivity');
+ h.clock.advance(90000);
+ assert.equal(h.controller.getState().status,'ERROR','absolute cap cannot be defeated by repeated progress');
  assert.equal(h.controller.getState().errorCode,'MODEL_TIMEOUT');
  h.controller.dispose();
 })();
