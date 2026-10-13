@@ -85,11 +85,13 @@
           <p id="studioMapCoverage" class="studio-muted"></p>
         </details>
         <div class="row main-actions">
-          <button class="primary studio-ai-main-action" id="scanAI" type="button" aria-describedby="studioAiQuickNote">Scan AI text</button>
-          <button id="scan" type="button">Review writing</button>
-          <button id="sample" type="button">Try an example</button>
-          <button id="clear" type="button">Clear</button>
+          <button class="primary studio-ai-main-action" id="scanAI" type="button" aria-describedby="v5ClickNote studioAiQuickNote">
+            <span class="v5-action-spark" aria-hidden="true">✦</span>
+            <span class="v5-action-copy"><strong class="v5-action-title">Analyze Text</strong><small class="v5-action-sub">حلّل النص</small></span>
+            <span class="v5-action-arrow" aria-hidden="true">→</span>
+          </button>
         </div>
+        <p id="v5ClickNote" class="v5-click-note">Writing review runs locally. The English research detector downloads model files only when you choose Analyze Text.</p>
         <details class="tool-details editor-options" id="editorOptions">
           <summary id="editorMore">Text statistics and undo / redo</summary>
           <div class="metrics">
@@ -98,7 +100,7 @@
             <div class="metric"><small id="m3">Sentences</small><b id="sentences">0</b></div>
             <div class="metric"><small id="m4">Flags</small><b id="flags">0</b></div>
           </div>
-          <div class="row"><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
+          <div class="row"><button id="scan" type="button">Review writing</button><button id="sample" type="button">Try an example</button><button id="clear" type="button">Clear</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
         </details>
       </section>
 
