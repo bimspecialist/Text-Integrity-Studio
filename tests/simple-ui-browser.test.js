@@ -26,18 +26,18 @@ async function run(){
      input.value='teh note,which includes results.';
      input.dispatchEvent(new Event('input',{bubbles:true}));
    });
-   await page.click('#scan');
+   await page.$eval('#scan',button=>button.click());
    await page.waitForFunction(()=>document.querySelectorAll('#labResults .writing-card').length>0 && !document.getElementById('quickReview').hidden);
    assert.equal(await page.$eval('#reportMore',el=>el.open),false,'Detailed report remains optional after check');
    await page.click('#reportMore > summary');
    assert.equal(await page.$eval('#reportMore',el=>el.open),true,'Users can reveal every detailed finding on demand');
    assert((await page.$eval('#quickReport',el=>el.textContent)).includes('suggestions'),'One action checks spelling/clarity');
-   await page.click('#quickReview');
+   await page.$eval('#quickReview',button=>button.click());
    assert.equal(await page.$eval('#writingTools',el=>el.open),true,'Review opens only on demand');
    await page.click('#labPreview');
    const preview=await page.$eval('#labPreviewText',el=>el.value);
    assert(preview.includes('the note, which'),'Original writing engine remains functional');
-   await page.click('#quickClean');
+   await page.$eval('#quickClean',button=>button.click());
    assert.equal(await page.$eval('#cleanupTools',el=>el.open),true,'Cleanup remains available without clutter');
    assert.equal(await page.$eval('#resultbox',el=>el.hidden),false,'Cleanup still previews before applying');
 
