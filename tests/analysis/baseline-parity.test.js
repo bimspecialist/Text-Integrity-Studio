@@ -45,7 +45,7 @@ function sampler_and_coverage_are_unchanged(){
  assert.equal(normal.method,'REAL_TOKENIZER_NO_SILENT_TRUNCATION_STRATIFIED_SAMPLE');
  assert.deepEqual(core.sampleIndices(10,3),[0,5,9]);
 
- const giant='a'.repeat(1800)+' '+eligibleEnglish;
+ const giant='a'.repeat(3000)+' '+eligibleEnglish;
  const large=core.partitionWindows(giant,actualTokenizer,{maxSamples:12});
  assert(large.oversizeCount>=1,'unsupported long single words must be reported');
  assert(large.supportedCoverage<1);
