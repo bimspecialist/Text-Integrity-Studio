@@ -112,9 +112,15 @@
   // this ranking is independent of detector signals and predicted authorship.
   found.sort((a,b)=>((a.risk==='low'?0:1)-(b.risk==='low'?0:1))||
    a.start-b.start||a.end-b.end||a.id.localeCompare(b.id));
+  // Repeated low-risk typo matches must not hide whole-paragraph clarity
+  // observations. Reserve a small share of the visible review for guidance.
+  const manual=found.filter(s=>s.risk==='manual');
+  const low=found.filter(s=>s.risk==='low');
+  const manualSlots=Math.min(manual.length,limit>1?Math.max(1,Math.floor(limit/4)):0);
+  const chosen=[...low.slice(0,limit-manualSlots),...manual.slice(0,manualSlots)];
   return Object.freeze({
    revision:snapshot.revision,
-   suggestions:Object.freeze(found.slice(0,limit)),
+   suggestions:Object.freeze(chosen),
    isPartial:grammar.truncated===true||style.partial===true,
    disclaimer:RISK_DESC[loc]
   });
