@@ -244,6 +244,7 @@
  }
  function exportReview(){
   if(!source.value.trim()||!state.profile){set('studioExportStatus',t().noExport);return;}
+  const modelParagraphProjection=modelProjection();
   const report={
    application:'Text Integrity Studio',version:'TIS_STYLE_V1',createdAt:new Date().toISOString(),
    sourceMetadata:core.safeFileMetadata($('file')?.files?.[0]),
@@ -252,7 +253,7 @@
     model_id:state.model.model_id,
     revision:'Browser-provided model revision; see original AI evidence export',
     status:state.model.status,
-    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s,modelProjection())}))
+    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s,modelParagraphProjection)}))
    }:null,
    disclaimer:'No source text, original file name, copied passages or individual authorship inference is included. Local editable text stays in the current tab.'
   };
