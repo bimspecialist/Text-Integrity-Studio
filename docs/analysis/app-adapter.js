@@ -32,17 +32,22 @@
     session.replaceText(source.value,kind||current.sourceKind);
    }
   }
-  const bridge=root.TISInferenceBridge.createInferenceBridge({
-   documentObject:document,origin:location.origin,
-   container:resultsRoot,src:'ai-runtime.html',
-   onEvent:event=>{
-    // Import libraries sometimes modify the source without an 'input' event.
-    // A result cannot be consumed until the actual textarea matches snapshot.
-    syncSource();
-    if(event.op==='RESULT')rawResult={id:event.requestId,raw:event.payload?.result};
-    if(event.op==='PROGRESS')lastProgress=event.payload;
-   }
-  });
+  const sameOriginAvailable=/^https?:\/\//u.test(location.origin);
+  // The editor and Word tools also run from file:// previews. Never crash
+  // those offline pages or try to create a model iframe at opaque origins.
+  const bridge=sameOriginAvailable?
+   root.TISInferenceBridge.createInferenceBridge({
+    documentObject:document,origin:location.origin,
+    container:resultsRoot,src:'ai-runtime.html',
+    onEvent:event=>{
+     // A result cannot be accepted when the actual textarea has changed.
+     syncSource();
+     if(event.op==='RESULT')rawResult={id:event.requestId,raw:event.payload?.result};
+     if(event.op==='PROGRESS')lastProgress=event.payload;
+    }
+   }):
+   Object.freeze({run:()=>false,cancel:()=>false,subscribe:()=>()=>{},dispose:()=>{}});
+
   function showState(state){
    if(disposed)return;
    if(state.status==='EMPTY'||state.status==='READY'){
