@@ -1,6 +1,8 @@
 'use strict';
 /* Research benchmark only: runs the actual TMR ONNX browser model on a bounded,
- * public English HC3 holdout. HC3 authorship labels are public dataset claims,
+ * public English HC3 holdout or external 2026 source-documented dataset.
+ * All author labels are source claims, not independently verified; no document
+ * text is written to prediction artifacts. HC3 labels are public dataset claims,
  * not independently verified provenance. The optional GPT-2-era model was not
  * tested here: different data and pretrained training collisions require review.
  */
@@ -20,10 +22,26 @@ function choose(label,split,limit){
  filtered.sort((a,b)=>a.id.localeCompare(b.id));
  return filtered.slice(0,limit);
 }
-const selected=[
- ...choose('human','test',24),...choose('ai','test',24),
- ...(includeCalibration?[...choose('human','calibration',32),...choose('ai','calibration',32)]:[])
-];
+const EXTERNAL=process.env.TIS_BENCH_CORPUS_MODE==='external-2026';
+const selected=EXTERNAL
+ ? [...dataset].filter(r=>r.split==='test'&&r.language==='en').sort((a,b)=>
+     a.id.localeCompare(b.id))
+ : [
+   ...choose('human','test',24),...choose('ai','test',24),
+   ...(includeCalibration?[...choose('human','calibration',32),...choose('ai','calibration',32)]:[])
+ ];
+if(EXTERNAL){
+ const counts=new Map();
+ for(const r of selected){
+  if(!['human','ai'].includes(r.label)||!r.source_group||
+     typeof r.text!=='string'||r.text.split(/\s+/).length<120||
+     !r.label_provenance)
+    throw Error('Invalid external benchmark record or authorship provenance');
+  counts.set(r.domain,(counts.get(r.domain)||0)+1);
+ }
+ if(!counts.has('academic')||!counts.has('encyclopedic'))
+  throw Error('Independent evaluation must include both academic and encyclopedic domains');
+}
 const human=selected.filter(x=>x.label==='human').length;
 const machine=selected.filter(x=>x.label==='ai').length;
 if(human<12||machine<12)throw Error('Not enough consent/license-audited public weak-label samples for an informative pilot');
@@ -64,8 +82,9 @@ async function run(){
     group:sample.source_group,
     domain:sample.domain||'general',
     language:'en',split:sample.split,
-    benchmark:'HC3_PUBLIC_WEAK_LABELS',
-    label_provenance:'UNVERIFIED_PUBLIC_DATASET_CLAIM',
+    benchmark:EXTERNAL?'TEXTSIGHT_2026_EXTERNAL_VENDOR_BENCHMARK':'HC3_PUBLIC_WEAK_LABELS',
+    label_provenance:EXTERNAL?sample.label_provenance:'UNVERIFIED_PUBLIC_DATASET_CLAIM',
+    model_family:EXTERNAL?(sample.model_family||''):'',
     covered_percent:result.primary.coverage,
     model_revision:result.primary.revision
    });

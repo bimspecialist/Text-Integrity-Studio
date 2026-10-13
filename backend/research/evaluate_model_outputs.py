@@ -79,10 +79,25 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
         cohort=[r for r in rows if str(r["domain"])==domain]
         n_h=sum(r["label"]=="human" for r in cohort)
         n_fp=sum(r["label"]=="human" and float(r["score"])>=80 for r in cohort)
+        n_ai=sum(r["label"]=="ai" for r in cohort)
+        n_tp=sum(r["label"]=="ai" and float(r["score"])>=80 for r in cohort)
         domain_results[domain]={
-            "total":len(cohort),"human":n_h,
+            "total":len(cohort),"human":n_h,"ai":n_ai,
             "observed_fp_rate":n_fp/n_h if n_h else None,
-            "upper_95_fp_rate":wilson_upper(n_fp,n_h)
+            "upper_95_fp_rate":wilson_upper(n_fp,n_h) if n_h else None,
+            "observed_tpr_at_80":n_tp/n_ai if n_ai else None,
+            "lower_95_tpr_at_80":1-wilson_upper(n_ai-n_tp,n_ai) if n_ai else None
+        }
+    model_family_results={}
+    for family in sorted({str(r.get("model_family","")) for r in rows
+                         if r["label"]=="ai" and r.get("model_family")}):
+        cohort=[r for r in rows if r["label"]=="ai" and r.get("model_family")==family]
+        detected=sum(float(r["score"])>=80 for r in cohort)
+        model_family_results[family[:100]]={
+            "n":len(cohort),
+            "detected_at_80":detected,
+            "observed_tpr_at_80":detected/len(cohort),
+            "lower_95_tpr_at_80":1-wilson_upper(len(cohort)-detected,len(cohort))
         }
     result={
       "system":"TIS browser TMR model",
@@ -98,6 +113,7 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
       "upper_95_fpr_at_80":wilson_upper(fp,human),
       "observed_tpr_at_80":tp/machine if machine else None,
       "domain_audit":domain_results,
+      "generator_family_audit":model_family_results,
       "release_readiness":"NOT_APPROVED",
       "notes":[
         "Observed rates are on public, weakly verified data and are not cross-domain claims.",

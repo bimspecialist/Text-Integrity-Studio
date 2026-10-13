@@ -3,6 +3,14 @@ A free, privacy-first **Arabic/English** text inspection and writing-review stud
 
 **Try the site:** https://bimspecialist.github.io/Text-Integrity-Studio/
 
+## Measured independent-source model evaluation — 13 October 2026
+
+**Important: experimental AI model scores are not accurate authorship probabilities.** An additional real ONNX evaluation against a separately published 2026 corpus recorded **104 documents**: 64 publicly human-labeled pre-ChatGPT academic/Wikipedia passages and 40 AI-labeled outputs from five 2026 generator families. The frozen raw >=80 AI-signal cutoff falsely flagged **5/64 human texts (7.8%)**, with a **17.0% 95% Wilson upper false-alert bound**, and caught **29/40 AI texts (72.5%)**. AUROC was **0.925** on this limited distribution (not 92.5% accuracy). Some recent generator types were poorly detected, and the dataset publisher is another detection vendor, so labels are documented source claims rather than independently audited truth.
+
+[Full source-controlled external 2026 evaluation, domain and generator comparisons, and replication steps](backend/research/EXTERNAL_2026_EVALUATION.md) · [Real GitHub Actions run](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38352220247).
+
+**Release remains RESEARCH ONLY.** The user's raw score is an uncalibrated diagnostic, not the percentage written by AI. The optional full-document scan and cross-model disagreement safeguards improve honesty and representativeness, not certified classifier accuracy. Do not use the model for misconduct allegations.
+
 ## Advanced model-evidence update — October 2026
 
 After user reports of large differences against other AI detectors, the browser engine was investigated rather than tuned to copy another site's number. Real benchmark evidence found **13/24 public HC3 human-labeled texts triggered an >=80% TMR AI-class signal**, a 54.2% observed false alert at that cutoff on a small weak-label sample (Wilson 95% upper bound 72.1%; Brier 0.3009; ECE 0.3461). **Do not interpret the raw model percentage as an authorship probability.** [Measured audit](backend/research/AI_DETECTOR_VALIDATION.md) · [GitHub Action](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38253905498).

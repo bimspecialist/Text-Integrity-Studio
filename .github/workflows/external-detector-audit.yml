@@ -1,0 +1,62 @@
+name: External 2026 document-domain detector audit (research only)
+on:
+  pull_request:
+    paths:
+      - 'backend/research/build_textsight_benchmark.py'
+      - 'backend/research/evaluate_model_outputs.py'
+      - 'tests/browser-ai-reference-benchmark.cjs'
+      - 'tests/test_external_benchmark.py'
+      - '.github/workflows/external-detector-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-public-source-claims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 24
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate source-provenance selection and per-domain metrics
+        run: |
+          python -m unittest discover -s tests -p 'test_external_benchmark.py' -v
+          python -m unittest discover -s tests -p 'test_detector_benchmark.py' -v
+          node --check tests/browser-ai-reference-benchmark.cjs
+      - name: Install lightweight public-dataset and headless-browser dependencies
+        run: |
+          python -m pip install 'huggingface_hub>=0.35,<2'
+          npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0
+      - name: Freeze provenance and sample public pre-ChatGPT vs current LLM texts
+        run: |
+          python backend/research/build_textsight_benchmark.py \
+            --out /tmp/tis-external2026 \
+            --human-per-domain 32 \
+            --ai-per-family 8
+      - name: Run actual frozen browser ONNX model on 2026 research source cohort
+        env:
+          TIS_BENCH_CORPUS_MODE: 'external-2026'
+          TIS_PUBLIC_WEAK_CORPUS: /tmp/tis-external2026/external-source-eval-private.jsonl
+          TIS_BENCH_RESULTS: /tmp/tis-external2026/unapproved-model-predictions.jsonl
+        run: node tests/browser-ai-reference-benchmark.cjs
+      - name: Report external false-positive, calibration and generator-specific detection statistics
+        run: |
+          python backend/research/evaluate_model_outputs.py \
+            --samples /tmp/tis-external2026/unapproved-model-predictions.jsonl \
+            --output /tmp/tis-external2026/research-metrics.json \
+            --benchmark TEXTSIGHT_2026_EXTERNAL_VENDOR_BENCHMARK \
+            --model-revision b9aa251e5bcda7e429fcc936767d921435945b60
+      - name: Keep only aggregate evidence, never dataset text or per-document predictions
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RESEARCH-ONLY-external-2026-AI-detector-evaluation
+          path: |
+            /tmp/tis-external2026/research-metrics.json
+            /tmp/tis-external2026/source-manifest.json
+          retention-days: 7
+          if-no-files-found: ignore
