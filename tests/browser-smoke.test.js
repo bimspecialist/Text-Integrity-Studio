@@ -43,8 +43,14 @@ async function run(){
    assert(loaded.includes('مرحبا\u200d'),'Arabic text extracted');
    assert.equal(await page.$eval('#source',e=>e.readOnly),true,'Word extraction read-only');
    await page.waitForFunction(()=>document.getElementById('labApply').disabled,{timeout:8000});
+   await page.$eval('#v6WordTools',n=>{n.open=true;});
    await page.click('#wordPreview');
-   await page.waitForFunction(()=>!document.getElementById('resultbox').hidden);
+   try{
+    await page.waitForFunction(()=>!document.getElementById('resultbox').hidden,{timeout:8000});
+   }catch(error){
+    const status=await page.$eval('#wordStatus',n=>n.textContent);
+    throw new Error('DOCX preview did not open: '+status);
+   }
    const preview=await page.$eval('#result',e=>e.value);
    assert(!preview.includes('One\u200b'),'Unicode cleaned in preview');
    assert(preview.includes('Hidden'),'Explicit hidden runs are not deleted by default');
