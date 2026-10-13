@@ -39,6 +39,7 @@ jobs:
           TIS_SCREENSHOT_DIR: /tmp/tis-ai-production
           TIS_REQUIRE_V4: ${{ github.event_name != 'pull_request' }}
           TIS_REQUIRE_V5: ${{ github.event_name != 'pull_request' }}
+          TIS_REQUIRE_V6: ${{ github.event_name != 'pull_request' }}
         run: node tests/deployed-ai-runtime.test.cjs
       - name: Preserve sanitized diagnostics and screenshot
         if: always()
