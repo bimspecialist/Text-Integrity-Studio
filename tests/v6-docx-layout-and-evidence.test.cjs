@@ -79,6 +79,9 @@ async function run(){
   assert.match(ui.explanation,/passage|vary|inconsistent|heterogeneous|تختلف/i,'Why it abstained must be visible to user');
   assert.match(ui.breakdown,/4.7%/,'Real model-window signal can still be shown as local evidence');
   assert.match(ui.breakdown,/coverage|covered|تغطية/i,'The paragraph-level score must be labeled with local model-window coverage');
+  const out=process.env.TIS_SCREENSHOT_DIR||temp;
+  fs.mkdirSync(out,{recursive:true});
+  await page.screenshot({path:path.join(out,'v6-long-docx-desktop.png'),fullPage:true});
   await page.$eval('#v5Toolbox',n=>n.open=true);
   await page.$eval('#v6WordTools',n=>n.open=true);
   assert.equal(await page.$eval('#wordToolbar',n=>n.hidden),false,'Word tools remain accessible by explicit disclosure');
@@ -96,6 +99,8 @@ async function run(){
   assert(phone.overflow<=8,'No RTL horizontal overflow');
   assert(phone.editorBottom<=phone.reportTop+6,'Main editor never overlaps results on mobile');
   assert.equal(phone.label,'—','Abstention indicator remains compact in Arabic');
+  await page.$eval('#v5Toolbox',n=>{n.open=false;});
+  await page.screenshot({path:path.join(out,'v6-docx-mobile-rtl.png'),fullPage:true});
   assert.deepEqual(errors,[],'No uncaught browser errors');
   console.log('PASS DOCX workflow hierarchy, visible single Analyze action, no overflow on inconclusive, scientific reason/coverage, RTL');
  }finally{await browser.close();await new Promise(ok=>server.close(ok));fs.rmSync(temp,{recursive:true,force:true});}
