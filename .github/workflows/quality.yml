@@ -64,6 +64,10 @@ jobs:
         run: |
           node --check docs/studio-insights-ui.js
           node tests/studio-insights-browser.test.js
+      - name: Focused scan-AI editor and visible diagnostic regression
+        run: |
+          node --check tests/scan-ai-workflow.test.cjs
+          node tests/scan-ai-workflow.test.cjs
       - name: Token-aware detector validation, coverage and disagreement safeguards
         run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)
