@@ -38,6 +38,10 @@
         <div class="panel-heading">
           <h2 id="titleInput">1 · Add your text or file</h2>
         </div>
+        <div class="studio-docbar" aria-label="Document workspace">
+          <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
+          <div id="studioDocumentStats" class="studio-doc-stats" aria-live="polite">0 words · 0 sections</div>
+        </div>
         <label class="file-input" for="file">
           <span class="file-icon" aria-hidden="true">↥</span>
           <span class="file-input-description">
@@ -49,6 +53,15 @@
         <label for="source" class="source-label" id="sourceLabel">Text to check</label>
         <textarea id="source" placeholder="Paste your text here…" aria-label="Text input" spellcheck="true"></textarea>
         <div class="input-summary" aria-live="polite" id="quickInputState">0 words · Ready to check</div>
+        <details id="studioEvidence" class="studio-heatmap-disclosure" hidden>
+          <summary id="studioEvidenceLabel">Analyzed text map · research signals</summary>
+          <p id="studioEvidenceNotice" class="studio-caution">Only analyzed model windows can be highlighted. Colors are not proof of AI authorship.</p>
+          <div id="studioHeatmapLegend" class="studio-heatmap-legend" aria-label="Model signal legend">
+            <span class="studio-color-low">Lower signal</span><span class="studio-color-medium">Mixed signal</span><span class="studio-color-high">Higher signal</span><span class="studio-color-unreviewed">Not evaluated</span>
+          </div>
+          <div id="studioHeatmap" class="studio-heatmap" dir="auto" aria-label="Read-only evidence map of the analyzed passages"></div>
+          <p id="studioMapCoverage" class="studio-muted"></p>
+        </details>
         <div class="row main-actions">
           <button class="primary" id="scan" type="button">Check my text</button>
           <button id="sample" type="button">Try an example</button>
@@ -88,6 +101,30 @@
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
         <div class="panel-heading"><h2 id="titleAudit">2 · Your results</h2><span id="checkedLabel" class="small">No check yet</span></div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
+          <div class="studio-review-header"><h3 id="studioReviewTitle">Review suggestions</h3><span class="studio-count" id="studioReviewCount">0</span></div>
+          <div class="studio-review-tabs" role="group" aria-label="Filter writing suggestions">
+            <button type="button" data-studio-filter="all" aria-pressed="true" id="studioFilterAll">All</button>
+            <button type="button" data-studio-filter="clarity" aria-pressed="false" id="studioFilterClarity">Clarity</button>
+            <button type="button" data-studio-filter="style" aria-pressed="false" id="studioFilterStyle">Style</button>
+          </div>
+          <p id="studioReviewNote" class="studio-muted" aria-live="polite">Add text to see local, explainable writing observations.</p>
+          <div id="studioReviewCards" aria-live="polite"></div>
+          <button id="studioOpenWritingLab" class="studio-writing-link" type="button">Review grammar fixes</button>
+          <details id="studioStyleGuide" class="studio-mini-details">
+            <summary id="studioStyleGuideLabel">Writing techniques with examples</summary>
+            <div id="studioExamplesList"></div>
+          </details>
+          <details id="studioSectionDetails" class="studio-mini-details">
+            <summary id="studioSectionsLabel">Paragraph metrics and analyzed coverage</summary>
+            <div id="studioSectionList" class="studio-section-list"></div>
+          </details>
+          <details id="studioEditHistory" class="studio-mini-details">
+            <summary id="studioHistoryLabel">Edit history (this session)</summary>
+            <ol id="studioHistoryList" class="studio-history-list"></ol>
+          </details>
+          <div class="studio-export-row"><button id="studioExportReview" type="button">Export writing report</button><span id="studioExportStatus" class="studio-muted" aria-live="polite"></span></div>
+        </section>
         <section id="aiMeter" class="ai-meter" aria-labelledby="aiMeterTitle">
           <div class="ai-meter-head"><h3 id="aiMeterTitle">AI text indicator</h3><span class="ai-research-badge" id="aiBadge">EXPERIMENTAL</span></div>
           <div class="ai-meter-content">
@@ -183,5 +220,7 @@
 <script src="experimental-signal-ui.js"></script>
 <script src="simple-ui.js"></script>
 <script src="ai-score-ui.js"></script>
+<script src="studio-insights-core.js"></script>
+<script src="studio-insights-ui.js"></script>
 </body>
 </html>
