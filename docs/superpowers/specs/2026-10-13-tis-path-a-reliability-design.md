@@ -14,9 +14,9 @@ The owner approved **Path A**: improve scientific honesty, reliability, user com
 
 **Engineering outcome:** The document identity, eligibility decision, analysis lifecycle, numeric evidence validation, and presentation state have one defined owner apiece. AI inference remains genuinely executed by pinned, locally running ONNX models in the browser, not a synthetic widget. Evaluation remains research-only until independently sufficient evidence exists.
 
-**Explicitly in scope:** state and module boundaries; diagnostics and retry; tokenizer/coverage correctness; bilingual/RTL and long DOCX preservation; privacy/supply-chain checks; reproducible accuracy/fairness evaluation; performance baselines; acceptance and rollback.
+**Explicitly in scope:** state and module boundaries; diagnostics and retry; tokenizer/coverage correctness; bilingual/RTL and long DOCX preservation; privacy/supply-chain checks; reproducible accuracy/fairness evaluation; performance baselines; acceptance and rollback; **opt-in review of post-scan natural-writing suggestions (`/humanize`) with user-controlled edits and no fabricated AI-score guarantees**.
 
-**Explicitly out of scope:** selling detection as certified authorship proof; training/deploying probabilities on weak labels; adjusting scores to match commercial detectors; a paid cloud backend, user accounts, team permissions or document cloud storage; a speculative Arabic detector; introducing React/Next.js into the GitHub Pages front end; replacing the website's entire design; deleting working tools.
+**Explicitly out of scope:** selling detection as certified authorship proof; training/deploying probabilities on weak labels; adjusting scores to match commercial detectors; deliberately introducing grammar mistakes or inventing personal experiences to trick detectors; a paid cloud backend, user accounts, team permissions or document cloud storage; a speculative Arabic detector; introducing React/Next.js into the GitHub Pages front end; replacing the website's entire design; deleting working tools.
 
 ## 2. Verified current baseline and architectural friction
 
@@ -60,6 +60,10 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
                 v
             AnalysisController — ONE state machine, ONE cancellation owner
                 |------> WritingReviewAdapter -> editorial observations
+                |                 |
+                |                 v
+                |           NaturalWritingAdvisor -> suggested revisions
+                |                                    (user review + undo)
                 |------> EligibilityPolicy  -> unsupported reason / opt-in
                 |                            |
                 |                            v
@@ -102,6 +106,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 | AnalysisController | docs/analysis/analysis-controller.js | dispatch(event), getState(), subscribe(listener) | Render DOM directly, load model script or invent numeric scores |
 | InferenceBridge | adapter around docs/ai-score-ui.js and browser-ai-runtime.js | run(snapshot, options, requestId), cancel(requestId), progress, result/error | Accept stale/cross-origin messages or send document text to remote detector API |
 | EvidenceValidator | docs/analysis/evidence-contract.js (pure) | validate(result, snapshot) -> accepted result or typed failure | Treat NaN, null, low coverage, disagreement as a human score |
+| NaturalWritingAdvisor | new thin module reusing docs/writing-rules.js and docs/studio-insights-core.js | suggest(snapshot, locale) -> structured editorial suggestions with local before/after preview | Optimize against the detector as a target; invent facts; add intentional errors; change text without user approval |
 | EvidenceProjection | extraction from docs/v5-public.js and docs/studio-insights-core.js | sectionOffsets, modelWindows, coverageUnits, mappedEvidence | Convert character coverage to word coverage or omit skipped sections silently |
 | ResultsPresenter | existing compact visual layer, migrating docs/studio-insights-ui.js and v5-public.js | render(state) from one owner | Maintain a competing AI lifecycle or add extra primary buttons |
 | ResearchEvaluation | existing backend/research and backend/hybrid_detector scripts | manifest + pinned model run -> aggregate metrics and signed/reviewed decision | Deploy calibration fitted from test samples by default |
@@ -129,6 +134,40 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 **Important denominator distinction:** documentCoverage = percentage of source WORDS actually processed by the model tokenizer windows; perParagraphCoverage = percentage of that paragraph's source-character span intersected by valid model windows. UI must label both precisely and cannot apply a word-denominator threshold to the character metric. A section signal is only a window-weighted diagnostic, not a claim that a given fraction of the paragraph was generated.
 
 **Model revision rule:** Inference output carries the actual checkpoint revision used. The validator must reject missing, mismatched or unknown revision when evidence is presented as pinned, not silently fall back to a default label. Existing historical raw reports can be handled as read-only legacy data with clear provenance limitation.
+
+### 6.1 Post-scan natural-writing suggestions (`/humanize`) — user-requested design amendment
+
+**User goal:** After Analyze Text, offer useful suggestions that make the writing more natural, clear, specific and true to the author's voice. Users may be interested in whether their next research-model scan changes, but **lowering an uncalibrated detector percentage is neither a guaranteed result nor the editorial quality objective**. The site must never market these edits as proven AI-detector bypasses or disguise an AI-generated passage as independently authored.
+
+**Alternative design choices:** (1) a small, local, transparent rule-based editorial advisor building on `TextIntegrityRules.analyze` and `TextIntegrityStudioInsights.analyzeDocument` (**selected for Path A**); (2) a wholly local generative rewriter (possible future research, but high model-memory cost and greater factual-drift risk); (3) third-party cloud paraphrasing (rejected because it transmits users' documents). Introduce the first as a thin advisor, **not a second inference model**.
+
+**When it appears:** The one existing **Analyze Text** button first runs the local writing review. On completion, cancellation, or unsupported Arabic/mixed/short text, editorial suggestions may still appear even when the AI detector displays INCONCLUSIVE/UNSUPPORTED. Do **not** use model-window values to infer which exact sentences were authored by AI. Suggestions derive from measurable writing features and optional user-supplied context, independent of classifier predictions.
+
+**Minimal interface (English/Arabic/RTL):** Under the honest AI result and key notes, show **Make writing more natural / اجعل الكتابة أكثر طبيعية** as an optional section. Display up to **three most useful suggestions** by default; additional observations remain in an expandable list. Each card has the observed issue, location, short *why*, **Before / After** example, and user-controlled **Preview / Apply / Undo** only when a safe replacement exists. Cards without defensible automatic replacement offer a guided edit prompt rather than inventing text. These are secondary inline controls; **Analyze Text remains the sole prominent page action**.
+
+**Conservative suggestion types and evidence:**
+1. Sentence-length uniformity -> break or combine sentences where comprehension improves; do not vary length randomly.
+2. Repeated generic terms/transitions -> replace only when the meaning is unchanged; preserve technical engineering terms and valid intentional repetition.
+3. Dense academic phrasing/overlong sentences -> reorganize into clearer, active sentences *where appropriate for the domain*; do not automatically informalize formal assignments.
+4. Vague claims or missing illustrative detail -> ask the user for a **real** example, observation, source or project-specific detail. Never create a personal anecdote, project figure or citation.
+5. Mechanical/overly formal cadence -> offer a fluent paraphrase without changing scope, polarity, qualifiers, dates, units or citations, and do not introduce deliberate grammatical mistakes.
+
+**Example English (illustrative only):** Before: “It is important to note that the experiment yielded results that were significant in nature.” After: “The experiment produced notable results; the report should explain which measurements support that conclusion.” This is an editorial clarity example, **not an asserted reduction in AI likelihood**.
+
+**Example Arabic (illustrative only):** Before: “من المهم الإشارة إلى أن المشروع قد شهد العديد من التطورات المختلفة.” After: “شهد المشروع تغييرات في التصميم؛ حدّد التغييرات الفعلية وأسبابها.” Arabic writing assistance is allowed even while **Arabic AI-authorship scoring remains unsupported**.
+
+**Required data contract:**
+- `EditorialSuggestion` is local, versioned and associated with `documentRevision`, a stable rule ID, locale, scope/section, [start,end) UTF-16 span, original excerpt, observed feature, human-readable reason, optional safe proposed replacement, edit risk (low/manual), and explanatory basis (local editorial heuristic, **not an AI-authorship finding**).
+- `SuggestionReview` records draft preview, accepted/rejected/dismissed action, undo snapshot and revision validation **in memory for the current editing session only**. Any intervening text change invalidates old spans; never apply to stale content just because text length is unchanged.
+- When source is a read-only DOCX extraction, suggestions must NOT directly mutate the original DOCX, and the UI should offer a preview or route to the existing explicitly authorized Word editing/export workflow. Protected ranges (numbers, formulas, URLs, quotes, citations, names, dates and units) must not be silently rewritten.
+- Sanitized exports may include rule counts/reason codes but must exclude original excerpts or private proposed text by default; the user must explicitly opt into a text-containing export.
+- The advisor must not require CDN AI models, transmit text to third parties, or run a hidden repeated-detector optimization loop. Existing optional research inference downloads only on the user's main Analyze action.
+
+**After a user-approved edit:** Show the changed passage in the editor, preserve undo and invalidate all previous source-specific AI evidence. The user may explicitly click **Analyze Text** again. If both runs produced valid, comparable, same-version model signals with equivalent scan options and comparable coverage, the UI may show a labeled **before/after change in raw research signal**, **never a “more human” percentage**, improvement guarantee or proof of origin. If either run was INCONCLUSIVE, unsupported or incomparable, display *comparison unavailable*.
+
+**Quality and product outcomes:** Evaluate readability, user-rated clarity, factual/technical preservation, user acceptance/rejection of proposals, explanation comprehension and successful undo. **Do not** use “percentage AI score decreased” as the optimization target or release KPI; that can incentivize misleading detector gaming. Compare benchmark performance independently on a frozen dataset, never on user-adapted live documents.
+
+**Error and protection cases:** no suggestion when there is insufficient evidence; “no issues found” must not mean “written by a human”; preserve ESL, Arabic dialect, author voice and academic tone; avoid forced colloquialisms; disable Apply on read-only/imported sources unless their supported editing workflow permits it; handle large documents and same-length edits; support keyboard/RTL/reduced motion.
 
 ## 7. Deterministic lifecycle, retry and failure policy
 
@@ -193,6 +232,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 |---|---|
 | Architectural state parity | Pure reducer/eligibility/evidence contract unit tests; no duplicate active run or conflicting visible state |
 | One-button workflow | Mock-driven and real Chromium: English eligible, short English, Arabic, mixed, edited, cancelled, retry, timeout, stale same-length edit |
+| Post-scan natural-writing advisor | Suggestions shown without verified AI score; source-derived before/after; locale and academic-tone preservation; protected figures, citations, quotes and technical terms; stale-revision rejection; user apply/undo; read-only DOCX safe path; no auto rescan, fake facts or score-decrease promise |
 | Tokenizer and extraction | Exact offsets, non-silent oversize tokens, short/long windows, UTF-16 handling, DOCX paragraph/read-only and PDF/OCR warnings |
 | Consensus and report integrity | Conflict/coverage/missing model/null/nonfinite/out-of-range/revision mismatch => no invented number, truthful flags and units |
 | Real inference | Pinned primary + opt-in legacy comparator executed in browser with true model assets, not fixture-only |
@@ -211,6 +251,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 | Risk | Severity | Containment |
 |---|---|---|
 | Users interpret raw signal as factual AI percentage | Critical | Uncalibrated labeling, required disclaimer, INCONCLUSIVE, separate scientific release |
+| Humanize suggestions inadvertently change factual claims or appear to certify “human-written” status | Critical | User-controlled previews, protected spans, explicit non-guarantee, no hidden detector optimization and regression tests |
 | Incorrect score on academic/ESL human text | Critical | Independent subgroup benchmarks, high-confidence-bound FPR release gate, human review |
 | Controller migration breaks Word/PDF/OCR | High | Preserve existing IDs/adapters and fixtures, reversible incremental PRs |
 | Same-length edits or late iframe messages leak stale results | High | Monotonic revision + requestId and race tests |
@@ -243,7 +284,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 | /5-whys | Trace score differences to model era/training population/token coverage/calibration and UI interpretations |
 | /perspective | Student, researcher, editor, teacher, mobile/RTL user and privacy-reviewer journeys |
 | /mental-models | Out-of-distribution generalization, base rates, selective prediction, source leakage and reversibility |
-| /brainstorm | Evaluate three architecture routes, select minimal-risk incremental compatibility design |
+| /brainstorm | Evaluate three architecture routes, select minimal-risk incremental compatibility design; add transparent local-only post-scan natural-writing advice rather than an unverified automatic detector evasion engine |
 
 These are **review frameworks**, not evidence that a panel of real outside experts met. Findings are traced to code, tests and the project's research reports.
 
@@ -255,6 +296,7 @@ These are **review frameworks**, not evidence that a panel of real outside exper
 3. Keep raw research signals available with clearly labeled units; prefer no number over misleading certainty. A calibrated authorship percentage stays blocked by scientific gates.
 4. Treat the existing V6 user experience (EN/AR dark editor, one button, optional tools) and real DOCX/PDF/OCR functionality as protected regression contracts.
 5. Permit separate, future research proposals for Arabic and new models, but no automatic production model addition.
+6. Approve the requested **post-scan natural-writing suggestions** as a small local-only editorial component with optional reviewed revisions. Do **not** authorize auto-humanization without review, fabricated anecdotes/errors, detector-score targeting, or any promise that the AI research signal will fall.
 
 **Approval boundary:** This file is a design proposal only. Do not implement code changes, write the detailed execution plan, alter model scores, merge into main or deploy based on this document alone. After the owner explicitly approves or requests revisions, invoke the writing-plans step and ask the owner to approve that plan and execution method before development.
 
