@@ -101,6 +101,15 @@
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
         <div class="panel-heading"><h2 id="titleAudit">2 · Your results</h2><span id="checkedLabel" class="small">No check yet</span></div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
+          <div class="studio-ai-quick-top">
+            <div class="studio-ai-quick-result"><small id="studioAiQuickLabel">AI model signal · research only</small><strong id="studioAiQuickValue" aria-live="polite">—</strong></div>
+            <span id="studioAiQuickBadge">EXPERIMENTAL</span>
+          </div>
+          <button id="studioAiQuickRun" type="button">Analyze with on-device model</button>
+          <progress id="studioAiQuickProgress" max="100" hidden aria-label="Actual model download progress"></progress>
+          <p id="studioAiQuickNote">English text, 120+ words. Model downloads only when requested; scores are not authorship probabilities.</p>
+        </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
           <div class="studio-review-header"><h3 id="studioReviewTitle">Review suggestions</h3><span class="studio-count" id="studioReviewCount">0</span></div>
           <div class="studio-review-tabs" role="group" aria-label="Filter writing suggestions">
