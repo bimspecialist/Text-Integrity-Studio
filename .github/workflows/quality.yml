@@ -68,6 +68,12 @@ jobs:
         run: |
           node --check tests/scan-ai-workflow.test.cjs
           node tests/scan-ai-workflow.test.cjs
+      - name: Approved one-click editor layout, self-hosted fonts and model truthfulness
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: |
+          node --check tests/approved-v5-one-click.test.cjs
+          node tests/approved-v5-one-click.test.cjs
       - name: Token-aware detector validation, coverage and disagreement safeguards
         run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)
