@@ -133,7 +133,7 @@ async function evaluate(text,requestId,opts={}){
  }
  const summary=core.consensus(primary,secondary,{context:opts.context});
  if(opts.deep===true&&!secondary){
-  summary.status='SECONDARY_UNAVAILABLE';
+  if(summary.score!==null)summary.status='SECONDARY_UNAVAILABLE';
   summary.flags.push('SECONDARY_MODEL_UNAVAILABLE');
  }
  return {
