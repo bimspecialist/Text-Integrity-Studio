@@ -20,6 +20,14 @@ const sampled=core.partitionWindows(lots,fakeTokenizer,{maxTokens:448,maxSamples
 assert(sampled.windowCount>9&&sampled.windows.length===9);
 assert(sampled.coverage<1 && sampled.coverage>0);
 assert(sampled.windows[0].start===0 && sampled.windows.at(-1).end===lots.trimEnd().length);
+const extended=core.partitionWindows(lots,fakeTokenizer,{maxTokens:448,maxSamples:core.MAX_WINDOWS_EXTENDED});
+assert(extended.windows.length>sampled.windows.length,'Extended scan actually inspects more independent model-token windows');
+assert(extended.coverage>sampled.coverage,'Extended mode must materially increase text coverage');
+assert(extended.coverage>=.60,'Extended scan covers most of this representative long test document');
+assert(extended.windows.every(w=>w.tokens<=448),'Full scan still honors the real tokenizer budget');
+assert.equal(extended.method,'REAL_TOKENIZER_FULL_DOCUMENT_NO_TRUNCATION');
+assert.equal(core.MIN_DOCUMENT_COVERAGE_PERCENT,60);
+
 const scores=Array(sampled.windows.length).fill(.7);
 const p=core.summarizeWindows(sampled.windows,scores,{modelId:'t1',coverage:sampled.coverage});
 assert.equal(p.score,70);
@@ -35,12 +43,28 @@ assert(dissent.flags.includes('MODELS_DISAGREE'));
 const underserved=core.consensus({...p,coverage:24});
 assert.equal(underserved.score,null);
 assert.equal(underserved.status,'INSUFFICIENT_COVERAGE');
+const borderline=core.consensus({...p,coverage:59.9});
+assert.equal(borderline.score,null,'A document-wide score is suppressed when 40% of the file was not inspected');
+const sufficient=core.consensus({...p,coverage:60});
+assert.equal(sufficient.score,70,'Representative coverage alone permits only an explicitly uncalibrated diagnostic');
 const formal=core.consensus({...p,coverage:85},null,{context:'second_language'});
 assert(formal.flags.includes('FORMAL_OR_NON_NATIVE_FALSE_POSITIVE_RISK'));
 const variance=core.summarizeWindows([{start:0,end:70,words:5,tokens:30},{start:71,end:150,words:5,tokens:30}],[.1,.94],{modelId:'t1',coverage:1});
 assert.equal(variance.consistency,'MIXED_PASSAGES');
 assert(variance.segments[0].tier==='LOWER_MODEL_SIGNAL');
 assert(variance.segments[1].tier==='HIGHER_MODEL_SIGNAL');
+const mixedReport=core.consensus({...variance,coverage:100});
+assert.equal(mixedReport.status,'HETEROGENEOUS_DOCUMENT');
+assert.equal(mixedReport.score,null);
+assert(mixedReport.flags.includes('DOCUMENT_WIDE_SCORE_NOT_REPRESENTATIVE'));
+const variable=core.consensus({...p,coverage:100,dispersion:.31,consistency:'VARIABLE_PASSAGES'});
+assert.equal(variable.status,'HETEROGENEOUS_DOCUMENT');
+assert.equal(variable.score,null);
+const doubleMixed=core.consensus({...p,coverage:100},{
+  ...variance,model_id:'other',coverage:100,score:72
+});
+assert.equal(doubleMixed.status,'HETEROGENEOUS_DOCUMENT');
+assert.equal(doubleMixed.score,null);
 const massive='a'.repeat(3000)+' '+english;
 const long=core.partitionWindows(massive,{encode(text){return Array(Math.ceil(text.length/2)+2).fill(1);}},{
  maxTokens:448,maxSamples:8
