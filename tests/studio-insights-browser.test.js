@@ -18,6 +18,8 @@ async function run(){
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
   await page.waitForSelector('#studioReviewCards');
   assert.equal(await page.$eval('#studioEvidence',n=>n.hidden),true,'No fabricated highlights before model inference');
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'—','Research summary is unscored by default');
+  assert.equal(await page.$eval('#studioAiQuickProgress',n=>n.hidden),true,'No invented model processing progress');
   assert.equal(await page.$eval('#aiBar',n=>n.hidden),true,'No invented calibrated number');
   assert.equal(await page.$eval('#studioReviewCards',n=>n.children.length),0,'No false notes before text');
   const all=Array.from({length:45},(_,i)=>'measurement'+(i%5)).join(' ');
@@ -38,16 +40,23 @@ async function run(){
     version:'TIS_CONSENSUS_V2_2026_10',model_id:'onnx-community/tmr-ai-text-detector-ONNX',
     calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE',
     sourceLength:document.getElementById('source').value.length,
-    segments:[{start:0,end:90,signal:89},{start:120,end:220,signal:18}]
+    segments:[{start:0,end:90,signal:89},{start:120,end:220,signal:18}],
+    displayedSignalPercent:67.2,status:'SINGLE_UNCALIBRATED_MODEL'
    }}));
   });
   await page.waitForFunction(()=>!document.querySelector('#studioEvidence').hidden);
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'67.2%','Quick summary can only show valid actual model signal');
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DOWNLOADING',percent:35}})));
+  assert.equal(await page.$eval('#studioAiQuickProgress',n=>n.value),35,'Download progress is measured, not fabricated');
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'IDLE'}})));
+  assert.equal(await page.$eval('#studioAiQuickProgress',n=>n.hidden),true);
   await page.click('#studioEvidence > summary');
   assert((await page.$$('#studioHeatmap mark')).length>0,'Only real supplied model spans receive color');
   assert((await page.$eval('#studioHeatmap',n=>n.textContent)).includes('measurement'));
   assert((await page.$eval('#studioEvidenceNotice',n=>n.textContent)).includes('model'),'No authorship proof presented');
   await page.$eval('#source',n=>{n.value+=' Updated.';n.dispatchEvent(new Event('input',{bubbles:true}));});
   await page.waitForFunction(()=>document.getElementById('studioEvidence').hidden,'Editing invalidates stale model highlights');
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'—','Stale AI number is removed immediately on text edits');
   await page.evaluate(()=>{
    const original=URL.createObjectURL.bind(URL);
    URL.createObjectURL=blob=>{window.__studioExportBlob=blob;return original(blob)};
