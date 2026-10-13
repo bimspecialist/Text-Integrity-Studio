@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
-**Goal:** Prove that the reliability and Humanize changes remain private, secure, responsive and accessible on the real GitHub Pages site, with meaningful fail-closed CI and post-deployment acceptance gates.
+**Goal:** Prove that detector reliability, fast Humanize suggestions and the separately gated fully on-device local-generative two-pane editor remain private, secure, responsive and accessible on GitHub Pages, with fail-closed real model and post-deployment acceptance gates.
 
 **Architecture:** Keep the existing GitHub Pages and browser-embedded ONNX runtime. Add network/privacy assertions, a pinned dependency inventory, reproducible desktop/mobile benchmarks, and release checks around the existing workflows rather than a new backend or a general CI rewrite.
 
@@ -13,11 +13,11 @@
 ## Global Constraints
 
 - GitHub Pages stays the public host; there is no server for document upload, model inference, account or session storage.
-- All original text, file bytes and private proposed edits remain in local browser memory; local model downloads are allowed only after the explicit Analyze action.
+- All original text, file bytes and private proposed edits remain in local browser memory; **English detector** model downloads are allowed only after explicit Analyze, while a NEW **generative rewriter** can download static audited assets only after separate informed Rewrite locally consent. No remote text inference or generated-text transfer.
 - Outer-page CSP: script-src 'self', connect-src 'self', style-src 'self'. Runtime iframe origins, privileges and allowed model/CDN requests require separate documented inspection; sandbox flags are not a complete security boundary.
 - Keep opt-in pinned primary and historical model IDs/revisions: b9aa251e5bcda7e429fcc936767d921435945b60 and 54895bd11f34b47a01369d25b2255224717409b8, Transformers.js 3.8.1 currently delivered via CDN. Do not silently upgrade a model or dependency while refactoring.
 - Existing dark website, first-party Manrope + IBM Plex Sans Arabic, one visible Analyze button, progress accessibility, EN/AR RTL, Word/PDF/OCR and original report export remain working.
-- Current planned device profiles: desktop Chromium 1440x900 and low/mid-spec emulated mobile 390x844. Real hardware measurements are preferred for peak memory, which browser harnesses may not expose reliably.
+- Current planned device profiles: desktop Chromium 1440x900 and low/mid-spec emulated mobile 390x844. Real hardware measurements are preferred for peak memory, which browser harnesses may not expose reliably. **Do not equate model download bytes with GPU/RAM footprint**. Test generator cold/warm/WebGPU/denied access separately from detector timings.
 - Benchmark lengths: fixed eligible 150 words, 2000 words, 20000 words and a near-limit <=120000-character document. Keep cold/warm downloads distinct. Investigate a >20% median or p95 runtime/memory deterioration on like-for-like conditions; do not fabricate absolute timings or bytes.
 - Public release requires Quality, real downloaded Chromium ONNX model smoke (both models) and post-deploy public-origin AI scan. A PR check of the OLD published main must not be mistaken for candidate validation.
 - Science remains separate: engineering release success never authorizes independently calibrated AI-authorship percentages or accusations.
@@ -28,7 +28,8 @@
 2. A runtime message with correct requestId but wrong event.source, origin or model revision must be rejected without rendering an AI score. Tasks S1/S5 tests spoofed_message_fail_closed.
 3. A browser blocking CDN/model fetches must provide an actionable retry error; it may still perform local editorial review, without a fake percentage. Tasks S1/S5 tests cdn_blocked_falls_back_to_editorial.
 4. A cold-start mobile scan near size limits may time out or be cancelled without freezing the editor; coverage and partiality must be disclosed. Task S3 tests low_memory_cancel_responsive.
-5. Arabic RTL with a long DOCX and a Humanize suggestion open must keep keyboard focus order, no overlap or x-scroll and full text labels. Task S4 tests rtl_long_docx_accessibility.
+5. Arabic RTL with a long DOCX and a Humanize suggestion or generative right pane open must keep keyboard focus order, no overlap or x-scroll and full text labels. Task S4 tests rtl_long_docx_accessibility.
+6. Source text including fabricated HTTP endpoints/prompt-injection must NOT appear in generator static-download requests or result in a remote fetch; denying explicit model consent must download zero generator weights. L3/L8 and S1 tests rewrite_remote_text_sentinel_absent and deny_rewriter_download.
 
 ---
 
@@ -125,6 +126,23 @@
 - [ ] **Step 3: Implement** candidate-specific release marker wiring, live-model PR path filters including all new docs/analysis/*.js and Humanize modules, the deployed-origin post-Pages smoke, and a checklist separating engineering approval from scientific certification. Keep failure blocking, not continue-on-error, for main deployment checks. Preserve all preexisting Quality steps.
 - [ ] **Step 4: Run** node tests/analysis/public-postdeploy-contract.test.cjs && node tests/deployed-ai-runtime.test.cjs with a controlled public fixture only after a genuine Pages deployment; trigger full Quality and Live optional AI browser model smoke via GitHub Actions. Expected: both real primary and secondary weights run successfully and the main public origin has the new release marker. Record actual link/commit/UTC time before claiming completion.
 - [ ] **Step 5: Commit** with git commit -m "release: enforce genuine post-Pages and scientific-hold gates".
+
+## Mandatory integration with local generative dual editor (L1–L8)
+
+The owner approved the **direction** of full on-device English/Arabic rewriting, but not a specific model, performance claim or deployed feature. See:
+- docs/superpowers/specs/2026-10-13-tis-dual-pane-local-rewrite-design.md
+- docs/superpowers/plans/2026-10-13-tis-local-generative-dual-editor.md
+
+These additional requirements are *blocking*, not optional future polish:
+- **S1 + L3/L8 network trust:** Distinguish static model GET from document-data exfiltration; intercept requests BEFORE consent and DURING genuine WebGPU local generation. Reject any external request with synthetic document text in URL, headers or body; never archive that test text. Untrusted document text cannot trigger arbitrary fetches or plugins. A blocked download must degrade to existing editorial tools.
+- **S2 + L1/L2 provenance:** Independently verify upstream Apache-2.0 or other license and the **converted ONNX artifact's** license, exact immutable model/runtime revisions, allowlisted static paths and real bytes. Qwen3-0.6B q4f16 570 MB is a model-file estimate, NOT total transfer or RAM. Unknown/contradictory license => generator remains unavailable.
+- **S3 + L1/L8 measured feasibility:** Record true Chromium GPU availability, real candidate startup/peak memory when measurable, first/warm generation time, load/cancel response and complete source-span coverage. Compare the detector's own old/new latency separately; do not treat a new heavyweight rewrite feature as if it were the existing detector's equal-workload performance.
+- **S4 + L7 responsive/editor semantics:** Test two live source/output panes at 1440px and 390px Arabic RTL stacked order; keyboard focus, consent dialog, actual Apply/Undo, reduced motion and source protected facts. Exactly one global Analyze Text; contextual Rewrite locally is secondary.
+- **S5 + L8 deployment:** A successful AI detector smoke proves only detection. Add a **separate genuine local generator smoke**, verifying a source-free fixture in Arabic and English and a release-specific new Pages marker. No fake demo/model-output fixture substitutes real WebGPU inference; failing QA or missing hardware evidence yields GENERATOR HOLD (no merge) even when basic site passes.
+- **Low-resource path:** WebGPU missing, insufficient measured GPU memory, canceled download, cache eviction or unsupported device must keep DOCX/PDF/OCR/regular writing/English detection working, without a cloud LLM fallback or “100% rewritten” badge.
+- **Privacy documentation:** Model binary/cache persistence is separate from never-storing user text. Clearly disclose which static domains receive GET asset requests and why first-use offline generation needs a network download; absolute privacy guarantees against compromised browser extensions cannot be made.
+
+**Test commands after implementation** (these files are not present yet): node tests/analysis/local-rewriter-network-privacy.test.cjs, node tests/analysis/local-rewriter-real-browser.test.cjs, node tests/analysis/dual-pane-editor-browser.test.cjs, node tests/analysis/local-rewriter-performance.test.cjs. Their real model path cannot be substituted by mocks in the production acceptance gate.
 
 ## Overall Release Gate — Complete Path A
 
