@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Trustworthy lazy iframe bridge and cancel race contracts
+        run: |
+          node --check tests/analysis/inference-bridge.test.js
+          node tests/analysis/inference-bridge.test.js
       - name: Strict evidence model revision and scientific abstention contracts
         run: |
           node --check tests/analysis/evidence-contract.test.js
