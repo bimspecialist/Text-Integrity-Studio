@@ -54,6 +54,83 @@ def ece(labels: list[int],scores: list[float],bins: int=10)->float:
             total+=len(assigned)/len(scores)*abs(truth-pred)
     return total
 
+# These states describe the real browser's display contract, not AI authorship.
+_UI_SCORED = {"SINGLE_UNCALIBRATED_MODEL", "AGREEMENT_UNCALIBRATED", "SECONDARY_UNAVAILABLE"}
+_UI_ABSTAINED = {"INSUFFICIENT_COVERAGE", "HETEROGENEOUS_DOCUMENT", "MODEL_DISAGREEMENT"}
+
+def evaluate_visible_ui(rows: list[dict]) -> dict:
+    """Audit selectively displayed diagnostics separately from raw model outputs.
+
+    Older benchmarks lacking these fields stay explicitly NOT_RECORDED; incomplete
+    or contradictory records fail closed rather than silently biasing the denominator.
+    No source text or personally identifying document content is retained.
+    """
+    present = any("report_status" in r or "reported_signal_percent" in r for r in rows)
+    if not present:
+        return {"status": "NOT_RECORDED",
+                "note": "Legacy corpus recorded raw signals only; visible UI false-alert and abstention rates are unknown."}
+    for row in rows:
+        if "report_status" not in row or "reported_signal_percent" not in row:
+            raise ValueError("Partial UI evidence: report_status and reported_signal_percent are required on every sample")
+        status = row["report_status"]
+        if not isinstance(status, str) or status not in _UI_SCORED | _UI_ABSTAINED:
+            raise ValueError("Invalid UI status")
+        score = row["reported_signal_percent"]
+        if score is None:
+            if status not in _UI_ABSTAINED:
+                raise ValueError("Inconsistent UI: scored status cannot have a null visible diagnostic")
+        else:
+            if status not in _UI_SCORED:
+                raise ValueError("Inconsistent UI: abstaining status cannot display a score")
+            if isinstance(score, bool) or not isinstance(score, (int, float)) or not math.isfinite(score) or not 0 <= score <= 100:
+                raise ValueError("Invalid UI score")
+            if abs(float(score) - float(row["score"])) > 1e-6:
+                raise ValueError("Inconsistent UI: one-model research diagnostic differs from raw model score")
+
+    def cohort(subset: list[dict]) -> dict:
+        human = [r for r in subset if r["label"] == "human"]
+        ai = [r for r in subset if r["label"] == "ai"]
+        selected = [r for r in subset if r["reported_signal_percent"] is not None]
+        human_selected = [r for r in selected if r["label"] == "human"]
+        ai_selected = [r for r in selected if r["label"] == "ai"]
+        human_high = sum(float(r["reported_signal_percent"]) >= 80 for r in human_selected)
+        ai_high = sum(float(r["reported_signal_percent"]) >= 80 for r in ai_selected)
+        return {
+            "total_n": len(subset),
+            "assessed_n": len(selected),
+            "abstained_n": len(subset) - len(selected),
+            "human_n": len(human),
+            "ai_n": len(ai),
+            "human_assessed_n": len(human_selected),
+            "ai_assessed_n": len(ai_selected),
+            "human_abstained_n": len(human) - len(human_selected),
+            "ai_abstained_n": len(ai) - len(ai_selected),
+            "reported_human_high_at_80": human_high,
+            "reported_ai_high_at_80": ai_high,
+            "reported_human_high_rate_all": human_high / len(human) if human else None,
+            "reported_ai_high_rate_all": ai_high / len(ai) if ai else None,
+            "reported_human_high_rate_assessed": human_high / len(human_selected) if human_selected else None,
+            "reported_ai_high_rate_assessed": ai_high / len(ai_selected) if ai_selected else None,
+            "human_high_upper_95_all": wilson_upper(human_high, len(human)) if human else None,
+            "human_high_upper_95_assessed": wilson_upper(human_high, len(human_selected)) if human_selected else None,
+            "ai_high_lower_95_all": wilson_lower(ai_high, len(ai)) if ai else None,
+            "abstention_rate": (len(subset) - len(selected)) / len(subset) if subset else None,
+        }
+
+    result = {"status": "MEASURED", **cohort(rows)}
+    result["by_domain"] = {name: cohort([r for r in rows if str(r["domain"]) == name])
+                           for name in sorted({str(r["domain"]) for r in rows})}
+    result["by_generator_family"] = {
+        name: cohort([r for r in rows if r["label"] == "ai" and str(r.get("model_family", "")) == name])
+        for name in sorted({str(r.get("model_family")) for r in rows
+                            if r["label"] == "ai" and r.get("model_family")})
+    }
+    result["note"] = ("This describes raw classifier diagnostics actually displayed by the browser. "
+                       "Abstentions are not human classifications or correct negatives. "
+                       "Rates among assessed texts are selection-biased; labels remain source claims. "
+                       "Neither a displayed score nor agreement proves AI authorship.")
+    return result
+
 def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
     if not rows:raise ValueError("Empty benchmark")
     ids=set();groups={}
@@ -132,6 +209,7 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
       "fnr_wilson_95_interval_at_80":[wilson_lower(fn,machine),wilson_upper(fn,machine)] if machine else None,
       "domain_audit":domain_results,
       "generator_family_audit":model_family_results,
+      "ui_selection":evaluate_visible_ui(rows),
       "release_readiness":"NOT_APPROVED",
       "notes":[
         "Observed rates are on public, weakly verified data and are not cross-domain claims.",
