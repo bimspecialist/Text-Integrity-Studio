@@ -8,6 +8,7 @@ async function run(){
  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
  const dir=fs.mkdtempSync(path.join(os.tmpdir(),'tis-v3-'));
+ const output=process.env.TIS_SCREENSHOT_DIR||dir;fs.mkdirSync(output,{recursive:true});
  try{
   const page=await browser.newPage();
   await page.setViewport({width:1400,height:900});
@@ -24,6 +25,7 @@ async function run(){
   await page.$eval('#source',(n,t)=>{n.value=t;n.dispatchEvent(new Event('input',{bubbles:true}));},input);
   await page.click('#scan');
   await page.waitForFunction(()=>document.querySelector('#studioReviewCards .studio-suggestion')&&document.querySelector('#studioDocumentStats')?.textContent.includes('2'));
+  await page.screenshot({path:path.join(output,'studio-v3-desktop.png'),fullPage:true});
   assert((await page.$eval('#studioReviewCards',n=>n.textContent)).includes('sentence'),'Real editorial guidance shown');
   assert.equal(await page.$eval('#source',n=>n.value),input,'Analysis cannot silently rewrite source');
   await page.click('.studio-suggestion button[data-studio-focus]');
@@ -46,15 +48,29 @@ async function run(){
   assert((await page.$eval('#studioEvidenceNotice',n=>n.textContent)).includes('model'),'No authorship proof presented');
   await page.$eval('#source',n=>{n.value+=' Updated.';n.dispatchEvent(new Event('input',{bubbles:true}));});
   await page.waitForFunction(()=>document.getElementById('studioEvidence').hidden,'Editing invalidates stale model highlights');
+  await page.evaluate(()=>{
+   const original=URL.createObjectURL.bind(URL);
+   URL.createObjectURL=blob=>{window.__studioExportBlob=blob;return original(blob)};
+  });
   await page.click('#studioExportReview');
+  const exported=await page.evaluate(async()=>JSON.parse(await window.__studioExportBlob.text()));
+  assert.equal(exported.application,'Text Integrity Studio');
+  assert.equal(exported.analysis.sections.length,2);
+  assert(!JSON.stringify(exported).includes('The field readings must be checked'),'Export never embeds source text');
+  assert(!JSON.stringify(exported).includes('private-contract'),'Export never embeds a source filename');
   const downloadLabels=await page.$eval('#studioExportStatus',n=>n.textContent);
   assert(downloadLabels.length>0,'Report export action has feedback');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.$eval('#studioReviewTitle',n=>n.textContent)).includes('اقتراح'));
   await page.setViewport({width:390,height:844});
+  await page.screenshot({path:path.join(output,'studio-v3-mobile-rtl.png'),fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
   assert(overflow<=8,'Mobile right-to-left editor fits narrow screens');
+  const file=path.join(dir,'notes.log');fs.writeFileSync(file,'A human-authored maintenance note recorded at the site.');
+  await (await page.$('#file')).uploadFile(file);
+  await page.waitForFunction(()=>document.getElementById('source').value.includes('maintenance note'),{timeout:10000});
+  assert((await page.$eval('#studioDocumentFormat',n=>n.textContent)).includes('LOG'),'Text-only LOG file imports as text');
   assert.deepEqual(errors,[],'No browser runtime errors');
   assert.deepEqual(remote,[],'Local review must not leak user text to third-party services');
   console.log('PASS dark editor, local suggestions, focus/edit safety, real ONNX window heatmap, stale invalidation, privacy and RTL/mobile');
