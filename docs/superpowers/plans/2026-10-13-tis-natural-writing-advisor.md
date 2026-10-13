@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
-**Goal:** After Analyze Text, provide local, bilingual, source-grounded suggestions for clearer, more natural writing with user-approved Before/After edits, safe Undo and an optional honest rescan comparison.
+**Goal:** After Analyze Text, provide local, bilingual, source-grounded suggestions for clearer, more natural writing with user-approved Before/After edits, safe Undo and an optional honest rescan comparison. This FAST editorial-advisor subsystem feeds the separately approved two-pane, local-generative workflow, but does not pretend to provide full model rewriting by itself.
 
-**Architecture:** Extend the already-local editorial rules and insights as a small advisor. Keep suggestions separate from AI authorship evidence and never optimize edits against classifier output. Use the canonical DocumentSession from the core reliability plan for revision-safe edits, preserving the read-only Word bridge and the sole prominent Analyze button.
+**Architecture:** Extend the already-local editorial rules and insights as a small advisor. Keep suggestions separate from AI authorship evidence and never optimize edits against classifier output. Use the canonical DocumentSession from the core reliability plan for revision-safe edits, preserving the read-only Word bridge and the sole prominent Analyze button. The OPTIONAL full ONNX generator and dual-pane integration are specified separately in docs/superpowers/plans/2026-10-13-tis-local-generative-dual-editor.md (L1-L8) and cannot be falsely fulfilled by these H1-H4 heuristics.
 
 **Tech Stack:** Plain JavaScript UMD/CommonJS, existing docs/writing-rules.js and docs/studio-insights-core.js, existing docs/writing-lab.js / TextIntegrityWordBridge, DOM/RTL CSS, Node 22 assertions, Puppeteer Chromium.
 
@@ -12,7 +12,7 @@
 
 ## Global Constraints
 
-- Local-first: never send a pasted document or proposed edit to an inference API. No new CDN models, mandatory backend, user login, hidden text telemetry or persisted private source.
+- Local-first: never send a pasted document or proposed edit to an inference API. Within H1-H4 no new CDN models; the separate L1-L8 full local generation workstream may download **static** audited ONNX model assets only with explicit user consent. No mandatory backend, user login, hidden text telemetry or persisted private source.
 - One prominent Analyze Text button remains unchanged. Humanize is a nonblocking optional follow-up section: **Make writing more natural / اجعل الكتابة أكثر طبيعية**, up to 3 top suggestions initially.
 - English and Arabic advice supported, including academic/formal writing and appropriate dialect. The AI authorship detector remains English-only, >=120 words and <=120000 JS UTF-16 characters.
 - No invented personal observations, references, figures or sentences presented as facts; no deliberate mistakes/forced slang; protect quotes, citations, dates, units, numbers, URLs, names and technical terms.
@@ -107,6 +107,18 @@
 - [ ] **Step 3: Implement** comparison only after two user-authorized comparable scans; store previous metadata-only signal summary in memory, never upload text. The card either shows a signed raw-signal change with both uncalibrated disclaimers or “Comparison unavailable.” Do not use detector changes as the suggestion-ranking function.
 - [ ] **Step 4: Run** node tests/analysis/scan-comparison.test.js && node tests/analysis/humanize-e2e-browser.test.cjs && node tests/security-static.test.js && node tests/browser-ai-ui.test.js && node tests/approved-v5-one-click.test.cjs. Expected: PASS and no unauthorized network requests. Run real ONNX smoke before merging as this changes the analysis-facing UI.
 - [ ] **Step 5: Commit** with git commit -m "feat: optional source-independent raw-signal comparison after manual rescan".
+
+## Relationship to approved dual-pane and full on-device rewriter
+
+The owner additionally approved **full local generative rephrasing in two side-by-side original/revised panes**, subject to a separate real-browser model selection and quality gate. H1-H4 remain essential for instant, low-resource, source-grounded advice, protected-span edits and truthful detector-signal comparison; they are NOT the full rewriting engine.
+
+- **L1-L3** add verified and consented on-device WebGPU/ONNX model loading via same-origin Worker, no remote inference or document transmission.
+- **L4-L6** add complete-tokenizer source coverage, Arabic/English protected-facts checks, chunk-based review, user-approved changes and Undo.
+- **L7-L8** implement the actual responsive dual editor, separate contextual Rewrite locally action, real local generation/privacy tests and deployment verification.
+- Existing H3 writing cards appear as an optional section of the Writing Editor/Humanize output pane; no competing global Analyze control is created. If L1 feasibility fails, H1-H4 remain the honest available feature and the full rewriter shows UNAVAILABLE.
+- **Do not** confuse enabling Arabic rewriting with enabling an Arabic AI authorship score.
+
+Full technical contracts, research candidates and acceptance criteria: docs/superpowers/specs/2026-10-13-tis-dual-pane-local-rewrite-design.md and docs/superpowers/plans/2026-10-13-tis-local-generative-dual-editor.md.
 
 ## Humanize Subsystem Completion Gate
 
