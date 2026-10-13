@@ -1,6 +1,6 @@
 # Text Integrity Studio — Path A: Reliability-First Architecture
 
-**Status:** DESIGN APPROVED BY OWNER ON 2026-10-13, INCLUDING POST-SCAN HUMANIZE. IMPLEMENTATION PLANS PENDING REVIEW; NO PRODUCT CODE AUTHORIZED.  
+**Status:** PATH A APPROVED; DUAL-PANE + LOCAL GENERATIVE REWRITING DIRECTION APPROVED 2026-10-13; REVISED DETAIL/PLANS FOR REVIEW; NO PRODUCT CODE AUTHORIZED.  
 **Date:** 2026-10-13  
 **Baseline:** main at 8d08635bd2adf3e32e22ba3735a0049ea6b22b4c (V6)  
 **Scope:** Existing GitHub Pages application and its offline evaluation pipeline; no new project or mandatory hosted inference service  
@@ -14,7 +14,7 @@ The owner approved **Path A**: improve scientific honesty, reliability, user com
 
 **Engineering outcome:** The document identity, eligibility decision, analysis lifecycle, numeric evidence validation, and presentation state have one defined owner apiece. AI inference remains genuinely executed by pinned, locally running ONNX models in the browser, not a synthetic widget. Evaluation remains research-only until independently sufficient evidence exists.
 
-**Explicitly in scope:** state and module boundaries; diagnostics and retry; tokenizer/coverage correctness; bilingual/RTL and long DOCX preservation; privacy/supply-chain checks; reproducible accuracy/fairness evaluation; performance baselines; acceptance and rollback; **opt-in review of post-scan natural-writing suggestions (`/humanize`) with user-controlled edits and no fabricated AI-score guarantees**.
+**Explicitly in scope:** state and module boundaries; diagnostics and retry; tokenizer/coverage correctness; bilingual/RTL and long DOCX preservation; privacy/supply-chain checks; reproducible accuracy/fairness evaluation; performance baselines; acceptance and rollback; **opt-in natural-writing suggestions with reviewed edits, a two-pane original/output workspace, and locally executed generative full-document rewriting after model-capability/consent checks**. The complete separate design is docs/superpowers/specs/2026-10-13-tis-dual-pane-local-rewrite-design.md.
 
 **Explicitly out of scope:** selling detection as certified authorship proof; training/deploying probabilities on weak labels; adjusting scores to match commercial detectors; deliberately introducing grammar mistakes or inventing personal experiences to trick detectors; a paid cloud backend, user accounts, team permissions or document cloud storage; a speculative Arabic detector; introducing React/Next.js into the GitHub Pages front end; replacing the website's entire design; deleting working tools.
 
@@ -139,7 +139,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 
 **User goal:** After Analyze Text, offer useful suggestions that make the writing more natural, clear, specific and true to the author's voice. Users may be interested in whether their next research-model scan changes, but **lowering an uncalibrated detector percentage is neither a guaranteed result nor the editorial quality objective**. The site must never market these edits as proven AI-detector bypasses or disguise an AI-generated passage as independently authored.
 
-**Alternative design choices:** (1) a small, local, transparent rule-based editorial advisor building on `TextIntegrityRules.analyze` and `TextIntegrityStudioInsights.analyzeDocument` (**selected for Path A**); (2) a wholly local generative rewriter (possible future research, but high model-memory cost and greater factual-drift risk); (3) third-party cloud paraphrasing (rejected because it transmits users' documents). Introduce the first as a thin advisor, **not a second inference model**.
+**Alternative design choices (updated per owner approval):** (1) a small local rule-based advisor building on `TextIntegrityRules.analyze` and `TextIntegrityStudioInsights.analyzeDocument` (**keep as fast default/fallback**); (2) a **fully local browser-based generative rewriter**, now approved as product scope, but gated by separate first-use model consent, genuine WebGPU/ONNX compatibility, performance, privacy, licensing, Arabic/English quality and factual-drift tests; (3) third-party cloud paraphrasing (**rejected**). The approved architecture is the combination of (1)+(2), with no unreviewed model deployed and no claim of detector evasion.
 
 **When it appears:** The one existing **Analyze Text** button first runs the local writing review. On completion, cancellation, or unsupported Arabic/mixed/short text, editorial suggestions may still appear even when the AI detector displays INCONCLUSIVE/UNSUPPORTED. Do **not** use model-window values to infer which exact sentences were authored by AI. Suggestions derive from measurable writing features and optional user-supplied context, independent of classifier predictions.
 
@@ -168,6 +168,14 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 **Quality and product outcomes:** Evaluate readability, user-rated clarity, factual/technical preservation, user acceptance/rejection of proposals, explanation comprehension and successful undo. **Do not** use “percentage AI score decreased” as the optimization target or release KPI; that can incentivize misleading detector gaming. Compare benchmark performance independently on a frozen dataset, never on user-adapted live documents.
 
 **Error and protection cases:** no suggestion when there is insufficient evidence; “no issues found” must not mean “written by a human”; preserve ESL, Arabic dialect, author voice and academic tone; avoid forced colloquialisms; disable Apply on read-only/imported sources unless their supported editing workflow permits it; handle large documents and same-length edits; support keyboard/RTL/reduced motion.
+
+### 6.2 Dual-pane UI and fully local generative rewriting — approved direction
+
+The owner approved a **two-pane source/output editor**, with unified task tabs for AI Detection, Humanize and Writing Editor, and **full-document local generative rewriting on the user's device**. The complete component/UX/data/privacy/whole-document/release contract is in docs/superpowers/specs/2026-10-13-tis-dual-pane-local-rewrite-design.md; its implementation tasks are in docs/superpowers/plans/2026-10-13-tis-local-generative-dual-editor.md.
+
+**Boundary:** The existing ONE prominent Analyze Text action remains for writing + eligible detector checks. Rewriting is separately and explicitly user-requested via a contextual **Rewrite locally** action with separate consent before a large model download; no automatic external LLM call or text upload. Arabic rewrites require local human-quality tests, while Arabic AI authorship scoring remains unsupported. Full rewrite status requires complete mapped source coverage, otherwise PARTIAL. Every draft is reviewed before Apply, and every accepted change invalidates stale research-model signals.
+
+**Candidate NOT committed:** onnx-community/Qwen3-0.6B-ONNX q4f16 (public file approximately 570 MB) may be tested with WebGPU; exact revision/converted license/total transfer/peak memory and bilingual quality remain release blockers until independently verified. Rule-based editorial help must continue on unsupported browsers or denied model-download consent. Do not market raw score changes as a higher "human" percentage.
 
 ## 7. Deterministic lifecycle, retry and failure policy
 
@@ -233,6 +241,7 @@ Sources: docs/ai-evidence-core.js; docs/browser-ai-runtime.js; docs/ai-score-ui.
 | Architectural state parity | Pure reducer/eligibility/evidence contract unit tests; no duplicate active run or conflicting visible state |
 | One-button workflow | Mock-driven and real Chromium: English eligible, short English, Arabic, mixed, edited, cancelled, retry, timeout, stale same-length edit |
 | Post-scan natural-writing advisor | Suggestions shown without verified AI score; source-derived before/after; locale and academic-tone preservation; protected figures, citations, quotes and technical terms; stale-revision rejection; user apply/undo; read-only DOCX safe path; no auto rescan, fake facts or score-decrease promise |
+| Fully local dual-pane generation | Both original and draft visible on desktop; explicit model consent; real pinned browser WebGPU generation; no text on external network; 100% chunk/source-span coverage or PARTIAL; genuine Arabic/English tests; fallback with zero fake outputs; no change to English detector score logic |
 | Tokenizer and extraction | Exact offsets, non-silent oversize tokens, short/long windows, UTF-16 handling, DOCX paragraph/read-only and PDF/OCR warnings |
 | Consensus and report integrity | Conflict/coverage/missing model/null/nonfinite/out-of-range/revision mismatch => no invented number, truthful flags and units |
 | Real inference | Pinned primary + opt-in legacy comparator executed in browser with true model assets, not fixture-only |
@@ -297,6 +306,7 @@ These are **review frameworks**, not evidence that a panel of real outside exper
 4. Treat the existing V6 user experience (EN/AR dark editor, one button, optional tools) and real DOCX/PDF/OCR functionality as protected regression contracts.
 5. Permit separate, future research proposals for Arabic and new models, but no automatic production model addition.
 6. Approve the requested **post-scan natural-writing suggestions** as a small local-only editorial component with optional reviewed revisions. Do **not** authorize auto-humanization without review, fabricated anecdotes/errors, detector-score targeting, or any promise that the AI research signal will fall.
+7. Approve the *direction* of **dual-pane editing and full locally executed generative rewriting** via consented model downloads; a specific ONNX model is NOT yet approved without measurable security/license/performance/English+Arabic quality gates. Remote text inference remains forbidden. Keep one global Analyze and a contextual Rewrite locally.
 
 **Owner approval boundary:** The owner explicitly approved the Path A design and post-scan Humanize addendum on 2026-10-13. This authorizes writing detailed execution plans, which are now under docs/superpowers/plans/. It does NOT authorize modifying product code, model scores, merging into main or deploying. Implementation starts only after the owner reviews the written plans and selects a supported execution method.
 
@@ -315,4 +325,4 @@ These are **review frameworks**, not evidence that a panel of real outside exper
 - https://github.com/bimspecialist/Text-Integrity-Studio/blob/main/.github/workflows/live-browser-ai.yml
 - https://github.com/bimspecialist/Text-Integrity-Studio/blob/main/.github/workflows/deployed-ai-diagnostic.yml
 
-**Status at end of specification: DESIGN APPROVED / IMPLEMENTATION PLANS AWAIT OWNER REVIEW / NO PRODUCT IMPLEMENTATION AUTHORIZED.**
+**Status at end of specification: PATH A AND LOCAL-DUAL-PANE DIRECTION APPROVED / REVISED DETAILED SPECS AND PLANS AWAIT OWNER REVIEW / NO PRODUCT IMPLEMENTATION AUTHORIZED.**
