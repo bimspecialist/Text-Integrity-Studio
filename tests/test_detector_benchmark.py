@@ -60,6 +60,53 @@ class EvaluationTests(unittest.TestCase):
         self.assertLess(report["fnr_wilson_95_interval_at_80"][0],1/20)
         self.assertGreater(report["fnr_wilson_95_interval_at_80"][1],1/20)
 
+    def test_visible_ui_signal_and_abstention_are_separate_from_raw_scores(self):
+        rows=self.samples()
+        for row in rows:
+            row["report_status"]="SINGLE_UNCALIBRATED_MODEL"
+            row["reported_signal_percent"]=row["score"]
+        # Raw model emits two high scores that the actual UI correctly withholds.
+        rows[0].update(score=95,report_status="HETEROGENEOUS_DOCUMENT",reported_signal_percent=None)
+        rows[20].update(report_status="INSUFFICIENT_COVERAGE",reported_signal_percent=None)
+        result=evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        self.assertEqual(result["confusion_matrix_at_80"]["false_positive"],1)
+        self.assertEqual(result["confusion_matrix_at_80"]["true_positive"],20)
+        ui=result["ui_selection"]
+        self.assertEqual(ui["status"],"MEASURED")
+        self.assertEqual(ui["assessed_n"],38)
+        self.assertEqual(ui["abstained_n"],2)
+        self.assertEqual(ui["human_abstained_n"],1)
+        self.assertEqual(ui["ai_abstained_n"],1)
+        self.assertEqual(ui["reported_human_high_at_80"],0)
+        self.assertEqual(ui["reported_ai_high_at_80"],19)
+        self.assertAlmostEqual(ui["reported_ai_high_rate_all"],19/20)
+        self.assertEqual(ui["reported_ai_high_rate_assessed"],1)
+        self.assertAlmostEqual(ui["abstention_rate"],2/40)
+        self.assertGreater(ui["human_high_upper_95_all"],0)
+        self.assertEqual(ui["by_domain"]["engineering"]["abstained_n"],2)
+
+    def test_ui_evidence_must_be_complete_and_fail_closed(self):
+        rows=self.samples()
+        missing=evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        self.assertEqual(missing["ui_selection"]["status"],"NOT_RECORDED")
+        rows[0]["report_status"]="SINGLE_UNCALIBRATED_MODEL"
+        with self.assertRaisesRegex(ValueError,"Partial UI evidence"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        rows=self.samples()
+        for row in rows:
+            row["report_status"]="SINGLE_UNCALIBRATED_MODEL"
+            row["reported_signal_percent"]=row["score"]
+        rows[0]["report_status"]="UNVERIFIED_STATUS"
+        with self.assertRaisesRegex(ValueError,"UI status"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        rows[0]["report_status"]="INSUFFICIENT_COVERAGE"
+        with self.assertRaisesRegex(ValueError,"Inconsistent UI"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        rows[0]["reported_signal_percent"]=None
+        rows[0]["report_status"]="SINGLE_UNCALIBRATED_MODEL"
+        with self.assertRaisesRegex(ValueError,"Inconsistent UI"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+
     def test_generator_family_audit_keeps_small_sample_uncertainty(self):
         rows=self.samples()
         for r in rows:
