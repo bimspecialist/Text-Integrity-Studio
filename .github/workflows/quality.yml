@@ -87,6 +87,10 @@ jobs:
         run: |
           node --check tests/approved-v5-one-click.test.cjs
           node tests/approved-v5-one-click.test.cjs
+      - name: Canonical eligibility policy shared by both browser result UIs
+        run: |
+          node --check tests/analysis/eligibility-policy-browser.test.cjs
+          node tests/analysis/eligibility-policy-browser.test.cjs
       - name: Shared detector-language and eligibility policy
         run: |
           node --check tests/analysis/eligibility-policy.test.js
