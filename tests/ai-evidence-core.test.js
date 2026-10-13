@@ -65,6 +65,17 @@ const doubleMixed=core.consensus({...p,coverage:100},{
 });
 assert.equal(doubleMixed.status,'HETEROGENEOUS_DOCUMENT');
 assert.equal(doubleMixed.score,null);
+// Unrounded evidence must govern abstention, not display rounding.
+const roundedUp=core.summarizeWindows([{start:0,end:30,words:10,tokens:40}],[.7],{coverage:.5996});
+assert.equal(roundedUp.coverage,60);
+assert(roundedUp.coverageRawPercent<60);
+assert.equal(core.consensus(roundedUp).status,'INSUFFICIENT_COVERAGE');
+const fineVariance=core.summarizeWindows([{start:0,end:30,words:5,tokens:40},{start:31,end:60,words:5,tokens:40}],[.2,.7004],{coverage:1});
+assert.equal(fineVariance.dispersion,.25);
+assert(fineVariance.dispersionRaw>.25);
+assert.equal(core.consensus(fineVariance).status,'HETEROGENEOUS_DOCUMENT');
+const roundedSecondary=core.consensus({...p,coverage:100},{...roundedUp,model_id:'other',score:70});
+assert.equal(roundedSecondary.status,'INSUFFICIENT_COVERAGE');
 const massive='a'.repeat(3000)+' '+english;
 const long=core.partitionWindows(massive,{encode(text){return Array(Math.ceil(text.length/2)+2).fill(1);}},{
  maxTokens:448,maxSamples:8

@@ -25,6 +25,10 @@ def wilson_upper(positive: int,total: int,z: float=1.959963984540054)->float:
     z2=z*z
     return min(1.0,(p+z2/(2*total)+z*math.sqrt((p*(1-p)+z2/(4*total))/total))/(1+z2/total))
 
+def wilson_lower(positive: int,total: int,z: float=1.959963984540054)->float:
+    if total <= 0:return 0.0
+    return 1.0-wilson_upper(total-positive,total,z)
+
 def auc(labels: list[int],scores: list[float])->float|None:
     if not labels or not 0<sum(labels)<len(labels):return None
     ordered=sorted(zip(scores,labels))
@@ -74,6 +78,12 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
     human=sum(v==0 for v in y);machine=sum(y)
     fp=sum(y_i==0 and s>=.8 for y_i,s in zip(y,predictions))
     tp=sum(y_i==1 and s>=.8 for y_i,s in zip(y,predictions))
+    fn=machine-tp
+    tn=human-fp
+    predicted_ai=tp+fp
+    precision=tp/predicted_ai if predicted_ai else None
+    recall=tp/machine if machine else None
+    f1=2*tp/(2*tp+fp+fn) if (2*tp+fp+fn) else None
     domain_results={}
     for domain in sorted({str(row["domain"]) for row in rows}):
         cohort=[r for r in rows if str(r["domain"])==domain]
@@ -111,7 +121,15 @@ def evaluate(rows: list[dict], *, expected_benchmark: str, revision: str)->dict:
       "alert_threshold":.8,
       "observed_fpr_at_80":fp/human if human else None,
       "upper_95_fpr_at_80":wilson_upper(fp,human),
-      "observed_tpr_at_80":tp/machine if machine else None,
+      "observed_tpr_at_80":recall,
+      "confusion_matrix_at_80":{"true_positive":tp,"false_positive":fp,"true_negative":tn,"false_negative":fn},
+      "precision_at_80":precision,
+      "precision_wilson_95_interval_at_80":[wilson_lower(tp,predicted_ai),wilson_upper(tp,predicted_ai)] if predicted_ai else None,
+      "recall_at_80":recall,
+      "recall_wilson_95_interval_at_80":[wilson_lower(tp,machine),wilson_upper(tp,machine)] if machine else None,
+      "f1_at_80":f1,
+      "observed_fnr_at_80":fn/machine if machine else None,
+      "fnr_wilson_95_interval_at_80":[wilson_lower(fn,machine),wilson_upper(fn,machine)] if machine else None,
       "domain_audit":domain_results,
       "generator_family_audit":model_family_results,
       "release_readiness":"NOT_APPROVED",

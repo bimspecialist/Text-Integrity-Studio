@@ -48,5 +48,13 @@ windowMock.testSecondary=fakeSecondary;
  assert(compare.flags.includes('MODELS_DISAGREE'));
  assert.equal(compare.calibration,'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE');
  assert(!sent.some(item=>item.value?.text),'No source document returned in model result');
+// Failed optional historical model must not hide contradictions in the primary model.
+let interval=0;
+windowMock.testPrimary=Object.assign(async()=>[{label:'ai',score:(interval++%2===0?.1:.9)}],{tokenizer});
+windowMock.testSecondary=Object.assign(async()=>{throw Error('SECONDARY_DOWN');},{tokenizer});
+const incomplete=await windowMock.__testApi.evaluate(long,'sample-3',{deep:true,context:'general'});
+assert.equal(incomplete.status,'HETEROGENEOUS_DOCUMENT');
+assert.equal(incomplete.score,null);
+assert(incomplete.flags.includes('SECONDARY_MODEL_UNAVAILABLE'));
  console.log('PASS strict model AI label mapping, pinned versions, tokenizer-aware windows, genuine model disagreement and no fake aggregate');
 })().catch(err=>{console.error(err);process.exit(1);});

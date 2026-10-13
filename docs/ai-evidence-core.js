@@ -123,15 +123,23 @@ function summarizeWindows(windows,values,options={}){
   range_percent:[round(range[0]*100,1),round(range[1]*100,1)],
   wordsAnalyzed:total,sampleCount:windows.length,
   coverage:round((options.coverage??1)*100,1),
+  // Decision guards must use full precision, not rounded display values.
+  coverageRawPercent:(options.coverage??1)*100,dispersionRaw:spread,
   segments:windowReports
  };
 }
 function consensus(primary,secondary=null,options={}){
  if(!primary||!Number.isFinite(primary.score))throw new TypeError('Primary model output required');
  const flags=[];
- if(primary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('LOW_DOCUMENT_COVERAGE');
+ const exactOrDisplayed=(displayed,raw,decimals)=>
+  Number.isFinite(raw)&&Number.isFinite(displayed)&&round(raw,decimals)===displayed?raw:displayed;
+ const primaryCoverage=exactOrDisplayed(primary.coverage,primary.coverageRawPercent,1);
+ const secondaryCoverage=secondary&&exactOrDisplayed(secondary.coverage,secondary.coverageRawPercent,1);
+ const primaryDispersion=exactOrDisplayed(primary.dispersion,primary.dispersionRaw,3);
+ const secondaryDispersion=secondary&&exactOrDisplayed(secondary.dispersion,secondary.dispersionRaw,3);
+ if(primaryCoverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('LOW_DOCUMENT_COVERAGE');
  if(primary.consistency==='MIXED_PASSAGES')flags.push('CONFLICTING_PASSAGES');
- if(primary.dispersion>.25)flags.push('HIGH_SEGMENT_VARIANCE');
+ if(primaryDispersion>.25)flags.push('HIGH_SEGMENT_VARIANCE');
  const context=options.context||'general';
  if(['academic','second_language','formal'].includes(context))flags.push('FORMAL_OR_NON_NATIVE_FALSE_POSITIVE_RISK');
  let score=primary.score,status='SINGLE_UNCALIBRATED_MODEL',agreement=null;
@@ -151,16 +159,16 @@ function consensus(primary,secondary=null,options={}){
    // the secondary separately for disagreement evidence.
    score=round(primary.score,1);
   }
-  if(secondary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('SECONDARY_LOW_COVERAGE');
+  if(secondaryCoverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('SECONDARY_LOW_COVERAGE');
   if(secondary.consistency==='MIXED_PASSAGES')flags.push('SECONDARY_MIXED_PASSAGES');
  }
- if(primary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT||
-    (secondary&&secondary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)){
+ if(primaryCoverage<MIN_DOCUMENT_COVERAGE_PERCENT||
+    (secondary&&secondaryCoverage<MIN_DOCUMENT_COVERAGE_PERCENT)){
   // No overall percentage when most of the document went unobserved.
   score=null;status='INSUFFICIENT_COVERAGE';
  }else if(primary.consistency==='MIXED_PASSAGES'||
-          primary.dispersion>.25||
-          (secondary&&(secondary.consistency==='MIXED_PASSAGES'||secondary.dispersion>.25))){
+          primaryDispersion>.25||
+          (secondary&&(secondary.consistency==='MIXED_PASSAGES'||secondaryDispersion>.25))){
   // Averages erase genuine disagreement between passages. Show the underlying
   // window scores, but do not misrepresent a mixed document with one number.
   score=null;status='HETEROGENEOUS_DOCUMENT';
