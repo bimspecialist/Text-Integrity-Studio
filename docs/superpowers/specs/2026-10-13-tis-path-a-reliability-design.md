@@ -1,6 +1,6 @@
 # Text Integrity Studio — Path A: Reliability-First Architecture
 
-**Status:** DESIGN FOR OWNER REVIEW — NOT APPROVED FOR IMPLEMENTATION  
+**Status:** DESIGN APPROVED BY OWNER ON 2026-10-13, INCLUDING POST-SCAN HUMANIZE. IMPLEMENTATION PLANS PENDING REVIEW; NO PRODUCT CODE AUTHORIZED.  
 **Date:** 2026-10-13  
 **Baseline:** main at 8d08635bd2adf3e32e22ba3735a0049ea6b22b4c (V6)  
 **Scope:** Existing GitHub Pages application and its offline evaluation pipeline; no new project or mandatory hosted inference service  
@@ -298,7 +298,7 @@ These are **review frameworks**, not evidence that a panel of real outside exper
 5. Permit separate, future research proposals for Arabic and new models, but no automatic production model addition.
 6. Approve the requested **post-scan natural-writing suggestions** as a small local-only editorial component with optional reviewed revisions. Do **not** authorize auto-humanization without review, fabricated anecdotes/errors, detector-score targeting, or any promise that the AI research signal will fall.
 
-**Approval boundary:** This file is a design proposal only. Do not implement code changes, write the detailed execution plan, alter model scores, merge into main or deploy based on this document alone. After the owner explicitly approves or requests revisions, invoke the writing-plans step and ask the owner to approve that plan and execution method before development.
+**Owner approval boundary:** The owner explicitly approved the Path A design and post-scan Humanize addendum on 2026-10-13. This authorizes writing detailed execution plans, which are now under docs/superpowers/plans/. It does NOT authorize modifying product code, model scores, merging into main or deploying. Implementation starts only after the owner reviews the written plans and selects a supported execution method.
 
 ## 15. Primary repository evidence
 
@@ -315,4 +315,4 @@ These are **review frameworks**, not evidence that a panel of real outside exper
 - https://github.com/bimspecialist/Text-Integrity-Studio/blob/main/.github/workflows/live-browser-ai.yml
 - https://github.com/bimspecialist/Text-Integrity-Studio/blob/main/.github/workflows/deployed-ai-diagnostic.yml
 
-**Status at end of specification: AWAITING USER REVIEW / NO IMPLEMENTATION AUTHORIZED.**
+**Status at end of specification: DESIGN APPROVED / IMPLEMENTATION PLANS AWAIT OWNER REVIEW / NO PRODUCT IMPLEMENTATION AUTHORIZED.**
