@@ -70,6 +70,7 @@ async function run(){
    return {ring:{left:ring.left,right:ring.right,top:ring.top,bottom:ring.bottom},
     label:{left:label.left,right:label.right,top:label.top,bottom:label.bottom},
     score:document.getElementById('studioAiQuickValue').textContent.trim(),
+    scanNote:document.getElementById('studioAiQuickNote').textContent.trim(),
     explanation:document.getElementById('v6ConclusionReason')?.textContent||'',
     breakdown:document.getElementById('v5BreakdownRows')?.textContent||''
    };
@@ -77,6 +78,8 @@ async function run(){
   assert.equal(ui.score,'—','INCONCLUSIVE should not overflow the 108px ring or become a false number');
   assert(ui.label.left>=ui.ring.left-2&&ui.label.right<=ui.ring.right+2,'Ring score must stay within circle');
   assert.match(ui.explanation,/passage|vary|inconsistent|heterogeneous|تختلف/i,'Why it abstained must be visible to user');
+  assert.match(ui.scanNote,/processing completed|whole-document number was withheld/i,
+   'Completed inference cannot keep showing an obsolete first-download instruction');
   assert.match(ui.breakdown,/4.7%/,'Real model-window signal can still be shown as local evidence');
   assert.match(ui.breakdown,/coverage|covered|تغطية/i,'The paragraph-level score must be labeled with local model-window coverage');
   const out=process.env.TIS_SCREENSHOT_DIR||temp;
