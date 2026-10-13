@@ -12,13 +12,13 @@ const modelFixture = '<!doctype html><html><body><script>'+
  "segments:[{start:0,end:75,signal:64.2,words:15,tokens:25}]};"+
  "const secondary={model_id:'onnx-community/roberta-base-openai-detector-ONNX',score:15.5,coverage:100,"+
  "sampleCount:1,range_percent:[15.5,15.5],consistency:'CONSISTENT_PASSAGES',segments:[]};"+
- "const deep=e.data.deep===true;"+
+ "const deep=e.data.deep===true;const full=e.data.full===true;primary.coverage=full?95:100;"+
  "const result={version:'TIS_CONSENSUS_V2_2026_10',primary:primary,"+
  "secondary:deep?secondary:null,models:deep?[primary,secondary]:[primary],"+
  "status:deep?'MODEL_DISAGREEMENT':'SINGLE_UNCALIBRATED_MODEL',score:deep?null:64.2,"+
  "flags:deep?['MODELS_DISAGREE']:[],agreementDifferencePoints:deep?48.7:null,"+
  "calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'};"+
- "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:e.data.requestId,result},location.origin);"+
+ "setTimeout(()=>window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:e.data.requestId,result},location.origin),e.data.text.includes('CANCEL_TEST')?450:0);"+
  "});"+
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},location.origin);"+
  '</script></body></html>';
@@ -74,6 +74,26 @@ async function run(){
   await page.waitForFunction(()=>document.getElementById('aiShort').textContent.includes('Models disagree'),{timeout:10000});
   assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
   assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('15.5%'),'Second independent model remains inspectable');
+
+  await page.click('#aiDeep'); // Back to primary-only, retaining the extended scan.
+  await page.click('#aiFullScan');
+  await page.click('#aiRun');
+  await page.waitForFunction(()=>document.getElementById('aiEvidenceBody')?.textContent.includes('95%'),{timeout:10000});
+  assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('95%'),
+   'Extended checkbox is forwarded and reflected in actual document coverage');
+
+  await page.$eval('#source',(el,value)=>{
+    el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+  },'CANCEL_TEST '+english);
+  await page.click('#aiRun');
+  assert((await page.$eval('#aiRun',el=>el.textContent)).includes('Cancel'),
+   'Long scan visibly offers cancellation');
+  await page.click('#aiRun');
+  await new Promise(resolve=>setTimeout(resolve,750));
+  assert.equal(await page.$eval('#aiMeterScore',el=>el.textContent.includes('%')),false,
+   'A delayed result from a cancelled request must never overwrite an empty score');
+  assert((await page.$eval('#aiStatus',el=>el.textContent)).includes('cancelled'));
+
 
   assert((await page.$eval('#aiLegal',n=>n.textContent)).includes('not a percentage of AI-authored words'),'Explicit uncalibrated-model disclaimer remains visible regardless of result wording');
   assert.equal(thirdParty.length,0,'No remote executable/model fetch in mock before live model download');

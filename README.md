@@ -11,6 +11,10 @@ The research-only engine now enforces true tokenizer windows of <=448 tokens ins
 
 Research evaluation and weak-label calibration code lives under [backend/research](backend/research). The publicly deployed website does **not** install its unapproved calibration weights, does not claim certification, and does not promise matching another commercial AI detector.
 
+## More representative document review (October 13, 2026)
+
+The experimental English-only AI model can now optionally inspect **up to 96 tokenizer-bounded windows** instead of sampling just 12, from the existing **Deep analysis options → Check more of long documents** checkbox. It can be cancelled safely. The overall percentage is **withheld**, with detailed raw model/window evidence available, when **less than 60%** of a file was sampled or its window signals strongly contradict each other. This prevents confident-looking averages that fail to represent a whole Word/PDF document. It does **not** validate or certify AI authorship accuracy. The public HC3 pilot's 13/24 human false alerts remain a prominent warning and the release remains **RESEARCH ONLY**.
+
 ## Simple interface, all existing tools
 
 The public browser app now follows **Add file or text → Check → Review & save**. One upload accepts TXT/MD/CSV/JSON, Word DOCX and PDF. The default view shows one primary check button and a short result; the remaining tools are retained behind accessible expandable sections: **grammar and writing suggestions, safe/thorough Unicode cleanup, tracked Word revisions/format-preserving export, PDF extraction and Arabic/English offline OCR, detailed security findings/reports, and optional experimental local-model research**. All Arabic/English labels work in RTL/LTR, with results appearing immediately after input on mobile. Expand only the tool you need.

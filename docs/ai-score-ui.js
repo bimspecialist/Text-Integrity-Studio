@@ -19,7 +19,13 @@ const languages={
   legal:'Uncalibrated classifier diagnostics · not a percentage of AI-authored words · English only, 120+ words. False positives remain possible.',
   advanced:'Deep analysis options',
   deep:'Compare with a second detector (more data and memory)',
-  deepHelp:'Optional model checks disagreement. It was trained on GPT-2 (2019), so its result is not a modern accuracy guarantee; disagreement blocks the combined number.',
+  deepHelp:'Optional model checks disagreement. It was trained on GPT-2 (2019), so it does not guarantee modern detection accuracy.',
+  fullScan:'Check more of long documents (slower)',
+  fullScanHelp:'Inspect up to 96 actual model-token windows rather than 12. This improves document coverage, not demonstrated classifier accuracy. It uses more CPU and memory.',
+  hetero:'Document has contradictory passages — no useful single percentage',
+  cancel:'Cancel analysis',cancelled:'Analysis cancelled. No score was saved.',
+  overflow:'Only the first 16 analyzed passages are shown here; the downloadable evidence report contains all measured passages.',
+
   contextLabel:'Writing context',
   pilotTitle:'Observed false-alert risk:',
   pilotText:'In one small HC3 public benchmark, 13 of 24 human-labeled texts scored at least 80% with the main model. Labels were not independently verified. Do not treat high scores as authorship proof.',
@@ -65,7 +71,8 @@ const languages={
    MODELS_DISAGREE:'Models differ by more than 25 percentage points.',
    SECONDARY_LOW_COVERAGE:'The cross-check covered too little of the text.',
    SECONDARY_MIXED_PASSAGES:'Cross-check signals vary sharply across passages.',
-   SECONDARY_MODEL_UNAVAILABLE:'The second model could not be loaded or run.'
+   SECONDARY_MODEL_UNAVAILABLE:'The second model could not be loaded or run.',
+   DOCUMENT_WIDE_SCORE_NOT_REPRESENTATIVE:'A single document-wide score would conceal contradictory passage evidence.'
   }
  },
  ar:{
@@ -77,7 +84,13 @@ const languages={
   legal:'مؤشرات نماذج غير معايرة · ليست نسبة الكلمات المكتوبة بالذكاء الاصطناعي · إنجليزي فقط، 120 كلمة فأكثر. قد تحدث نتائج إيجابية خاطئة.',
   advanced:'خيارات الفحص المتقدم',
   deep:'قارن مع نموذج ثانٍ (يستهلك تنزيلًا وذاكرة أكبر)',
-  deepHelp:'خيار مستقل لكشف الاختلاف. النموذج الإضافي دُرّب على GPT-2 عام 2019، فلا يضمن كشف النماذج الحديثة. عند التعارض لا نعرض نسبة موحدة.',
+  deepHelp:'نموذج إضافي مدرَّب على GPT-2 عام 2019. لا يضمن كشف النصوص المولَّدة بالنماذج الحديثة.',
+  fullScan:'افحص أجزاءً أكثر من المستندات الطويلة (أبطأ)',
+  fullScanHelp:'يفحص حتى 96 مقطعًا ضمن حد الرموز الفعلي بدل 12. يزيد مقدار النص المُفحَص، ولا يعني زيادة مثبتة في دقة النموذج. يستهلك موارد إضافية.',
+  hetero:'مقاطع المستند متعارضة — لا تصلح نسبة إجمالية واحدة',
+  cancel:'إلغاء التحليل',cancelled:'أُلغِي التحليل ولم تُحفظ نتيجة.',
+  overflow:'عُرضت أول 16 مقطعًا فقط؛ يمكن تنزيل التقرير للاطلاع على كل المقاطع المفحوصة.',
+
   contextLabel:'نوع الكتابة',
   pilotTitle:'خطر الخطأ في التنبيه:',
   pilotText:'في اختبار محدود على مجموعة HC3 العامة، حصل 13 من أصل 24 نصًا مصنفًا بشريًا على إشارة 80% أو أكثر من النموذج الأساسي. تسميات المصدر لم تُراجع بشكل مستقل. لا تستخدم النتيجة لإثبات هوية الكاتب.',
@@ -123,7 +136,8 @@ const languages={
    MODELS_DISAGREE:'يختلف النموذجان بأكثر من 25 نقطة مئوية.',
    SECONDARY_LOW_COVERAGE:'تغطية غير كافية للنموذج الثاني.',
    SECONDARY_MIXED_PASSAGES:'اختلاف كبير في نتائج مقاطع النموذج الثاني.',
-   SECONDARY_MODEL_UNAVAILABLE:'تعذّر تشغيل النموذج الثاني.'
+   SECONDARY_MODEL_UNAVAILABLE:'تعذّر تشغيل النموذج الثاني.',
+   DOCUMENT_WIDE_SCORE_NOT_REPRESENTATIVE:'النسبة الإجمالية تخفي اختلافًا جوهريًا بين المقاطع.'
   }
  }
 };
@@ -137,7 +151,7 @@ function cancel(){
 }
 function reset(reason=''){
  cancel();lastResult=null;currentRequest='';inputSnapshot='';running=false;
- $('aiRun').disabled=false;
+ $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
  const indicator=$('aiMeterScore');if(indicator?.firstChild)indicator.firstChild.textContent='—';
@@ -148,11 +162,13 @@ function translate(){
   aiMeterTitle:'title',aiBadge:'badge',aiMeterUnit:'unit',
   aiMeterExplanation:'explanation',aiRun:'run',aiConsent:'consent',
   aiLegal:'legal',aiExport:'export',aiAdvancedSummary:'advanced',
-  aiDeepLabel:'deep',aiDeepHelp:'deepHelp',aiContextLabel:'contextLabel',
+  aiDeepLabel:'deep',aiDeepHelp:'deepHelp',
+  aiFullScanLabel:'fullScan',aiFullScanHelp:'fullScanHelp',aiContextLabel:'contextLabel',
   aiEvidenceTitle:'evidenceTitle',
   aiPilotRisk:'pilotTitle',aiPilotRiskText:'pilotText',aiPilotLink:'pilotLink'
  };
  for(const [id,key] of Object.entries(fields))set(id,t()[key]);
+ set('aiRun',running?t().cancel:t().run);
  // These values affect warnings, never modify classifier outputs.
  const options=$('aiContext')?.options;
  if(options){
@@ -188,7 +204,7 @@ function start(){
  }
  reset();running=true;inputSnapshot=text;
  currentRequest=String(Date.now())+'-'+String(++counter);
- $('aiRun').disabled=true;status(t().loading);
+ $('aiRun').disabled=false;set('aiRun',t().cancel);status(t().loading);
  $('aiMeter').scrollIntoView({block:'nearest'});
  if(!child){
   child=document.createElement('iframe');
@@ -205,6 +221,7 @@ function postRun(){
  child.contentWindow.postMessage({
   channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,
   text:inputSnapshot,deep:$('aiDeep').checked===true,
+  full:$('aiFullScan').checked===true,
   context:$('aiContext').value
  },location.origin);
 }
@@ -246,7 +263,8 @@ function renderEvidence(result){
  container.append(element('h4','',t().flags),list);
  if(result.primary?.segments?.length){
   container.append(element('h4','',t().segments));
-  for(const [index,segment] of result.primary.segments.entries()){
+  const displaySegments=result.primary.segments.slice(0,16);
+  for(const [index,segment] of displaySegments.entries()){
    const start=segment.start,end=segment.end;
    if(!Number.isInteger(start)||!Number.isInteger(end)||start<0
     ||end>inputSnapshot.length||start>=end)continue;
@@ -264,6 +282,9 @@ function renderEvidence(result){
     ' · '+String(segment.tokens)+' '+(lang()==='ar'?'رمزًا':'tokens')));
    container.append(box);
   }
+  if(result.primary.segments.length>displaySegments.length){
+   container.append(element('p','help',t().overflow));
+  }
  }
 }
 function render(result){
@@ -277,20 +298,21 @@ function render(result){
  if($('aiMeterScore')?.firstChild)$('aiMeterScore').firstChild.textContent=hasNumber?number.toFixed(1)+'%':'—';
  const conflict=result.status==='MODEL_DISAGREEMENT';
  const lowCoverage=result.status==='INSUFFICIENT_COVERAGE';
- set('aiShort',conflict?t().uncertain:lowCoverage?t().lowCoverage:
+ const hetero=result.status==='HETEROGENEOUS_DOCUMENT';
+ set('aiShort',conflict?t().uncertain:lowCoverage?t().lowCoverage:hetero?t().hetero:
   result.status==='SECONDARY_UNAVAILABLE'?t().partial:t().measured);
  $('aiBar').hidden=!hasNumber;
  $('aiBar').value=hasNumber?number:0;
  $('aiEvidence').hidden=false;
  $('aiExport').hidden=false;
- $('aiRun').disabled=false;
+ $('aiRun').disabled=false;set('aiRun',t().run);
  status(t().done+(result.primary.coverage<100?' '+t().statusSampled:'')+
    (conflict?' '+t().modelReason:'')+
    (result.status==='AGREEMENT_UNCALIBRATED'?' '+t().statusAgreement:''));
  renderEvidence(result);
 }
 function error(code){
- $('aiRun').disabled=false;running=false;
+ $('aiRun').disabled=false;running=false;set('aiRun',t().run);
  $('aiBar').hidden=true;$('aiExport').hidden=true;
  const message=code==='UNVERIFIED_MODEL_LABEL'?t().unsupported:
   code==='MIN_WORDS'?t().short:
@@ -308,7 +330,7 @@ function handleMessage(event){
    status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
   }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
  }else if(data.op==='RESULT'){
-  currentRequest='';running=false;
+  currentRequest='';running=false;set('aiRun',t().run);
   if($('source').value!==inputSnapshot){reset(t().expired);return;}
   lastResult=data.result;render(lastResult);
  }else if(data.op==='ERROR'){
@@ -330,7 +352,10 @@ function exportResult(){
 }
 function setup(){
  if(!$('aiMeter'))return;
- $('aiRun').addEventListener('click',start);
+ $('aiRun').addEventListener('click',()=>{
+  if(running){reset(t().cancelled);return;}
+  start();
+ });
  $('aiExport').addEventListener('click',exportResult);
  $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);});
  for(const id of ['clear','sample'])$(id)?.addEventListener('click',()=>reset());

@@ -85,10 +85,13 @@ async function getClassifier(which,requestId){
  return promise;
 }
 function ensureActive(){if(cancelled)throw Error('CANCELLED');}
-async function runModel(which,text,requestId,context){
+async function runModel(which,text,requestId,context,fullScan=false){
  ensureActive();
  const pipe=await getClassifier(which,requestId);
- const selection=core.partitionWindows(text,pipe.tokenizer,{maxTokens:448,maxSamples:12});
+ const selection=core.partitionWindows(text,pipe.tokenizer,{
+  maxTokens:448,
+  maxSamples:fullScan?core.MAX_WINDOWS_EXTENDED:core.MAX_WINDOWS
+ });
  if(!selection.windows.length)throw Error('INSUFFICIENT_COVERAGE');
  const results=[];
  for(let i=0;i<selection.windows.length;i++){
@@ -113,16 +116,16 @@ async function runModel(which,text,requestId,context){
   totalWindows:selection.windowCount,
   skippedOversizeWords:selection.oversizeCount,
   sampling:selection.method,
-  context
+  context,fullScan
  };
 }
 async function evaluate(text,requestId,opts={}){
  const eligibility=core.eligibility(text);
  if(!eligibility.eligible)throw Error(eligibility.reason);
- const primary=await runModel('primary',text,requestId,opts.context);
+ const primary=await runModel('primary',text,requestId,opts.context,opts.full===true);
  let secondary=null,secondaryError=null;
  if(opts.deep===true){
-  try{secondary=await runModel('secondary',text,requestId,opts.context);}
+  try{secondary=await runModel('secondary',text,requestId,opts.context,opts.full===true);}
   catch(e){
    if(e?.message==='CANCELLED')throw e;
    secondaryError='SECONDARY_MODEL_UNAVAILABLE';
@@ -135,7 +138,7 @@ async function evaluate(text,requestId,opts={}){
  }
  return {
   ...summary,primary,secondary,secondaryError,
-  deepRequested:opts.deep===true,
+  deepRequested:opts.deep===true,extendedScanRequested:opts.full===true,
   score_type:'UNCALIBRATED_CLASSIFIER_SIGNAL_NOT_AUTHORSHIP_PROBABILITY',
   words:eligibility.words,language:'en',
   version:'TIS_CONSENSUS_V2_2026_10',
@@ -147,7 +150,7 @@ async function perform(data){
  busy=true;cancelled=false;
  try{
   const result=await evaluate(data.text,data.requestId,{
-   deep:data.deep===true,context:data.context||'general'
+   deep:data.deep===true,full:data.full===true,context:data.context||'general'
   });
   ensureActive();send('RESULT',data.requestId,{result});
  }catch(e){
