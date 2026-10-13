@@ -258,3 +258,25 @@ html[dir="rtl"] .v5-breakdown-row{direction:rtl}
  }
  #studioReviewCards{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
+
+/* Default UI has one analyze action; the rest remains accessible here. */
+#v5Toolbox{margin:14px 0 0;border:1px solid #304761;border-radius:12px;background:#142135}
+#v5Toolbox>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;
+ padding:14px 17px;cursor:pointer;color:#bcdaf5;font-weight:700;font-size:12px}
+#v5Toolbox>summary::-webkit-details-marker{display:none}
+#v5Toolbox>summary::after{content:"+";font-size:19px;line-height:1;color:#8fc7ff}
+#v5Toolbox[open]>summary::after{content:"−"}
+#v5Toolbox>summary:focus-visible{outline:3px solid #8ccfff;outline-offset:3px}
+#v5ToolboxItems{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;padding:0 14px 15px}
+#v5ToolboxItems>.tool-details{margin:0;align-self:start;min-width:0}
+#v5ToolboxItems>.tool-details>summary{min-height:49px;font-size:11px}
+#v5ToolboxItems>.tool-details .panel{min-width:0}
+#reportPanel #aiDetectorTechnical .studio-mini-details,
+#reportPanel #aiDetectorTechnical #reportMore{margin:8px 0;border-top:1px solid #33455d}
+#reportPanel #aiDetectorTechnical .studio-mini-details>summary{display:list-item;font-size:11px;color:#b5d9f8}
+#reportPanel #aiDetectorTechnical #reportMore>summary{font-size:11px}
+#reportPanel #aiDetectorTechnical .studio-export-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+@media(max-width:900px){
+ #v5Toolbox{margin:11px 0 0}
+ #v5ToolboxItems{grid-template-columns:1fr;padding:0 10px 11px}
+}
