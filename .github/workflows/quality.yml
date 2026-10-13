@@ -52,6 +52,10 @@ jobs:
           node tests/browser-smoke.test.js
       - name: Simplified front page progressive disclosure regression
         run: node tests/simple-ui-browser.test.js
+      - name: Privacy-safe bilingual editorial insights and real-model heatmap contracts
+        run: |
+          node --check docs/studio-insights-core.js
+          node tests/studio-insights-core.test.js
       - name: Token-aware detector validation, coverage and disagreement safeguards
         run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)
