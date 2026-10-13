@@ -27,7 +27,7 @@
    needWords:n=>'Add '+n+' more English words (minimum 120) to run the research AI scan.',
    languageUnsupported:'AI detection supports English only. Arabic and mixed-language writing can still use writing review.',
    tooLong:'The detector supports at most 120,000 characters. Select a shorter document.',
-   title:'Review suggestions',note:'Local style observations only — not evidence of AI authorship.',
+   title:'Key writing insights',note:'Local style observations only — not evidence of AI authorship.',
    empty:'Your text has no warnings under these limited editorial heuristics. Review the meaning, numbers and citations yourself.',
    add:'Add text and choose Check my text to review writing suggestions.',
    all:'All',clarity:'Clarity',style:'Style',writing:'Review grammar fixes',
@@ -59,7 +59,7 @@
    needWords:n=>'أضف '+n+' كلمة إنجليزية (120 كلمة على الأقل) لبدء فحص AI البحثي.',
    languageUnsupported:'كشف AI يدعم الإنجليزية فقط حاليًا. أدوات تحسين الكتابة متاحة للعربية والنص المختلط.',
    tooLong:'يدعم الفحص 120 ألف حرف كحد أقصى. اختر نصًا أقصر.',
-   title:'اقتراحات المراجعة',note:'ملاحظات أسلوبية محلية فقط، وليست دليلًا على مصدر النص.',
+   title:'أبرز ملاحظات الكتابة',note:'ملاحظات أسلوبية محلية فقط، وليست دليلًا على مصدر النص.',
    empty:'لا توجد ملاحظات ضمن قواعد التحرير المحدودة. راجع المعنى والأرقام والمراجع بنفسك.',
    add:'أضف نصًا ثم اضغط فحص النص لعرض الاقتراحات.',
    all:'الكل',clarity:'الوضوح',style:'الأسلوب',writing:'مراجعة تصحيحات اللغة',
@@ -260,8 +260,16 @@
   setTimeout(()=>URL.revokeObjectURL(url),1500);
   set('studioExportStatus',t().saved);
  }
+ function setAnalyzeLabel(){
+  const button=$('scanAI'),first=button?.querySelector('.v5-action-title'),second=button?.querySelector('.v5-action-sub');
+  if(!first||!second){set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);return;}
+  const arabic=document.documentElement.lang==='ar';
+  first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):(arabic?'تحليل النص باستخدام AI':'Analyze Text');
+  second.textContent=state.aiRunning?(arabic?'Cancel analysis':'إلغاء التحليل'):(arabic?'Analyze Text':'حلّل النص');
+  button.setAttribute('aria-label',first.textContent);
+ }
  function translate(){
-  set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);
+  setAnalyzeLabel();
   set('scan',t().writingScan);
   set('studioPrivacyLabel',t().privacy);
   set('studioExportTop',t().exportTop);
@@ -317,7 +325,12 @@
   });
   $('language').addEventListener('click',()=>{translate();});
   $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
-  $('scanAI').addEventListener('click',()=>{$('aiRun')?.click();});
+  // A single explicit user action runs safe writing review first, then the
+  // optional English model only when eligibility checks in ai-score-ui pass.
+  $('scanAI').addEventListener('click',()=>{
+   if(!state.aiRunning)$('scan')?.click();
+   $('aiRun')?.click();
+  });
   $('studioExportTop').addEventListener('click',()=>{$('studioExportReview')?.click();});
   window.addEventListener('tis:ai-status',event=>{
    const message=event.detail?.text||'';
@@ -328,7 +341,7 @@
   window.addEventListener('tis:ai-progress',event=>{
    const bar=$('studioAiQuickProgress');const detail=event.detail||{};
    state.aiRunning=!['IDLE','DONE','ERROR','CANCELLED'].includes(detail.stage);
-   set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);
+   setAnalyzeLabel();
    set('studioAiQuickRun',state.aiRunning?t().cancelScan:t().aiRun);
    $('scanAI').setAttribute('aria-pressed',state.aiRunning?'true':'false');
    if(state.aiRunning)$('studioAiQuick').dataset.state='running';
