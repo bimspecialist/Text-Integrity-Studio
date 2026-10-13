@@ -91,8 +91,9 @@
   const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
   const lat=(text.match(/[A-Za-z]/g)||[]).length;
   const letters=(text.match(/\p{L}/gu)||[]).length;
-  if(lat<80||ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return t().languageUnsupported;
+  if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return t().languageUnsupported;
   if(words<120)return t().needWords(120-words);
+  if(lat<80)return t().languageUnsupported;
   return t().readyEnglish;
  }
  function set(id,value){if($(id))$(id).textContent=value;}
