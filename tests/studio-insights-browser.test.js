@@ -78,7 +78,7 @@ async function run(){
   const mobileGeometry=await page.evaluate(()=>{
    const box=id=>{const r=document.getElementById(id).getBoundingClientRect();
     return {top:r.top+scrollY,bottom:r.bottom+scrollY,width:r.width};};
-   return {input:box('inputPanel'),report:box('reportPanel'),writing:box('writingTools'),
+   return {input:box('inputPanel'),report:box('reportPanel'),writing:box('v5Toolbox'),
     overflow:document.documentElement.scrollWidth-innerWidth};
   });
   assert(mobileGeometry.input.top<mobileGeometry.report.top,
