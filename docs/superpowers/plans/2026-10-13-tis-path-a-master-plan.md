@@ -2,22 +2,22 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (- [ ]) syntax for tracking.
 
-**Goal:** Deliver the approved Path A reliability-first redesign of detector internals, transparent and safe post-scan Humanize Suggestions, independent scientific evaluation, and privacy/performance/release checks WITHOUT replacing the existing Text Integrity Studio app or inventing AI-authorship certainty.
+**Goal:** Deliver the approved Path A detector reliability, local editorial suggestions, explainable AI evidence, **two-pane editing with full on-device English/Arabic generative rewriting**, independent scientific evaluation, and privacy/performance/release checks WITHOUT replacing Text Integrity Studio or inventing AI-authorship certainty.
 
-**Architecture:** Four separately reviewed workstreams, each with its own test-first plan and independently demonstrable output. Maintain GitHub Pages as a static, local-first site and the one-button bilingual UI; ship guarded incremental compatibility changes, not a rewrite. Offline evaluation/research never silently becomes a production detector update.
+**Architecture:** Five separately reviewed workstreams (R/H/L/E/S), each with its own test-first plan and independently demonstrable output. Maintain GitHub Pages as a static, local-first site and the one-button bilingual UI; ship guarded incremental compatibility changes, not a rewrite. Offline evaluation/research never silently becomes a production detector update.
 
 **Tech Stack:** Existing docs/ first-party JavaScript UMD/CommonJS, ONNX in same-origin browser iframe, GitHub Pages, Node 22, Chromium Puppeteer, existing Python 3.12 research evaluator and GitHub Actions workflows.
 
-**Spec:** docs/superpowers/specs/2026-10-13-tis-path-a-reliability-design.md (approved design with owner-requested Humanize subsection 6.1).
+**Spec:** docs/superpowers/specs/2026-10-13-tis-path-a-reliability-design.md (approved Path A) plus docs/superpowers/specs/2026-10-13-tis-dual-pane-local-rewrite-design.md (owner-approved direction, detailed redesign awaiting review).
 
 ## Global Constraints
 
 - Protected verified V6 main baseline: 8d08635bd2adf3e32e22ba3735a0049ea6b22b4c. If main advances before execution, inspect the new SHA and rebase/reconcile plans; do not overwrite another change.
 - No work starts merely because the design was approved. The owner must review THIS execution plan and choose Native or an actually available subagent-reviewed execution method first.
 - Existing dark Manrope / IBM Plex Sans Arabic, EN/AR/RTL, large editor, ONE prominent Analyze Text action, PDF/DOCX/OCR/cleanup/export all stay working.
-- Local-first private document handling. Explicit model download only on Analyze; no mandatory server/backend, text upload or third-party analytics.
+- Local-first private document handling. English detector model downloads only after Analyze; the NEW full local generator downloads heavy static model/runtime assets **only after separate explicit Rewrite locally consent**, not page load or ordinary Analyze. No mandatory server/backend, user text upload, third-party AI inference or analytics.
 - Pinned primary TMR revision b9aa251e5bcda7e429fcc936767d921435945b60 and secondary legacy revision 54895bd11f34b47a01369d25b2255224717409b8. Eligibility minimum 120 English words, <=120000 JS characters, 448 tokens/window, 12 normal/96 extended windows, 60% sampled-word coverage guard. Do not change thresholds/weights in an architecture PR.
-- A raw signal is NOT a calibrated AI-authorship probability. INCONCLUSIVE/ERROR/UNSUPPORTED/CANCELLED have no overall number. Humanize editing must not be optimized for evading detectors or invent facts.
+- A raw signal is NOT a calibrated AI-authorship probability. INCONCLUSIVE/ERROR/UNSUPPORTED/CANCELLED have no overall number. Humanize editing must not be optimized for evading detectors or invent facts. Generative Arabic writing assistance does NOT unlock Arabic AI detection; full rewrite must have 100% source-span coverage or clearly PARTIAL.
 - TDD small tests, real-model smoke, pre/post screenshots, regression paths, independent review gates and easily reversible feature PRs; never disable CI failures to force green.
 - Engineering GO (safe experimental site) and scientific PRODUCTION CLAIM HOLD (certified authorship percent not validated) are separate, non-substitutable decisions.
 
@@ -36,11 +36,12 @@
 | Stream | Complete implementation plan | Reviewable deliverable | Depends on |
 |---|---|---|---|
 | R — detector lifecycle | docs/superpowers/plans/2026-10-13-tis-core-reliability.md | Immutable revision snapshots, one eligibility policy/controller, strict evidence validator and single projection | none, except preserved V6 behavior |
-| H — natural writing suggestions | docs/superpowers/plans/2026-10-13-tis-natural-writing-advisor.md | User-reviewed Arabic/English post-scan suggestions, safe Apply/Undo, optional honest rescan comparison | R2 and final R8 controller/app adapter |
+| H — natural writing suggestions | docs/superpowers/plans/2026-10-13-tis-natural-writing-advisor.md | User-reviewed Arabic/English post-scan suggestions, safe Apply/Undo, optional honest rescan comparison; light fallback | R2 and final R8 controller/app adapter |
+| L — local generative dual editor | docs/superpowers/plans/2026-10-13-tis-local-generative-dual-editor.md | Consent-first licensed on-device ONNX/Worker generation, full source coverage, 2-pane result and protected-facts review | R2/R8 + H1-H3, security/model feasibility L1 gate; may HOLD independently |
 | E — scientific evaluation | docs/superpowers/plans/2026-10-13-tis-scientific-evaluation.md | Group-disjoint, provenance-audited offline metrics, research calibration evaluation, explicit BLOCKED/HOLD | independent; no browser release prerequisite |
 | S — privacy/performance/release | docs/superpowers/plans/2026-10-13-tis-security-performance-release.md | Network trust tests, pinned dependency inventory, cold/warm benchmarks, RTL/a11y and actual public post-Pages gates | S3 V6 baseline BEFORE R8; S1/S2/S4/S5 integration after R8 and H3 |
 
-**Module boundary lock-in:** R2 owns snapshots; R3 eligibility; R4 outcome validation; R5 transport; R6 state machine; R7 measured section mapping; R8 DOM adaptation. H1 produces editor observations, H2 user-controlled edits, H3 renders the optional section, H4 compares only comparable raw model outputs. E1–E5 remain offline research. S1–S5 govern trust, performance, accessibility, release and rollback. Do not implement two independent copies of the same decision.
+**Module boundary lock-in:** R2 owns snapshots; R3 eligibility; R4 outcome validation; R5 transport; R6 state machine; R7 measured section mapping; R8 DOM adaptation. H1 produces lightweight editor observations, H2 user-controlled edits, H3 renders optional suggestions, H4 compares only comparable raw model outputs. L1 vets local models; L2 consent/capabilities; L3 Worker transport; L4 tokenizer chunks; L5 facts; L6 generative review; L7 responsive two-pane UI; L8 true model/privacy/published release proof. E1–E5 remain offline research. S1–S5 govern trust, performance, accessibility, release and rollback. No duplicate ownership or hidden cloud fallback.
 
 ## Proposed sequence — no automatic merge
 
@@ -84,6 +85,16 @@
 - [ ] **Step 4:** Complete H4 optional comparable raw-signal comparison. Incomparable, unsupported or INCONCLUSIVE scans show comparison unavailable. Run full browser/Word/PDF/OCR and genuine model smoke.
 - [ ] **Step 5:** Independent editorial factuality/accessibility/QA review and production acceptance; no promise that a user's AI score will fall.
 
+### Master Gate M3a: Ship the separately gated fully local generative two-pane editor
+
+**Files / checks:** L1–L8 plan, H1–H3, R2/R8 and S1–S5. The generator may remain HOLD while previously verified reliability and rule-based writing updates ship independently.
+
+- [ ] **Step 1:** Complete L1 feasibility/license gate on one genuinely running, revision-pinned ONNX WebGPU candidate, recording exact file size vs measured total transfer, English/Arabic writing quality and real hardware constraints. If failed or unknown: STOP model enablement; no fake output or cloud fallback.
+- [ ] **Step 2:** Complete L2-L3 capability/consent and same-origin Worker: no heavy download before explicit Rewrite locally consent, source/outputs absent from external request bodies/URLs/headers, cancellation and memory contention safe.
+- [ ] **Step 3:** Complete L4-L6 exact tokenizer-aware source coverage, honest PARTIAL, Arabic/English protected claims, review/accept/undo and stale revision rejection, including read-only DOCX import.
+- [ ] **Step 4:** Complete L7 responsive dual-pane editor and L8 real pinned model browser QA: original + draft side-by-side desktop, stacked mobile 390px RTL, one global Analyze, contextual Rewrite locally. Run true local rewriting AND both existing detector ONNX browser tests, privacy, Word/PDF/OCR and rollback smoke.
+- [ ] **Step 5:** Independent quality/privacy/hardware reviews. Merge/enable the large generator ONLY after explicit owner acceptance, real WebGPU and English/Arabic results; otherwise keep fast deterministic Humanize and mark local full rewrite unavailable.
+
 ### Master Gate M4: Independently audit scientific accuracy (parallel with M1–M3)
 
 **Files / checks:** E1–E5 plan and existing backend/research scripts.
@@ -100,7 +111,7 @@
 
 - [ ] **Step 1:** Run all Node/Python contract + Chromium integration suites, protect no unexpected third-party upload and no hidden source text logging.
 - [ ] **Step 2:** Validate V6 baseline vs current changes using real measured performance profiles; >20% median/p95/memory regression triggers review, not ignored numbers.
-- [ ] **Step 3:** Run full Quality checks and actual downloaded-model smoke in a candidate PR branch. Confirm outcome contract, one primary button, DOCX/PDF/OCR export, Humanize undo and EN/AR RTL.
+- [ ] **Step 3:** Run full Quality checks and actual downloaded-model smoke in a candidate PR branch. Confirm outcome contract, one primary button, DOCX/PDF/OCR export, Humanize undo, dual-pane EN/AR RTL and (only if enabled) real on-device generative WebGPU worker plus zero external document egress. Do not release the generator from mock-only smoke.
 - [ ] **Step 4:** Only after owner-approved merge, verify Pages published new exact commit/release marker and actual public-origin real ONNX inference. If any release-critical check fails, immediately STOP rollout and revert that feature PR.
 - [ ] **Step 5:** Deliver source-linked report: changed files, actual test/check links, measured performance and scientific uncertainties; close engineering GO/HOLD. Scientific authorship-certification remains on separate approval gate.
 
@@ -113,6 +124,8 @@
 | Honest abstention | R4/R7/R8 correct null status and visible reason | null coerced to human/AI score |
 | One main action | R8/H3/S4 desktop + 390px RTL Chromium visual tests | duplicate prominent analysis buttons |
 | Humanize safety | H1/H2/H3 protected claims, reviewed edit, Word read-only and Undo | source rewritten automatically/invented figure |
+| Fully local rewriting | L1-L8 verified license + real model, separate consent, full-span coverage, reviewed source/draft and 390px RTL | static model card mistaken for real inference, partial claimed full or text sent remotely |
+| Low-resource fallback | L2/L3/L8 denied consent and no-WebGPU tests, existing rules remain | unsupported device invokes remote LLM or displays fake rewrite |
 | Humanize comparison | H4 same-model/options/coverage and explicit rescan tests | raw score change misrepresented as human-authorship proof |
 | Data provenance | E1/E2 immutable source/label manifest and group split | source leakage/weak label certified as ground truth |
 | Science uncertainty | E3/E4/E5 FPR upper, ECE/Brier + stratification and hold | sample insufficiency framed as 99% accuracy |
@@ -122,7 +135,7 @@
 
 ## Risks, dependencies and rollback
 
-- R8 must not ship without R1–R7 tests. H2/H3 depend on R2/R8, so no detached Humanize patch to the old duplicated state machine.
+- R8 must not ship without R1–R7 tests. H2/H3 depend on R2/R8, so no detached Humanize patch to the old duplicated state machine. The L-series local generator depends on R2/R8 and H1–H3 plus L1 model feasibility: lack of licensed/working WebGPU keeps the L-series feature HOLD without blocking safe editing improvements.
 - S3 baseline must be measured before claimed performance improvements. Research E can run independently; absence of independent E data does not prevent safe **experimental** UI/refactor fixes from shipping.
 - The pre-existing external model/JS CDN is an explicit threat boundary, not an excuse to send user documents to a remote service. Any dependency/vendor swap requires separate measured risk/license review.
 - The engineering website is not a certified detector. A single public “AI percentage” is not a factual verdict; refuse production calibration promises until E5 gates pass.
@@ -133,6 +146,6 @@
 
 This is a written execution plan, not proof of finished software. None of these unchecked steps have been executed, and no product source files, trained model weights or release status were changed while authoring this plan.
 
-After the owner reviews and approves these five plan documents and chooses a supported execution method, implement one task at a time with test-first commits, reviewer gates, and separately authorized merges/deployments.
+After the owner reviews the **six** plan documents (master plus R/H/L/E/S), including the detailed dual-pane specification, and chooses a supported execution method, implement one task at a time with test-first commits, reviewer gates, and separately authorized merges/deployments.
 
 **Status: AWAITING PLAN APPROVAL AND EXECUTION-METHOD SELECTION.**
