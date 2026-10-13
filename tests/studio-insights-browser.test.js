@@ -25,7 +25,7 @@ async function run(){
   const all=Array.from({length:45},(_,i)=>'measurement'+(i%5)).join(' ');
   const input=all+'. The field readings must be checked.\n\n'+('Measurement data measurement outcome. ').repeat(18);
   await page.$eval('#source',(n,t)=>{n.value=t;n.dispatchEvent(new Event('input',{bubbles:true}));},input);
-  await page.click('#scan');
+  await page.$eval('#scan',button=>button.click());
   await page.waitForFunction(()=>document.querySelector('#studioReviewCards .studio-suggestion')&&document.querySelector('#studioDocumentStats')?.textContent.includes('2'));
   await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:path.join(output,'studio-v4-desktop.png'),fullPage:true});
@@ -72,7 +72,7 @@ async function run(){
   assert(downloadLabels.length>0,'Report export action has feedback');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
-  assert((await page.$eval('#studioReviewTitle',n=>n.textContent)).includes('اقتراح'));
+  assert((await page.$eval('#studioReviewTitle',n=>n.textContent)).includes('ملاحظات'));
   await page.setViewport({width:390,height:844});
   await page.evaluate(()=>window.scrollTo(0,0));
   const mobileGeometry=await page.evaluate(()=>{
