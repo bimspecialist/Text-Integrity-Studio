@@ -10,11 +10,13 @@ const fixture=[
  "if(e.data.text.includes('MODEL_NETWORK_FAIL')){",
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'ERROR',requestId:id,code:'MODEL_UNAVAILABLE'},location.origin);return;}",
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'PROGRESS',requestId:id,stage:'DOWNLOADING',percent:42,model:'primary'},location.origin);",
- "const primary={model_id:'onnx-community/tmr-ai-text-detector-ONNX',score:64.2,coverage:96,",
+ "const primary={model_id:'onnx-community/tmr-ai-text-detector-ONNX',revision:'b9aa251e5bcda7e429fcc936767d921435945b60',score:64.2,coverage:96,coverageRawPercent:96,",
  "segments:[{start:0,end:80,signal:64.2,words:15,tokens:26}],sampleCount:1,consistency:'CONSISTENT_PASSAGES'};",
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:id,",
  "result:{version:'TIS_CONSENSUS_V2_2026_10',primary,secondary:null,models:[primary],score:64.2,",
- "status:'SINGLE_UNCALIBRATED_MODEL',flags:[],calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'}},location.origin);});",
+ "status:'SINGLE_UNCALIBRATED_MODEL',flags:[],calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE',"+
+ "valid_for_authorship_decisions:false,score_type:'UNCALIBRATED_CLASSIFIER_SIGNAL_NOT_AUTHORSHIP_PROBABILITY',"+
+ "processing:'CLIENT_ON_DEVICE_NO_REMOTE_INFERENCE',deepRequested:false,extendedScanRequested:false,language:'en'}},location.origin);});",
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},location.origin);",
  '</script></body></html>'
 ].join('');
