@@ -89,7 +89,11 @@ def prepare(rows_by_source: dict[str, list[dict]], *, per_human: int = 32, per_a
         for group, text_id, family, original, text in candidates:
             if text_id in seen_text:
                 continue
-            if group in groups_by_source[shard]:
+            # Preserve separate model-family generations of the same prompt.
+            # They are correlated by prompt and will be reported as such,
+            # never treated as independent calibration/test author groups.
+            group_identity = group + "|" + family if shard == "ai_2026" else group
+            if group_identity in groups_by_source[shard]:
                 continue
             if shard == "ai_2026":
                 if family_counts[family] >= per_ai_family:
@@ -97,7 +101,7 @@ def prepare(rows_by_source: dict[str, list[dict]], *, per_human: int = 32, per_a
             elif counts[shard] >= per_human:
                 continue
             seen_text.add(text_id)
-            groups_by_source[shard].add(group)
+            groups_by_source[shard].add(group_identity)
             counts[shard] += 1
             if shard == "ai_2026":
                 family_counts[family] += 1
