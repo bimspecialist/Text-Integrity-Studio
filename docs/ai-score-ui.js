@@ -210,8 +210,9 @@ function eligible(text){
  if(text.length>120000)return 'TEXT_TOO_LONG';
  const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length,lat=(text.match(/[A-Za-z]/g)||[]).length;
  const letters=(text.match(/\p{L}/gu)||[]).length;
- if(lat<80||ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
+ if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
  if(words<120)return 'MIN_WORDS';
+ if(lat<80)return 'UNSUPPORTED_LANGUAGE';
  return null;
 }
 function start(){
