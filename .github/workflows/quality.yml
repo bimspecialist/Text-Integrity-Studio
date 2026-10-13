@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: User-reviewed natural-writing edits and bounded Undo
+        run: |
+          node --check tests/analysis/editorial-review.test.js
+          node tests/analysis/editorial-review.test.js
       - name: Source-accurate local bilingual Humanize advice
         run: |
           node --check tests/analysis/natural-writing-advisor.test.js
