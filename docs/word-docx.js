@@ -69,7 +69,8 @@ function extract(doc){
    }
    if(str.trim())rows.push(str);
  }
- return rows.join('\n');
+ // Preserve Word paragraph boundaries for the editor's actual section mapping.
+ return rows.join('\n\n');
 }
 function inspectDoc(doc,path){
  const runs=Array.from(doc.getElementsByTagNameNS(W,'r')),hidden=runs.filter(isHidden).filter(r=>textNodes(r).some(x=>x.textContent));
@@ -118,6 +119,7 @@ async function loadWord(file){
    $('source').readOnly=true;
    history=[];future=[];histButtons();
    $('source').value=parts.map(p=>p.text).filter(Boolean).join('\n\n');
+   $('source').dispatchEvent(new Event('input',{bubbles:true}));
    $('source').style.minHeight='270px';
    $('resultbox').hidden=true;
    $('wordToolbar').hidden=false;$('wordReport').hidden=false;
