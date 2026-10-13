@@ -65,6 +65,8 @@ async function run(){
   await page.waitForSelector('#tisOnDeviceModel');
   await page.waitForFunction(()=>document.querySelector('#aiMeterScore')?.textContent.includes('64.2%'),{timeout:10000});
   assert.equal(await page.$eval('#aiBar',e=>e.value),64.2);
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'64.2%',
+   'Compact score comes exclusively from a verified runtime model result');
   assert.equal(await page.$eval('#aiEvidence',e=>e.hidden),false,'Detailed evidence available on demand');
   await page.click('#aiEvidence > summary');
   assert((await page.$eval('#aiEvidenceBody',el=>el.textContent)).includes('64.2%'),'Per-model and per-passage evidence visible');
@@ -73,6 +75,8 @@ async function run(){
   await page.click('#aiRun');
   await page.waitForFunction(()=>document.getElementById('aiShort').textContent.includes('Models disagree'),{timeout:10000});
   assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'INCONCLUSIVE',
+   'A model disagreement withholds the compact percentage too');
   assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('15.5%'),'Second independent model remains inspectable');
 
   await page.click('#aiDeep'); // Back to primary-only, retaining the extended scan.
@@ -93,6 +97,8 @@ async function run(){
   assert.equal(await page.$eval('#aiMeterScore',el=>el.textContent.includes('%')),false,
    'A delayed result from a cancelled request must never overwrite an empty score');
   assert((await page.$eval('#aiStatus',el=>el.textContent)).includes('cancelled'));
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'—',
+   'Cancel clears the compact score before late messages arrive');
 
 
   assert((await page.$eval('#aiLegal',n=>n.textContent)).includes('not a percentage of AI-authored words'),'Explicit uncalibrated-model disclaimer remains visible regardless of result wording');
