@@ -20,6 +20,7 @@ import re
 from pathlib import Path
 
 DATASET = "textsightai/ai-text-detection-benchmark-2026"
+DATASET_REVISION = "423b1768f0827675295fd6dc3cd255ad2f411183"
 LICENSE = "cc-by-sa-4.0"
 INPUT_FILES = {
     "human_wikipedia": "data/human_wikipedia_pre2022.jsonl",
@@ -139,10 +140,10 @@ def download_source() -> tuple[dict[str, list[dict]], str]:
     from huggingface_hub import HfApi, hf_hub_download
 
     api = HfApi()
-    info = api.dataset_info(DATASET, revision="main")
+    info = api.dataset_info(DATASET, revision=DATASET_REVISION)
     sha = str(info.sha)
-    if not re.fullmatch(r"[a-f0-9]{40}", sha):
-        raise RuntimeError("Cannot resolve an immutable source revision")
+    if not re.fullmatch(r"[a-f0-9]{40}", sha) or sha != DATASET_REVISION:
+        raise RuntimeError("Configured external benchmark revision cannot be verified")
     card = info.cardData
     published_license = card.get("license") if isinstance(card, dict) else getattr(card, "license", None)
     if published_license != LICENSE:
