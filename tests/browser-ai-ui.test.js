@@ -76,8 +76,12 @@ async function run(){
   await page.click('#scanAI');
   await page.waitForFunction(()=>document.getElementById('aiShort').textContent.includes('Models disagree'),{timeout:10000});
   assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
-  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'INCONCLUSIVE',
-   'A model disagreement withholds the compact percentage too');
+  assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'—',
+   'An inconclusive model must not overflow the circle or display a fabricated number');
+  assert.match(await page.$eval('#v5ResultHeadline',n=>n.textContent),/inconclusive/i,
+   'The no-score condition is visibly explained outside the numeric indicator');
+  assert.match(await page.$eval('#v6ConclusionReason',n=>n.textContent),/models disagree/i,
+   'The visible reason specifies why independent model outputs conflicted');
   assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('15.5%'),'Second independent model remains inspectable');
 
   await page.click('#aiDeep'); // Back to primary-only, retaining the extended scan.
