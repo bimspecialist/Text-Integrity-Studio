@@ -20,6 +20,13 @@
    aiQuick:'AI model signal · research only',aiRun:'Analyze with on-device model',
    aiBadge:'EXPERIMENTAL',aiIntro:'English text, 120+ words. First use downloads model weights. Results are not authorship probabilities.',
    aiInconclusive:'INCONCLUSIVE',aiProgress:'Preparing optional on-device model…',
+   mainScan:'Scan AI text',writingScan:'Review writing',cancelScan:'Cancel AI scan',
+   privacy:'Private in this browser',exportTop:'Export report',advanced:'Advanced AI details and analyzed passages',
+   confidence:'Uncalibrated research signal · not authorship probability',
+   readyEnglish:'Ready to scan English text. First use downloads a ~126 MB research model.',
+   needWords:n=>'Add '+n+' more English words (minimum 120) to run the research AI scan.',
+   languageUnsupported:'AI detection supports English only. Arabic and mixed-language writing can still use writing review.',
+   tooLong:'The detector supports at most 120,000 characters. Select a shorter document.',
    title:'Review suggestions',note:'Local style observations only — not evidence of AI authorship.',
    empty:'Your text has no warnings under these limited editorial heuristics. Review the meaning, numbers and citations yourself.',
    add:'Add text and choose Check my text to review writing suggestions.',
@@ -45,6 +52,13 @@
    aiQuick:'إشارة نموذج AI · بحثية فقط',aiRun:'التحليل بالنموذج داخل الجهاز',
    aiBadge:'تجريبي',aiIntro:'نص إنجليزي 120 كلمة فأكثر. تُنزّل أوزان النموذج عند الطلب. النتائج ليست احتمال تأليف النص.',
    aiInconclusive:'غير حاسم',aiProgress:'تجهيز النموذج الاختياري داخل الجهاز…',
+   mainScan:'فحص AI للنص',writingScan:'تحسين الكتابة',cancelScan:'إلغاء فحص AI',
+   privacy:'المستند خاص داخل هذا المتصفح',exportTop:'تصدير التقرير',advanced:'التفاصيل العلمية والمقاطع المفحوصة',
+   confidence:'إشارة بحثية غير معايرة · ليست احتمال تأليف النص',
+   readyEnglish:'النص الإنجليزي جاهز للفحص. أول تشغيل ينزّل نموذجًا بحثيًا بحجم 126 ميجابايت تقريبًا.',
+   needWords:n=>'أضف '+n+' كلمة إنجليزية (120 كلمة على الأقل) لبدء فحص AI البحثي.',
+   languageUnsupported:'كشف AI يدعم الإنجليزية فقط حاليًا. أدوات تحسين الكتابة متاحة للعربية والنص المختلط.',
+   tooLong:'يدعم الفحص 120 ألف حرف كحد أقصى. اختر نصًا أقصر.',
    title:'اقتراحات المراجعة',note:'ملاحظات أسلوبية محلية فقط، وليست دليلًا على مصدر النص.',
    empty:'لا توجد ملاحظات ضمن قواعد التحرير المحدودة. راجع المعنى والأرقام والمراجع بنفسك.',
    add:'أضف نصًا ثم اضغط فحص النص لعرض الاقتراحات.',
@@ -67,9 +81,21 @@
   }
  };
  const state={profile:null,filter:'all',dismissed:new Set(),model:null,history:[],
-              lastText:source.value,scanTimer:null,historyTimer:null};
+              aiRunning:false,lastText:source.value,scanTimer:null,historyTimer:null};
  const t=()=>labels[document.documentElement.lang==='ar'?'ar':'en'];
  const round=n=>Math.round(n*10)/10;
+ function readinessNote(){
+  const text=source.value;if(!text.trim())return t().aiIntro;
+  const words=(text.match(/\S+/gu)||[]).length;
+  if(text.length>120000)return t().tooLong;
+  const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
+  const lat=(text.match(/[A-Za-z]/g)||[]).length;
+  const letters=(text.match(/\p{L}/gu)||[]).length;
+  if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return t().languageUnsupported;
+  if(words<120)return t().needWords(120-words);
+  if(lat<80)return t().languageUnsupported;
+  return t().readyEnglish;
+ }
  function set(id,value){if($(id))$(id).textContent=value;}
  function addHistory(label){
   state.history.unshift({label,time:new Date().toLocaleTimeString(
@@ -86,6 +112,7 @@
   const file=$('file')?.files?.[0];
   const meta=core.safeFileMetadata(file);
   set('studioDocumentTitle',file?file.name:t().untitled);
+  set('studioTopDocument',file?file.name:t().untitled);
   set('studioDocumentFormat',meta&&meta.extension!=='unsupported'
    ?meta.extension.toUpperCase()+' · '+Math.round((meta.bytes||0)/1024)+' KB':t().local);
  }
@@ -97,6 +124,7 @@
   set('studioDocumentStats',p?t().count(p.statistics.words,p.paragraphs.total):t().count(0,0));
   renderCards();
   renderSections();
+  if(!state.model&&!state.aiRunning)set('studioAiQuickNote',readinessNote());
  }
  function renderCards(){
   const root=$('studioReviewCards');root.replaceChildren();
@@ -233,11 +261,17 @@
   set('studioExportStatus',t().saved);
  }
  function translate(){
+  set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);
+  set('scan',t().writingScan);
+  set('studioPrivacyLabel',t().privacy);
+  set('studioExportTop',t().exportTop);
+  set('aiDetectorTechnicalLabel',t().advanced);
+  set('studioAiConfidence',t().confidence);
   set('studioReviewTitle',t().title);
   set('studioAiQuickLabel',t().aiQuick);
   set('studioAiQuickRun',t().aiRun);
   set('studioAiQuickBadge',t().aiBadge);
-  if(!state.model)set('studioAiQuickNote',t().aiIntro);
+  if(!state.model&&!state.aiRunning)set('studioAiQuickNote',readinessNote());
   set('studioFilterAll',t().all);set('studioFilterClarity',t().clarity);set('studioFilterStyle',t().style);
   set('studioOpenWritingLab',t().writing);set('studioStyleGuideLabel',t().guide);
   set('studioSectionsLabel',t().sections);set('studioHistoryLabel',t().history);
@@ -283,8 +317,24 @@
   });
   $('language').addEventListener('click',()=>{translate();});
   $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
+  $('scanAI').addEventListener('click',()=>{$('aiRun')?.click();});
+  $('studioExportTop').addEventListener('click',()=>{$('studioExportReview')?.click();});
+  window.addEventListener('tis:ai-status',event=>{
+   const message=event.detail?.text||'';
+   set('studioAiQuickStatus',message);
+   if(message)$('studioAiQuick').dataset.state=event.detail?.running?'running':'failed';
+   else if(!state.model)delete $('studioAiQuick').dataset.state;
+  });
   window.addEventListener('tis:ai-progress',event=>{
    const bar=$('studioAiQuickProgress');const detail=event.detail||{};
+   state.aiRunning=!['IDLE','DONE','ERROR','CANCELLED'].includes(detail.stage);
+   set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);
+   set('studioAiQuickRun',state.aiRunning?t().cancelScan:t().aiRun);
+   $('scanAI').setAttribute('aria-pressed',state.aiRunning?'true':'false');
+   if(state.aiRunning)$('studioAiQuick').dataset.state='running';
+   else if(detail.stage==='DONE')$('studioAiQuick').dataset.state='complete';
+   else if(detail.stage==='ERROR')$('studioAiQuick').dataset.state='failed';
+   else if(!state.model)delete $('studioAiQuick').dataset.state;
    if(detail.stage==='IDLE'||detail.stage==='DONE'||detail.stage==='ERROR'||detail.stage==='CANCELLED'){
     bar.hidden=true;bar.removeAttribute('value');return;
    }
@@ -311,6 +361,7 @@
    set('studioAiQuickValue',Number.isFinite(signal)&&signal>=0&&signal<=100
     ?signal.toFixed(1)+'%':t().aiInconclusive);
    set('studioAiQuickNote',t().aiIntro);
+   $('studioAiQuick').dataset.state='complete';
    state.model={...detail,segments:detail.segments.filter(x=>
     Number.isInteger(x.start)&&Number.isInteger(x.end)&&
     x.start>=0&&x.end<=source.value.length&&x.end>x.start&&

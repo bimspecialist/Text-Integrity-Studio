@@ -1,0 +1,45 @@
+name: Deployed AI detection integration diagnostic
+on:
+  pull_request:
+    paths:
+      - 'tests/deployed-ai-runtime.test.cjs'
+      - '.github/workflows/deployed-ai-diagnostic.yml'
+      - 'docs/ai-score-ui.js'
+      - 'docs/browser-ai-runtime.js'
+      - 'docs/ai-runtime.html'
+      - 'docs/index.html'
+      - 'docs/studio-insights-ui.js'
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["pages build and deployment"]
+    types: [completed]
+permissions:
+  contents: read
+jobs:
+  production-baseline:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    # The public GitHub Pages site remains on main until the PR is merged.
+    # This checks the old live build for root-cause information, not the PR's preview.
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ github.event_name == 'pull_request' }}
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install headless Chromium driver
+        run: npm install --no-save --no-package-lock --ignore-scripts puppeteer-core@25.13.0
+      - name: Exercise published domain and save runtime status
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ai-production
+          TIS_REQUIRE_V4: ${{ github.event_name != 'pull_request' }}
+        run: node tests/deployed-ai-runtime.test.cjs
+      - name: Preserve sanitized diagnostics and screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployed-ai-diagnostics
+          path: /tmp/tis-ai-production/*
+          retention-days: 3
+          if-no-files-found: ignore

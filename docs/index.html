@@ -7,7 +7,7 @@
 <meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
-<link rel="stylesheet" href="app.css">
+<link rel="stylesheet" href="app.css?v=20261013-v4">
 </head>
 <body>
 <div class="shell">
@@ -15,13 +15,17 @@
   <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
   <nav class="side-navigation" aria-label="Workspace navigation">
     <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
-    <a class="nav-item" href="#reportPanel"><span aria-hidden="true">◷</span><span id="navResults">Results</span></a>
+    <a class="nav-item" href="#studioAiQuick" aria-label="AI Detector"><span aria-hidden="true">◷</span><span id="navResults">AI Detector</span></a>
     <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
     <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
   </nav>
   <div class="top"><span class="tag" id="localtag">● Private · On your device</span><button type="button" id="language" aria-label="Change interface language">العربية</button></div>
 </header>
 <main>
+  <div id="studioWorkspaceTop" class="studio-workspace-top">
+    <div class="studio-heading-path"><span class="studio-top-app">Text Integrity Studio</span><span aria-hidden="true">/</span><strong id="studioTopDocument">Untitled document</strong></div>
+    <div class="studio-top-tools"><span id="studioPrivacyLabel" class="studio-top-privacy">Private in this browser</span><button id="studioExportTop" type="button">Export report</button></div>
+  </div>
   <section class="hero" aria-labelledby="heading">
     <div class="eyebrow" id="heroEyebrow">WORKSPACE / DOCUMENT REVIEW</div>
     <h1 id="heading">Check and improve your text.</h1>
@@ -63,7 +67,8 @@
           <p id="studioMapCoverage" class="studio-muted"></p>
         </details>
         <div class="row main-actions">
-          <button class="primary" id="scan" type="button">Check my text</button>
+          <button class="primary studio-ai-main-action" id="scanAI" type="button" aria-describedby="studioAiQuickNote">Scan AI text</button>
+          <button id="scan" type="button">Review writing</button>
           <button id="sample" type="button">Try an example</button>
           <button id="clear" type="button">Clear</button>
         </div>
@@ -99,16 +104,17 @@
     </div>
     <div class="workspace-results">
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
-        <div class="panel-heading"><h2 id="titleAudit">2 · Your results</h2><span id="checkedLabel" class="small">No check yet</span></div>
+        <div class="panel-heading"><h2 id="titleAudit">AI detector</h2><span id="checkedLabel" class="small">Waiting for a scan</span></div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
         <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
           <div class="studio-ai-quick-top">
-            <div class="studio-ai-quick-result"><small id="studioAiQuickLabel">AI model signal · research only</small><strong id="studioAiQuickValue" aria-live="polite">—</strong></div>
+            <div class="studio-ai-quick-result"><small id="studioAiQuickLabel">AI model signal · research only</small><strong id="studioAiQuickValue" aria-live="polite">—</strong><span id="studioAiConfidence">Research model · not calibrated</span></div>
             <span id="studioAiQuickBadge">EXPERIMENTAL</span>
           </div>
           <button id="studioAiQuickRun" type="button">Analyze with on-device model</button>
           <progress id="studioAiQuickProgress" max="100" hidden aria-label="Actual model download progress"></progress>
           <p id="studioAiQuickNote">English text, 120+ words. Model downloads only when requested; scores are not authorship probabilities.</p>
+          <p id="studioAiQuickStatus" role="status" aria-live="polite" class="studio-ai-status"></p>
         </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
           <div class="studio-review-header"><h3 id="studioReviewTitle">Review suggestions</h3><span class="studio-count" id="studioReviewCount">0</span></div>
@@ -134,6 +140,8 @@
           </details>
           <div class="studio-export-row"><button id="studioExportReview" type="button">Export writing report</button><span id="studioExportStatus" class="studio-muted" aria-live="polite"></span></div>
         </section>
+        <details id="aiDetectorTechnical" class="studio-tech-details">
+          <summary id="aiDetectorTechnicalLabel">Advanced details and analyzed passages</summary>
         <section id="aiMeter" class="ai-meter" aria-labelledby="aiMeterTitle">
           <div class="ai-meter-head"><h3 id="aiMeterTitle">AI text indicator</h3><span class="ai-research-badge" id="aiBadge">EXPERIMENTAL</span></div>
           <div class="ai-meter-content">
@@ -184,6 +192,7 @@
           <button id="aiExport" type="button" hidden>Save model report</button>
           <div class="ai-legal" id="aiLegal">English only · Minimum 120 words · Uncalibrated model score, not an AI-written percentage. Short, academic and second-language writing may be falsely flagged.</div>
         </section>
+        </details>
         <div class="report-actions">
           <button id="quickReview" class="primary" type="button" hidden>Review writing suggestions</button>
           <button id="quickClean" type="button">Preview cleanup</button>
@@ -218,7 +227,7 @@
 </footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js"></script>
+<script src="app.js?v=20261013-v4"></script>
 <script src="vendor/jszip.min.js"></script>
 <script src="writing-rules.js"></script>
 <script src="docx-editor.js"></script>
@@ -228,8 +237,8 @@
 <script src="experimental-signal.js"></script>
 <script src="experimental-signal-ui.js"></script>
 <script src="simple-ui.js"></script>
-<script src="ai-score-ui.js"></script>
+<script src="ai-score-ui.js?v=20261013-v4"></script>
 <script src="studio-insights-core.js"></script>
-<script src="studio-insights-ui.js"></script>
+<script src="studio-insights-ui.js?v=20261013-v4"></script>
 </body>
 </html>

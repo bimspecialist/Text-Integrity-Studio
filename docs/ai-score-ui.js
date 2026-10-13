@@ -9,6 +9,9 @@ const VERSION='TIS_CONSENSUS_V2_2026_10';
 const PRIMARY='onnx-community/tmr-ai-text-detector-ONNX';
 let child=null,ready=false,currentRequest='',lastResult=null,counter=0;
 let inputSnapshot='',running=false;
+let readinessTimer=null,inactivityTimer=null,absoluteTimer=null;
+function stopTimers(){for(const timer of [readinessTimer,inactivityTimer,absoluteTimer])clearTimeout(timer);readinessTimer=null;inactivityTimer=null;absoluteTimer=null;}
+function waitForProgress(id){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(running&&currentRequest===id)error('MODEL_TIMEOUT');},180000);}
 const languages={
  en:{
   title:'AI text evidence',badge:'EXPERIMENTAL',unit:'Model signal',
@@ -39,6 +42,11 @@ const languages={
   download:(p,model)=>'Downloading '+model+' model assets: '+p+'%',
   done:'Model diagnostics calculated. They are not independently calibrated for this website.',
   failed:'The model could not run. Check network access, browser memory or content blockers. No fabricated result is shown.',
+  engineTimeout:'The on-device AI engine did not start. Check browser content blockers, then retry with current Chrome or Edge.',
+  modelTimeout:'The model stopped responding. Check device memory and internet access, then retry.',
+  downloadFailed:'Could not download or initialize the AI model. Check internet access, browser extensions and available memory, then retry.',
+  runtimeFailed:'The optional AI engine failed to load. Check whether scripts are blocked, then retry.',
+  noCoverage:'Not enough model windows could be evaluated. Try a longer English text.',
   unsupported:'Unexpected model output or class labels; results withheld.',
   expired:'The text changed. Analyze again to evaluate this version.',
   export:'Download model evidence',
@@ -105,6 +113,11 @@ const languages={
   download:(p,model)=>'تنزيل ملفات نموذج '+model+': '+p+'%',
   done:'اكتمل حساب مؤشرات النماذج، لكنها لم تُعاير بشكل مستقل لهذا الموقع.',
   failed:'تعذر تشغيل النموذج. تحقق من الشبكة والذاكرة ومانع المحتوى. لن نعرض رقمًا افتراضيًا.',
+  engineTimeout:'لم يبدأ محرك AI داخل المتصفح. تحقق من إضافات حظر المحتوى ثم أعد المحاولة باستخدام Chrome أو Edge محدث.',
+  modelTimeout:'توقف النموذج عن الاستجابة. تحقق من ذاكرة الجهاز والإنترنت ثم أعد المحاولة.',
+  downloadFailed:'تعذر تنزيل نموذج AI أو تهيئته. تحقق من الإنترنت وإضافات المتصفح والذاكرة ثم أعد المحاولة.',
+  runtimeFailed:'تعذر تحميل محرك AI الاختياري. تحقق من عدم حظر السكربتات ثم حاول مجددًا.',
+  noCoverage:'لم يُفحص عدد كافٍ من مقاطع النص. جرّب نصًا إنجليزيًا أطول.',
   unsupported:'خرج تصنيف غير متوقع من النموذج، ولذلك حُجبت النتيجة.',
   expired:'تغيّر النص بعد الفحص؛ شغّل التحليل مجددًا.',
   export:'تنزيل تقرير أدلة النماذج',
@@ -146,13 +159,16 @@ const languages={
 const lang=()=>document.documentElement.lang==='ar'?'ar':'en';
 const t=()=>languages[lang()];
 function set(id,value){if($(id))$(id).textContent=value;}
-function status(value){set('aiStatus',value);}
+function status(value){
+ set('aiStatus',value);
+ window.dispatchEvent(new CustomEvent('tis:ai-status',{detail:{text:String(value||''),running}}));
+}
 function cancel(){
  if(currentRequest&&child?.contentWindow)
   child.contentWindow.postMessage({channel:'TIS_BROWSER_AI_V1',op:'CANCEL',requestId:currentRequest},location.origin);
 }
 function reset(reason=''){
- cancel();lastResult=null;currentRequest='';inputSnapshot='';running=false;
+ cancel();stopTimers();lastResult=null;currentRequest='';inputSnapshot='';running=false;
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
@@ -183,7 +199,7 @@ function translate(){
  }
  if(lastResult)render(lastResult);else set('aiShort',t().idle);
  set('navEditor',lang()==='ar'?'المحرر':'Editor');
- set('navResults',lang()==='ar'?'النتائج':'Results');
+ set('navResults',lang()==='ar'?'كاشف AI':'AI detector');
  set('navWriting',lang()==='ar'?'تحسين الكتابة':'Writing tools');
  set('navCleanup',lang()==='ar'?'التنظيف':'Cleanup');
  set('heroEyebrow',lang()==='ar'?'مساحة العمل / مراجعة المستند':'WORKSPACE / DOCUMENT REVIEW');
@@ -191,11 +207,12 @@ function translate(){
 function eligible(text){
  const words=(text.match(/\S+/gu)||[]).length;
  if(!text.trim())return 'NO_TEXT';
- if(words<120)return 'MIN_WORDS';
  if(text.length>120000)return 'TEXT_TOO_LONG';
  const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length,lat=(text.match(/[A-Za-z]/g)||[]).length;
  const letters=(text.match(/\p{L}/gu)||[]).length;
- if(lat<80||ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
+ if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
+ if(words<120)return 'MIN_WORDS';
+ if(lat<80)return 'UNSUPPORTED_LANGUAGE';
  return null;
 }
 function start(){
@@ -204,13 +221,17 @@ function start(){
  if(problem){
   reset(problem==='NO_TEXT'?t().noText:problem==='MIN_WORDS'?t().short:
    problem==='UNSUPPORTED_LANGUAGE'?t().language:t().failed);
-  $('aiMeter').scrollIntoView({block:'nearest'});return;
+  if(window.matchMedia('(max-width:900px)').matches)$('studioAiQuick')?.scrollIntoView({block:'nearest'});
+  return;
  }
  reset();running=true;inputSnapshot=text;
  currentRequest=String(Date.now())+'-'+String(++counter);
+ const request=currentRequest;
+ readinessTimer=setTimeout(()=>{if(running&&currentRequest===request&&!ready)error('RUNTIME_INIT_TIMEOUT');},30000);
+ absoluteTimer=setTimeout(()=>{if(running&&currentRequest===request)error('MODEL_TIMEOUT');},540000);
  $('aiRun').disabled=false;set('aiRun',t().cancel);status(t().loading);
  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
- $('aiMeter').scrollIntoView({block:'nearest'});
+ if(window.matchMedia('(max-width:900px)').matches)$('studioAiQuick')?.scrollIntoView({block:'nearest'});
  if(!child){
   child=document.createElement('iframe');
   child.id='tisOnDeviceModel';
@@ -218,11 +239,14 @@ function start(){
   child.setAttribute('sandbox','allow-scripts allow-same-origin');
   child.setAttribute('referrerpolicy','no-referrer');
   child.setAttribute('aria-hidden','true');child.hidden=true;
+  child.addEventListener('error',()=>{if(running)error('RUNTIME_SCRIPT_FAILED');});
   child.src='ai-runtime.html';$('aiMeter').append(child);
  }else if(ready)postRun();
 }
 function postRun(){
  if(!ready||!child||!currentRequest)return;
+ clearTimeout(readinessTimer);readinessTimer=null;
+ waitForProgress(currentRequest);
  child.contentWindow.postMessage({
   channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,
   text:inputSnapshot,deep:$('aiDeep').checked===true,
@@ -328,32 +352,42 @@ function render(result){
  }}));
 }
 function error(code){
- $('aiRun').disabled=false;running=false;set('aiRun',t().run);
- $('aiBar').hidden=true;$('aiExport').hidden=true;
+ const unrecoverable=['RUNTIME_INIT_TIMEOUT','RUNTIME_SCRIPT_FAILED','MODEL_TIMEOUT'].includes(code);
+ cancel();stopTimers();currentRequest='';running=false;lastResult=null;
+ $('aiRun').disabled=false;set('aiRun',t().run);
+ $('aiBar').hidden=true;$('aiExport').hidden=true;$('aiEvidence').hidden=true;
+ window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:null}));
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'ERROR'}}));
+ if(unrecoverable){child?.remove();child=null;ready=false;}
  const message=code==='UNVERIFIED_MODEL_LABEL'?t().unsupported:
   code==='MIN_WORDS'?t().short:
-  code==='UNSUPPORTED_LANGUAGE'?t().language:t().failed;
+  code==='UNSUPPORTED_LANGUAGE'?t().language:
+  code==='RUNTIME_INIT_TIMEOUT'?t().engineTimeout:
+  code==='RUNTIME_SCRIPT_FAILED'?t().runtimeFailed:
+  code==='MODEL_TIMEOUT'?t().modelTimeout:
+  code==='MODEL_UNAVAILABLE'||code==='MODEL_LOAD_FAILED'?t().downloadFailed:
+  code==='INSUFFICIENT_COVERAGE'?t().noCoverage:t().failed;
  status(message);
 }
 function handleMessage(event){
  if(!child||event.source!==child.contentWindow||event.origin!==location.origin)return;
  const data=event.data;
  if(data?.channel!=='TIS_BROWSER_AI_V1')return;
- if(data.op==='READY'){ready=true;postRun();return;}
+ if(data.op==='READY'){ready=true;clearTimeout(readinessTimer);readinessTimer=null;postRun();return;}
  if(!currentRequest||data.requestId!==currentRequest)return;
  if(data.op==='PROGRESS'){
+  waitForProgress(currentRequest);
   window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:data.stage,percent:data.percent}}));
   if(data.stage==='DOWNLOADING'&&Number.isFinite(data.percent)){
    status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
   }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
  }else if(data.op==='RESULT'){
-  currentRequest='';running=false;set('aiRun',t().run);
+  stopTimers();currentRequest='';running=false;set('aiRun',t().run);
   if($('source').value!==inputSnapshot){reset(t().expired);return;}
   lastResult=data.result;render(lastResult);
   window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
  }else if(data.op==='ERROR'){
-  currentRequest='';running=false;error(data.code);
-  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'ERROR'}}));
+  error(data.code);
  }
 }
 function exportResult(){
@@ -376,7 +410,7 @@ function setup(){
   start();
  });
  $('aiExport').addEventListener('click',exportResult);
- $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);});
+ $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);else if($('aiStatus').textContent)status('');});
  for(const id of ['clear','sample'])$(id)?.addEventListener('click',()=>reset());
  $('file')?.addEventListener('change',()=>reset());
  $('language')?.addEventListener('click',translate);

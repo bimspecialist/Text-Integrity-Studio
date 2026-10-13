@@ -413,3 +413,176 @@ mark.studio-low{background:#24574e;color:#ebfff7}
 #studioAiQuickProgress{display:block;width:100%;height:7px;margin-top:7px;accent-color:#6bb4eb}
 #studioAiQuickProgress[hidden]{display:none!important}
 #studioAiQuickNote{color:#acc3d7;font-size:10.5px;line-height:1.5;margin:6px 0 0}
+
+
+/* V4 focused-document workspace: task-led, QuillBot Docs / GPTZero inspired
+   (original product identity preserved; no imitation of proprietary branding). */
+body{background:#0e1117;color:#eef2f7}
+.shell{max-width:1760px}
+.hero,.steps{display:none!important}
+.studio-workspace-top{
+ display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap;
+ padding:13px 2px 19px;margin-bottom:1px;border-bottom:1px solid #252e3a
+}
+.studio-heading-path{display:flex;align-items:center;gap:11px;min-width:0;color:#768ca5;font-size:12px}
+.studio-top-app{font-weight:750;color:#dfe8f4;letter-spacing:-.15px}
+.studio-heading-path strong{font-weight:600;color:#f0f4fa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:280px}
+.studio-top-tools{display:flex;gap:13px;align-items:center}
+.studio-top-privacy{color:#9fbaa9;font-size:11px}
+#studioExportTop{background:#222d3b;color:#dbe8f6;border:1px solid #3a4b60;border-radius:8px;padding:8px 12px;font-size:12px}
+header.app-sidebar{background:#111620;border-color:#283443}
+.app-sidebar .nav-item{transition:background-color .15s}
+.app-sidebar .nav-item.current{background:#193a56;color:#fff}
+.workspace{gap:12px;grid-template-columns:minmax(0,1fr) minmax(310px,355px);align-items:start}
+#inputPanel,#reportPanel{
+ border:1px solid #343d4a;background:#1a1f27;box-shadow:none;
+ border-radius:12px;border-top:1px solid #343d4a
+}
+#inputPanel{padding:19px 22px;min-width:0}
+#inputPanel .panel-heading{margin:0 0 10px}
+#inputPanel .panel-heading h2{font-size:13px;color:#acbbcb;letter-spacing:.3px}
+.studio-docbar{background:#242a33;border-color:#3b444e;padding:9px 13px;margin-bottom:11px}
+.studio-doc-title strong{color:#e9edf3}
+.studio-doc-title span,.studio-doc-stats{color:#9eafc2}
+#inputPanel .file-input{
+ background:#202833;border:1px dashed #526274;min-height:64px;
+ border-radius:9px;padding:10px 12px;display:flex;gap:10px
+}
+#inputPanel .file-icon{width:27px;height:27px;font-size:17px;background:#2b425b;color:#b9e1ff}
+#inputPanel .file-input-description strong{font-size:12px}
+#inputPanel .file-input-description small{color:#a6b4c6}
+#inputPanel #file{cursor:pointer;font-size:11px}
+#source{
+ background:#171b22;border:1px solid #313b47;border-radius:9px;
+ color:#f3f6fa;min-height:min(62vh,610px);height:min(62vh,610px);
+ font-size:15px;line-height:1.85;letter-spacing:.02px;padding:19px 21px;
+ box-shadow:inset 0 1px 4px #070c1244
+}
+#source:focus-visible{outline:2px solid #4897d7;outline-offset:0}
+.input-summary{color:#a9b9cc;font-size:11px}
+#inputPanel .main-actions{display:flex;gap:9px;margin-top:13px;align-items:center}
+#inputPanel .main-actions button{
+ border-radius:8px;min-height:42px;padding:11px 17px;font-weight:700;font-size:12px
+}
+#inputPanel .main-actions #scanAI{
+ background:#2c9ad8;color:white;border:1px solid #58b5ed;
+ min-width:174px;order:0;flex:0 0 auto
+}
+#inputPanel .main-actions #scanAI:hover{background:#3fa9e4}
+#inputPanel .main-actions #scan{background:#2b3441;color:#eff5fc;border:1px solid #53687e;order:1;min-width:130px}
+#inputPanel .main-actions #sample,#inputPanel .main-actions #clear{
+ background:transparent;border:1px solid #3e4e60;color:#b4c5d8;order:2
+}
+#inputPanel #editorOptions{margin-top:11px}
+#reportPanel{padding:16px 17px;display:flex;flex-direction:column;gap:0;max-height:calc(100vh - 111px);overflow-y:auto}
+#reportPanel>.panel-heading{order:0;display:flex;align-items:center;gap:8px;margin-bottom:7px}
+#reportPanel>.panel-heading h2{font-size:15px;letter-spacing:-.25px}
+#checkedLabel{font-size:10px}
+#studioAiQuick{order:1;background:#202731;border-color:#364859;margin:4px 0 10px;padding:14px}
+.studio-ai-quick-top{align-items:flex-start}
+.studio-ai-quick-result{gap:9px;max-width:75%}
+.studio-ai-quick-result small{font-size:10.5px;color:#adc8df}
+.studio-ai-quick-result strong{font-size:34px;font-weight:760;color:#f2f8ff;line-height:1;letter-spacing:-1px}
+#studioAiConfidence{font-size:10px;font-weight:500;color:#b0c4d8;line-height:1.45}
+#studioAiQuickBadge{background:#3e3121;border-color:#7d6644;color:#f1d8b4}
+#studioAiQuickRun{background:#246c9c;border-color:#3d94c6;margin:12px 0 5px;font-size:12px;padding:11px}
+#studioAiQuickRun:hover{background:#3782b4}
+#studioAiQuickNote{color:#aebdcd;font-size:11px;line-height:1.6}
+.studio-ai-status{
+ font-size:11.5px;font-weight:620;line-height:1.6;
+ padding:8px 10px;margin:10px 0 1px;background:#122232;border-radius:8px;
+ border-inline-start:3px solid #5a9cca;color:#d8ebf9
+}
+.studio-ai-status:empty{display:none}
+#studioAiQuick[data-state=failed] .studio-ai-status,
+#studioAiQuick[data-state=unsupported] .studio-ai-status{
+ background:#3a2b21;color:#f6d8b7;border-inline-start-color:#e1a85e
+}
+#studioAiQuick[data-state=running] .studio-ai-status{background:#182f42}
+#studioAiQuickProgress{accent-color:#52b4ea}
+#studioReview{order:3;border-color:#313e4f;padding-top:10px;margin-top:7px}
+#studioReview .studio-suggestion{background:#212731;border-color:#354354}
+#studioReview .studio-suggestion-type{color:#8aafcd}
+#studioReviewCards{max-height:370px}
+#reportPanel>#quickReport{order:4;color:#9fb2c4;background:transparent;border:0;padding:8px 0;font-size:11px;line-height:1.55;margin:5px 0}
+#reportPanel>.report-actions{order:5}
+#reportPanel>#reportMore{order:6}
+#aiDetectorTechnical{
+ order:2;margin:2px 0 0;border:1px solid #34465a;border-radius:9px;background:#1d2935
+}
+#aiDetectorTechnical>summary{
+ padding:12px;color:#c6ddf0;font-weight:650;font-size:11.5px;cursor:pointer;
+ list-style:none;display:flex;justify-content:space-between;align-items:center;gap:6px
+}
+#aiDetectorTechnical>summary::after{content:"+";font-size:17px;color:#83bce2}
+#aiDetectorTechnical[open]>summary::after{content:"−"}
+#aiDetectorTechnical>summary::-webkit-details-marker{display:none}
+#aiDetectorTechnical>summary:focus-visible{outline:3px solid #89cafa;outline-offset:2px}
+#aiDetectorTechnical #aiMeter{margin:0;padding:10px;border:0;background:transparent;box-shadow:none;border-radius:0}
+#aiDetectorTechnical .ai-meter-content{grid-template-columns:75px minmax(0,1fr);gap:10px;margin:12px 0}
+#aiDetectorTechnical .ai-meter-score{width:72px;height:72px;border-width:6px;font-size:19px}
+#aiDetectorTechnical .ai-meter-score small{font-size:8px}
+#aiDetectorTechnical #aiRun{font-size:11px}
+#reportPanel>#reportMore{border-top:1px solid #374455}
+#reportPanel button,#inputPanel button{transition:background-color .12s ease}
+@media(min-width:1200px){
+ .shell{grid-template-columns:73px minmax(0,1fr)}
+ header.app-sidebar{padding:15px 9px}
+ .app-sidebar .nav-item{width:47px;min-height:47px}
+ main{padding:5px clamp(14px,2vw,34px) 18px}
+ .workspace{gap:13px;grid-template-columns:minmax(0,1fr) minmax(315px,360px)}
+ #source{min-height:min(60vh,630px);height:min(60vh,630px)}
+}
+@media(max-width:1199px){
+ #source{min-height:370px;height:48vh}
+ #reportPanel{max-height:none;overflow:visible}
+}
+@media(max-width:900px){
+ .studio-workspace-top{padding:10px 0 14px}
+ #inputPanel{padding:16px}
+ #reportPanel{padding:16px;margin-top:4px}
+ #source{height:340px;min-height:340px}
+ .studio-top-tools{gap:8px}
+}
+@media(max-width:550px){
+ .studio-workspace-top{align-items:flex-start;gap:8px}
+ .studio-heading-path{font-size:11px;width:100%}
+ .studio-top-privacy{display:none}
+ #studioExportTop{font-size:11px}
+ #inputPanel{padding:13px}
+ #inputPanel .main-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+ #inputPanel .main-actions #scanAI{grid-column:1/-1;width:100%;min-width:0}
+ #inputPanel .main-actions #scan{min-width:0;grid-column:1/-1}
+ #inputPanel .main-actions #sample,#inputPanel .main-actions #clear{min-width:0}
+ #source{min-height:300px;height:300px;padding:14px 13px;font-size:14px}
+ #reportPanel{padding:13px}
+ #studioAiQuick{padding:12px}
+ #studioAiQuick .studio-ai-quick-result strong{font-size:31px}
+}
+@media(prefers-reduced-motion:reduce){
+ #reportPanel button,#inputPanel button{transition:none}
+}
+
+
+/* V4 mobile ordering: replace fragile flattened CSS grid with a predictable
+   flex column so the editor can never overlap or disappear beneath results. */
+@media(max-width:900px){
+ .workspace{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+ .workspace-main,.workspace-results{display:contents}
+ #inputPanel,#reportPanel,#writingTools,#cleanupTools,#pdfTools,
+ #wordReportTools,#wordPickerOptions,#aboutResults,#researchTools{
+  width:100%;min-width:0;max-width:100%;position:relative;
+ }
+ #inputPanel{order:0}
+ #reportPanel{order:1}
+ #writingTools{order:2}
+ #cleanupTools{order:3}
+ #pdfTools{order:4}
+ #wordReportTools{order:5}
+ #wordPickerOptions{order:6}
+ #aboutResults{order:7}
+ #researchTools{order:8}
+ #reportPanel{max-height:none;overflow:visible}
+ .tool-details>summary{white-space:normal;overflow-wrap:anywhere}
+ .tool-details summary span{min-width:0;overflow-wrap:anywhere}
+}

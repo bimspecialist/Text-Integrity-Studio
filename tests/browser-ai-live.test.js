@@ -17,7 +17,7 @@ async function main(){
   const english=('The laboratory research assistant collected detailed measurements from each experimental location, '+
    'reviewed the calculations with the instructor, and recorded the underlying observations for independent verification. ').repeat(11);
   await page.$eval('#source',(el,text)=>{el.value=text;el.dispatchEvent(new Event('input',{bubbles:true}));},english);
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await page.waitForFunction(()=>{
     const label=document.getElementById('aiMeterScore')?.textContent||'';
     const status=document.getElementById('aiStatus')?.textContent||'';
@@ -37,9 +37,10 @@ async function main(){
   await page.screenshot({path:path.join(dirname,'real-model-runtime.png'),fullPage:true});
   // Explicit advanced opt-in: download a second independent historical model
   // and verify it really runs instead of simulating a second number.
+  await page.click('#aiDetectorTechnical > summary');
   await page.click('#aiAdvanced > summary');
   await page.click('#aiDeep');
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await page.waitForFunction(()=>{
     const details=document.getElementById('aiEvidenceBody')?.textContent||'';
     const button=document.getElementById('aiRun');

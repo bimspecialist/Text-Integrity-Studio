@@ -17,7 +17,7 @@ for(const text of [html,privacy]){
  assert(!/\sstyle=/.test(text),'No inline style attributes');
  assert(!/\son[a-z]{3,}="/i.test(text),'No inline event handlers');
 }
-assert(html.includes('src="docx-editor.js"')&&html.includes('src="app.js"'),'First-party modules referenced');
+assert(html.includes('src="docx-editor.js"')&&/src="app\.js(?:\?v=[a-zA-Z0-9-]+)?"/.test(html),'First-party modules referenced');
 assert(html.includes('href="privacy.html"'),'Privacy disclosure linked');
 assert(fs.existsSync('docs/vendor/JSZIP_LICENSE.txt'),'Bundled library license included');
 console.log('PASS static CSP, local scripts, disclosure and dependency-license checks');

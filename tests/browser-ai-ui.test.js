@@ -55,24 +55,25 @@ async function run(){
 
   const arabic=('هذه تجربة عربية هندسية كتبها الباحث بنفسه واستعرض فيها النتائج وملاحظات القياس بشكل واضح. ').repeat(18);
   await page.$eval('#source',(el,value)=>{el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));},arabic);
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   assert.equal(await page.$('#tisOnDeviceModel'),null,'Arabic input is not sent to an English model');
   assert((await page.$eval('#aiStatus',el=>el.textContent)).includes('English'),'Unsupported language explained rather than invented');
 
   const english=('Students documented the engineering experiment and described their measurements in independent notes. ').repeat(22);
   await page.$eval('#source',(el,value)=>{el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));},english);
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await page.waitForSelector('#tisOnDeviceModel');
   await page.waitForFunction(()=>document.querySelector('#aiMeterScore')?.textContent.includes('64.2%'),{timeout:10000});
   assert.equal(await page.$eval('#aiBar',e=>e.value),64.2);
   assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'64.2%',
    'Compact score comes exclusively from a verified runtime model result');
   assert.equal(await page.$eval('#aiEvidence',e=>e.hidden),false,'Detailed evidence available on demand');
+  await page.click('#aiDetectorTechnical > summary');
   await page.click('#aiEvidence > summary');
   assert((await page.$eval('#aiEvidenceBody',el=>el.textContent)).includes('64.2%'),'Per-model and per-passage evidence visible');
   await page.click('#aiAdvanced > summary');
   await page.click('#aiDeep');
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await page.waitForFunction(()=>document.getElementById('aiShort').textContent.includes('Models disagree'),{timeout:10000});
   assert.equal(await page.$eval('#aiMeterScore',e=>e.textContent.includes('%')),false,'Disagreement abstains from single number');
   assert.equal(await page.$eval('#studioAiQuickValue',n=>n.textContent.trim()),'INCONCLUSIVE',
@@ -81,7 +82,7 @@ async function run(){
 
   await page.click('#aiDeep'); // Back to primary-only, retaining the extended scan.
   await page.click('#aiFullScan');
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await page.waitForFunction(()=>document.getElementById('aiEvidenceBody')?.textContent.includes('95%'),{timeout:10000});
   assert((await page.$eval('#aiEvidenceBody',e=>e.textContent)).includes('95%'),
    'Extended checkbox is forwarded and reflected in actual document coverage');
@@ -89,10 +90,10 @@ async function run(){
   await page.$eval('#source',(el,value)=>{
     el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
   },'CANCEL_TEST '+english);
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   assert((await page.$eval('#aiRun',el=>el.textContent)).includes('Cancel'),
    'Long scan visibly offers cancellation');
-  await page.click('#aiRun');
+  await page.click('#scanAI');
   await new Promise(resolve=>setTimeout(resolve,750));
   assert.equal(await page.$eval('#aiMeterScore',el=>el.textContent.includes('%')),false,
    'A delayed result from a cancelled request must never overwrite an empty score');
@@ -107,6 +108,7 @@ async function run(){
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.$eval('#aiBadge',n=>n.textContent)).includes('تجريبي'));
   await page.setViewport({width:390,height:844});
+  await page.evaluate(()=>window.scrollTo(0,0));
   await page.screenshot({path:path.join(output,'workspace-mobile-rtl.png'),fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
   assert(overflow<=8,'Arabic phone viewport fits without horizontal scrolling');
