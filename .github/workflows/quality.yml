@@ -87,6 +87,10 @@ jobs:
         run: |
           node --check tests/approved-v5-one-click.test.cjs
           node tests/approved-v5-one-click.test.cjs
+      - name: Shared detector-language and eligibility policy
+        run: |
+          node --check tests/analysis/eligibility-policy.test.js
+          node tests/analysis/eligibility-policy.test.js
       - name: DocumentSession immutability and source revision contracts
         run: |
           node --check tests/analysis/document-session.test.js
