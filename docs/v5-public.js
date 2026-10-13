@@ -145,64 +145,43 @@
   const p=document.createElement('p');p.className='studio-muted';
   p.textContent=current().empty;node.append(p);
  }
- function textGroupScores(span,signals){
-  const start=span.start,end=span.end;
-  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return null;
-  const overlapping=signals.filter(s=>s.start<end&&s.end>start);
-  if(!overlapping.length)return null;
-  const boundaries=[start,end];
-  for(const s of overlapping){
-   boundaries.push(Math.max(start,s.start),Math.min(end,s.end));
-  }
-  boundaries.sort((a,b)=>a-b);
-  const distinct=boundaries.filter((b,i)=>i===0||b!==boundaries[i-1]);
-  let measured=0,weighted=0;
-  for(let i=1;i<distinct.length;i++){
-   const lo=distinct[i-1],hi=distinct[i],width=hi-lo;
-   if(width<=0)continue;
-   const hits=overlapping.filter(s=>s.start<hi&&s.end>lo);
-   if(!hits.length)continue;
-   measured+=width;
-   weighted+=width*hits.reduce((acc,s)=>acc+s.signal,0)/hits.length;
-  }
-  const coverage=measured/(end-start)*100;
-  return measured?{coverage,signal:weighted/measured}:null;
- }
  function renderBreakdown(detail){
   const target=$('v5BreakdownRows');target.replaceChildren();
   if(!detail||!Array.isArray(detail.segments))return renderEmpty();
-  const core=globalThis.TextIntegrityStudioInsights;
-  if(!core||typeof core.analyzeDocument!=='function')return renderEmpty();
-  let sections=[];
-  try{sections=core.analyzeDocument(source.value,{maxSections:500}).sections;}catch{return renderEmpty();}
-  const valid=detail.segments.filter(s=>s&&Number.isInteger(s.start)&&Number.isInteger(s.end)&&
-   s.start>=0&&s.end<=source.value.length&&s.end>s.start&&
-   typeof s.signal==='number'&&Number.isFinite(s.signal)&&s.signal>=0&&s.signal<=100);
-  if(!valid.length||!sections.length)return renderEmpty();
-  // Sample the document rather than reporting only the opening heading blocks.
-  const sampled=sections.length<=8?sections:Array.from({length:8},(_,i)=>
-   sections[Math.round(i*(sections.length-1)/7)]);
-  let count=0;
-  for(const section of sampled){
-   const score=textGroupScores(section,valid);
-   const assessed=score&&score.coverage>=60;
+  const snapshots=globalThis.TISDocumentSession;
+  const projector=globalThis.TISEvidenceProjection;
+  if(!snapshots?.createDocumentSession||!projector?.projectEvidence)return renderEmpty();
+  let overview;
+  try{
+   const snapshot=snapshots.createDocumentSession(source.value).read();
+   const score=Number.isFinite(detail.displayedSignalPercent)?detail.displayedSignalPercent:null;
+   overview=projector.projectEvidence(snapshot,{
+    revision:snapshot.revision,
+    kind:score===null?'INCONCLUSIVE':'RESEARCH_SIGNAL',signal:score,
+    documentCoverageWordsPercent:detail.documentCoverage,segments:detail.segments
+   },{maxOverviewSections:8});
+  }catch{return renderEmpty();}
+  if(!overview.sections.length)return renderEmpty();
+  for(const section of overview.sections){
+   const assessed=section.windowSignal!==null;
    const row=document.createElement('div');row.className='v5-breakdown-row';
    if(!assessed)row.classList.add('is-unscored');
    const title=document.createElement('span');
    title.textContent=current().section(section.id);
    const value=document.createElement('strong');
-   value.textContent=assessed?score.signal.toFixed(1)+'%':current().uncovered;
-   value.title=assessed?current().modelSignal+' · '+score.coverage.toFixed(0)+'% coverage':current().insufficient;
+   value.textContent=assessed?section.windowSignal.toFixed(1)+'%':current().uncovered;
+   value.title=assessed?current().modelSignal+' · '+section.paragraphCoverageCharactersPercent.toFixed(0)+'% coverage':current().insufficient;
    const coverage=document.createElement('small');coverage.className='v6-window-coverage';
-   coverage.textContent=score?current().windowCoverage.replace('{coverage}',score.coverage.toFixed(0)+'%'):current().insufficient;
+   coverage.textContent=section.coveredCharacters?
+    current().windowCoverage.replace('{coverage}',section.paragraphCoverageCharactersPercent.toFixed(0)+'%'):
+    current().insufficient;
    const bar=document.createElement('div');bar.className='v5-breakdown-bar';
    bar.setAttribute('aria-label',value.title);
    const fill=document.createElement('i');
-   fill.style.width=assessed?score.signal.toFixed(1)+'%':'0%';
-   bar.append(fill);row.append(title,value,bar,coverage);target.append(row);count++;
+   fill.style.width=assessed?section.windowSignal.toFixed(1)+'%':'0%';
+   bar.append(fill);row.append(title,value,bar,coverage);target.append(row);
   }
-  if(!count)renderEmpty();
-  if(sections.length>8){
+  if(overview.totalParagraphs>overview.sections.length){
    const p=document.createElement('p');p.className='studio-muted';
    p.textContent=current().more;target.append(p);
   }
