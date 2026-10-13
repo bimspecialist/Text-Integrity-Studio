@@ -148,7 +148,7 @@
           <p id="studioAiQuickStatus" role="status" aria-live="polite" class="studio-ai-status"></p>
         </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
-          <div class="studio-review-header"><h3 id="studioReviewTitle">Review suggestions</h3><span class="studio-count" id="studioReviewCount">0</span></div>
+          <div class="studio-review-header"><div><h3 id="studioReviewTitle">Key writing insights</h3><p id="v5InsightsSubtitle">Explainable observations — not proof of authorship</p></div><span class="studio-count" id="studioReviewCount">0</span></div>
           <div class="studio-review-tabs" role="group" aria-label="Filter writing suggestions">
             <button type="button" data-studio-filter="all" aria-pressed="true" id="studioFilterAll">All</button>
             <button type="button" data-studio-filter="clarity" aria-pressed="false" id="studioFilterClarity">Clarity</button>
@@ -170,6 +170,12 @@
             <ol id="studioHistoryList" class="studio-history-list"></ol>
           </details>
           <div class="studio-export-row"><button id="studioExportReview" type="button">Export writing report</button><span id="studioExportStatus" class="studio-muted" aria-live="polite"></span></div>
+        </section>
+        <section id="v5Breakdown" class="v5-breakdown" aria-labelledby="v5BreakdownTitle">
+          <div class="v5-breakdown-top"><h3 id="v5BreakdownTitle">Text breakdown</h3><small id="v5BreakdownCaption">Measured model windows only</small></div>
+          <div id="v5BreakdownRows" class="v5-breakdown-rows" aria-live="polite">
+            <p class="studio-muted">Research signals per analyzed paragraph appear after a supported AI scan.</p>
+          </div>
         </section>
         <details id="aiDetectorTechnical" class="studio-tech-details">
           <summary id="aiDetectorTechnicalLabel">Advanced details and analyzed passages</summary>
@@ -270,6 +276,7 @@
 <script src="simple-ui.js"></script>
 <script src="ai-score-ui.js?v=20261013-v4"></script>
 <script src="studio-insights-core.js"></script>
-<script src="studio-insights-ui.js?v=20261013-v4"></script>
+<script src="studio-insights-ui.js?v=20261013-v5"></script>
+<script src="v5-public.js?v=20261013-v5"></script>
 </body>
 </html>
