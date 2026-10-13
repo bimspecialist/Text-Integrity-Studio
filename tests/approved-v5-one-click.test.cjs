@@ -59,6 +59,7 @@ async function run(){
   assert.deepEqual(initial.actionButtons,['scanAI'],'Only one visible main analysis button before opening advanced tools');
   assert.match(initial.fonts,/Manrope|IBM Plex Sans Arabic/);
   assert.equal(initial.technicalOpen,false);
+  assert.equal(await page.$eval('#v5Toolbox',n=>n.open),false,'Optional tools are behind one clearly labeled disclosure');
   assert.equal(initial.mockClaims,false,'Do not hardcode a speculative AI confidence or 72%');
   assert.equal(await page.evaluate(()=>document.fonts.check('400 14px "TIS Manrope"')&&[...document.fonts].some(f=>f.family==='TIS Manrope'&&f.status==='loaded')),true,'The licensed first-party Manrope font loads');
   const tiny='teh note,which includes a verified result.';
