@@ -21,6 +21,18 @@ The TMR/RoBERTa model uses English RAID-style examples from 2024. Its published 
 
 These changes improve *measurement fidelity and inspectability*. They do not prove external discrimination performance.
 
+## 2b. Selective document-wide reporting and long-file analysis — October 13, 2026
+
+To avoid amplifying the already-observed high false-alert rate, the browser's *overall model diagnostic* is now **withheld** when any of these measured input-quality conditions apply:
+
+- Less than **60%** of the actual document words were processed. A low-coverage note is shown with the sampled passages. The 60% minimum is a transparency floor for summarizing a whole file, **not** an independently derived probability or AI-classification threshold.
+- The tokenizer-bounded windows contain strong opposite classifications (some near 0 and others near 1) or the within-document model-signal spread exceeds 0.25. A single mean masks contradictory passages, so the whole-document number becomes **INCONCLUSIVE** while individual model/window diagnostic signals remain available.
+- Two independently trained detectors differ by more than the pre-existing provisional 25-percentage-point disagreement guardrail.
+
+An explicit **"Check more of long documents"** option expands stratified sampling from 12 up to **96 windows**, each bounded by the *actual model tokenizer*. It can raise the amount of document evidence and requires more CPU time, but **does not itself improve the classifier's validated accuracy**. A cancel button and stale-response protection keep the UI responsive. Details show the first 16 bounded passages; a downloadable diagnostic JSON report contains every evaluated passage without including the raw document text.
+
+No calibration model was changed or deployed by these fixes. This is an **engineering safety improvement** and requires separate external benchmark testing to support any claim of better detection accuracy. Users must still interpret even high individual model signals cautiously, especially for authentic academic/non-native human writing.
+
 ## 3. Real TMR reference pilot — completed
 
 GitHub Actions: https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38253905498
