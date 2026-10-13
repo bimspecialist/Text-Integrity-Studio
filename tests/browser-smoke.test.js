@@ -26,6 +26,7 @@ async function run(){
    await page.waitForSelector('#wordPick',{timeout:10000});
    await page.waitForSelector('#writingLab',{timeout:10000});
    await page.$eval('#source',el=>{el.value='teh note,which';el.dispatchEvent(new Event('input',{bubbles:true}));});
+   await page.$eval('#v5Toolbox',el=>{el.open=true;});
    await page.click('#writingTools > summary');
    await page.click('#labAnalyze');
    await page.waitForFunction(()=>document.querySelectorAll('.writing-card').length>0);
