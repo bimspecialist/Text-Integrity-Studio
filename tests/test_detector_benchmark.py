@@ -29,9 +29,27 @@ class EvaluationTests(unittest.TestCase):
         self.assertEqual(report["observed_fpr_at_80"],0)
         self.assertGreater(report["upper_95_fpr_at_80"],0.1)
         self.assertEqual(report["observed_tpr_at_80"],1)
+        self.assertEqual(report["domain_audit"]["engineering"]["ai"],20)
+        self.assertEqual(report["domain_audit"]["engineering"]["human"],20)
+        self.assertEqual(report["domain_audit"]["engineering"]["observed_tpr_at_80"],1)
+        self.assertLess(report["domain_audit"]["engineering"]["lower_95_tpr_at_80"],1)
+        self.assertEqual(report["generator_family_audit"],{})
         self.assertEqual(report["release_readiness"],"NOT_APPROVED")
         self.assertAlmostEqual(ece([0,1],[.1,.9]),.1)
         self.assertEqual(auc([0,1],[.5,.5]),.5)
+
+    def test_generator_family_audit_keeps_small_sample_uncertainty(self):
+        rows=self.samples()
+        for r in rows:
+            if r["label"]=="ai":
+                r["model_family"]="generatorA" if int(r["id"].split("-")[-1])<10 else "generatorB"
+        report=evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
+        families=report["generator_family_audit"]
+        self.assertEqual(set(families),{"generatorA","generatorB"})
+        self.assertEqual(families["generatorA"]["n"],10)
+        self.assertEqual(families["generatorB"]["n"],10)
+        self.assertLess(families["generatorA"]["lower_95_tpr_at_80"],1)
+        self.assertLess(families["generatorB"]["lower_95_tpr_at_80"],1)
 
     def test_bad_provenance_and_scores_rejected(self):
         rows=self.samples()
