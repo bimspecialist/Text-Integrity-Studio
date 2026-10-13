@@ -19,6 +19,7 @@ async function run(){
   await page.click('#additionalOptions > summary');
   assert.equal(await page.$eval('#additionalOptions',n=>n.open),true,'Experts can access all analysis options');
   await page.click('button[type=button].secondary');
+  await page.waitForFunction(() => document.querySelector('h1')?.textContent.includes('افحص'),{timeout:10000});
   assert((await page.$eval('h1',n=>n.textContent)).includes('افحص'));
   assert.equal(await page.$eval('main',n=>n.dir),'rtl','Arabic uses RTL');
   await page.setViewport({width:390,height:844});
