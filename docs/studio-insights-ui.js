@@ -17,6 +17,9 @@
  const labels={
   en:{
    untitled:'Untitled document',local:'Local draft',count:(w,p)=>w+' words · '+p+' sections',
+   aiQuick:'AI model signal · research only',aiRun:'Analyze with on-device model',
+   aiBadge:'EXPERIMENTAL',aiIntro:'English text, 120+ words. First use downloads model weights. Results are not authorship probabilities.',
+   aiInconclusive:'INCONCLUSIVE',aiProgress:'Preparing optional on-device model…',
    title:'Review suggestions',note:'Local style observations only — not evidence of AI authorship.',
    empty:'Your text has no warnings under these limited editorial heuristics. Review the meaning, numbers and citations yourself.',
    add:'Add text and choose Check my text to review writing suggestions.',
@@ -39,6 +42,9 @@
   },
   ar:{
    untitled:'مستند بلا اسم',local:'مسودة محلية',count:(w,p)=>w+' كلمة · '+p+' مقطع',
+   aiQuick:'إشارة نموذج AI · بحثية فقط',aiRun:'التحليل بالنموذج داخل الجهاز',
+   aiBadge:'تجريبي',aiIntro:'نص إنجليزي 120 كلمة فأكثر. تُنزّل أوزان النموذج عند الطلب. النتائج ليست احتمال تأليف النص.',
+   aiInconclusive:'غير حاسم',aiProgress:'تجهيز النموذج الاختياري داخل الجهاز…',
    title:'اقتراحات المراجعة',note:'ملاحظات أسلوبية محلية فقط، وليست دليلًا على مصدر النص.',
    empty:'لا توجد ملاحظات ضمن قواعد التحرير المحدودة. راجع المعنى والأرقام والمراجع بنفسك.',
    add:'أضف نصًا ثم اضغط فحص النص لعرض الاقتراحات.',
@@ -180,6 +186,8 @@
  }
  function resetEvidence(){
   state.model=null;
+  set('studioAiQuickValue','—');
+  set('studioAiQuickNote',t().aiIntro);
   $('studioEvidence').hidden=true;
   $('studioEvidence').open=false;
   $('studioHeatmap').replaceChildren();
@@ -226,6 +234,10 @@
  }
  function translate(){
   set('studioReviewTitle',t().title);
+  set('studioAiQuickLabel',t().aiQuick);
+  set('studioAiQuickRun',t().aiRun);
+  set('studioAiQuickBadge',t().aiBadge);
+  if(!state.model)set('studioAiQuickNote',t().aiIntro);
   set('studioFilterAll',t().all);set('studioFilterClarity',t().clarity);set('studioFilterStyle',t().style);
   set('studioOpenWritingLab',t().writing);set('studioStyleGuideLabel',t().guide);
   set('studioSectionsLabel',t().sections);set('studioHistoryLabel',t().history);
@@ -270,6 +282,17 @@
    setTimeout(refresh,400);
   });
   $('language').addEventListener('click',()=>{translate();});
+  $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
+  window.addEventListener('tis:ai-progress',event=>{
+   const bar=$('studioAiQuickProgress');const detail=event.detail||{};
+   if(detail.stage==='IDLE'||detail.stage==='DONE'||detail.stage==='ERROR'||detail.stage==='CANCELLED'){
+    bar.hidden=true;bar.removeAttribute('value');return;
+   }
+   bar.hidden=false;
+   if(detail.stage==='DOWNLOADING'&&Number.isFinite(detail.percent)&&detail.percent>=0&&detail.percent<=100){
+    bar.value=detail.percent;
+   }else bar.removeAttribute('value');
+  });
   $('studioOpenWritingLab').addEventListener('click',()=>{
    const details=$('writingTools');
    if(details){details.open=true;details.scrollIntoView({block:'start',behavior:'auto'});}
@@ -284,6 +307,10 @@
       detail.calibration!=='NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'||
       detail.model_id!=='onnx-community/tmr-ai-text-detector-ONNX'||
       detail.sourceLength!==source.value.length||!Array.isArray(detail.segments))return;
+   const signal=detail.displayedSignalPercent;
+   set('studioAiQuickValue',Number.isFinite(signal)&&signal>=0&&signal<=100
+    ?signal.toFixed(1)+'%':t().aiInconclusive);
+   set('studioAiQuickNote',t().aiIntro);
    state.model={...detail,segments:detail.segments.filter(x=>
     Number.isInteger(x.start)&&Number.isInteger(x.end)&&
     x.start>=0&&x.end<=source.value.length&&x.end>x.start&&
