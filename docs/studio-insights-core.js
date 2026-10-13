@@ -129,7 +129,7 @@
   if(!file||typeof file!=='object')return null;
   const name=String(file.name||'');
   const ext=((name.match(/\.([a-z0-9]{1,8})$/i)||[])[1]||'').toLowerCase();
-  const supported=new Set(['txt','md','csv','json','docx','pdf','log']);
+  const supported=new Set(['txt','md','csv','tsv','json','docx','pdf','log','yaml','yml','tex','srt','vtt']);
   const size=Number(file.size);
   const date=Number(file.lastModified);
   return {
