@@ -7,6 +7,7 @@ const path=require('node:path');
 const {chrome}=require('./pdf-browser.test.js');
 const URL_TO_TEST=process.env.TIS_TARGET_URL||'https://bimspecialist.github.io/Text-Integrity-Studio/';
 const MAX_TIME=Number(process.env.TIS_SCAN_TIMEOUT_MS||270000);
+const REQUIRE_V4=process.env.TIS_REQUIRE_V4==='true';
 async function run(){
  const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage']});
  const page=await browser.newPage();
@@ -28,6 +29,17 @@ async function run(){
   const response=await page.goto(URL_TO_TEST,{waitUntil:'domcontentloaded',timeout:60000});
   if(!response?.ok())throw Error('Cannot open public origin: '+response?.status());
   await page.waitForSelector('#source',{timeout:30000});
+  if(REQUIRE_V4){
+   await page.waitForSelector('#scanAI',{visible:true,timeout:15000});
+   const shape=await page.evaluate(()=>({
+    bigHero:getComputedStyle(document.querySelector('.hero')).display,
+    wizard:getComputedStyle(document.querySelector('.steps')).display,
+    advancedOpen:document.querySelector('#aiDetectorTechnical')?.open,
+    scanLabel:document.querySelector('#scanAI')?.textContent?.trim()
+   }));
+   if(shape.bigHero!=='none'||shape.wizard!=='none'||shape.advancedOpen!==false)
+    throw Error('The published domain is still serving the old UI: '+JSON.stringify(shape));
+  }
   // English known-provenance development fixture. This text is not an accuracy benchmark.
   const sentence=[
    'Field engineers recorded concrete temperature at each stage of the demonstration.',
@@ -41,7 +53,8 @@ async function run(){
    el.value=text;el.dispatchEvent(new Event('input',{bubbles:true}));
   },english);
   const launch=await page.evaluate(()=>{
-   const button=document.getElementById('studioAiQuickRun')||document.getElementById('aiRun');
+   const button=REQUIRE_V4?document.getElementById('scanAI'):
+    (document.getElementById('studioAiQuickRun')||document.getElementById('aiRun'));
    if(!button)return false;
    button.click();return true;
   });
@@ -72,7 +85,7 @@ async function run(){
     frameState:frameState.slice(0,200)
    };
   });
-  diagnostics={...diagnostics,...state,detectorResponded:state.evidenced,requestErrors,consoleErrors};
+  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,detectorResponded:state.evidenced,requestErrors,consoleErrors};
   const output=process.env.TIS_SCREENSHOT_DIR||'/tmp/tis-ai-production';
   fs.mkdirSync(output,{recursive:true});
   await page.screenshot({path:path.join(output,'deployed-ai-runtime.png'),fullPage:true});
