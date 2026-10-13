@@ -34,7 +34,9 @@
    reasonCoverage:'Only {coverage} of this document was analyzed. The research engine requires at least 60% coverage to summarize its sampled signal.',
    reasonOther:'The research engine withheld a document-wide score because the available evidence is inconclusive.',
    coverageNote:'Document sampled: {coverage}. Passage signals are not authorship probabilities.',
-   windowCoverage:'{coverage} passage coverage · model-window signal'
+   windowCoverage:'{coverage} passage coverage · model-window signal',
+   signalComplete:'Research model evaluated the inspected text windows. This raw signal is not an authorship probability.',
+   signalWithheld:'Model processing completed, but a whole-document number was withheld to avoid a misleading conclusion.'
   },
   ar:{
    tagline:'اكتب بثقة.',privacy:'مستنداتك خاصة داخل المتصفح',
@@ -62,7 +64,9 @@
    reasonCoverage:'تم فحص {coverage} من المستند فقط. يتطلب عرض إشارة إجمالية تغطية 60% على الأقل.',
    reasonOther:'لم يعرض المحرك نسبة شاملة لأن الأدلة البحثية المتاحة غير حاسمة.',
    coverageNote:'نسبة المستند التي جرى فحصها: {coverage}. إشارات المقاطع ليست احتمالات تأليف.',
-   windowCoverage:'تغطية المقطع {coverage} · إشارة النموذج'
+   windowCoverage:'تغطية المقطع {coverage} · إشارة النموذج',
+   signalComplete:'فحص النموذج المقاطع المعاينة. الإشارة البحثية ليست احتمالًا موثوقًا لتأليف النص.',
+   signalWithheld:'اكتمل الفحص، لكن المحرك امتنع عن عرض رقم شامل للمستند لتجنب نتيجة مضللة.'
   }
  };
  const current=()=>copy[document.documentElement.lang==='ar'?'ar':'en'];
@@ -91,7 +95,10 @@
   if(!state.model&&!state.active&&!source.value.trim())set('v5ResultHeadline',t.ready);
   if($('v5UploadTab'))$('v5UploadTab').setAttribute('aria-label',t.upload);
   sectionStats();
-  if(state.model){renderBreakdown(state.model);showConclusion(state.model);showCoverage(state.model);}
+  if(state.model){renderBreakdown(state.model);showConclusion(state.model);showCoverage(state.model);
+   const numeric=Number.isFinite(state.model.displayedSignalPercent)&&state.model.displayedSignalPercent>=0&&state.model.displayedSignalPercent<=100;
+   set('studioAiQuickNote',numeric?t.signalComplete:t.signalWithheld);
+  }
   else if(!$('v5BreakdownRows').querySelector('.v5-breakdown-row'))renderEmpty();
   updateDocumentNotice();
   set('v6WordToolsLabel',t.wordTools);
@@ -220,6 +227,7 @@
     d.sourceLength!==source.value.length||!Array.isArray(d.segments))return;
   state.model=d;
   const score=Number.isFinite(d.displayedSignalPercent)&&d.displayedSignalPercent>=0&&d.displayedSignalPercent<=100;
+  set('studioAiQuickNote',score?current().signalComplete:current().signalWithheld);
   if(!score)set('studioAiQuickValue','—');
   ring.classList.toggle('v6-ring-inconclusive',!score);
   showCoverage(d);showConclusion(d);
