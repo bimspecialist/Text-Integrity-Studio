@@ -562,3 +562,27 @@ header.app-sidebar{background:#111620;border-color:#283443}
 @media(prefers-reduced-motion:reduce){
  #reportPanel button,#inputPanel button{transition:none}
 }
+
+
+/* V4 mobile ordering: replace fragile flattened CSS grid with a predictable
+   flex column so the editor can never overlap or disappear beneath results. */
+@media(max-width:900px){
+ .workspace{display:flex;flex-direction:column;align-items:stretch;gap:11px}
+ .workspace-main,.workspace-results{display:contents}
+ #inputPanel,#reportPanel,#writingTools,#cleanupTools,#pdfTools,
+ #wordReportTools,#wordPickerOptions,#aboutResults,#researchTools{
+  width:100%;min-width:0;max-width:100%;position:relative;
+ }
+ #inputPanel{order:0}
+ #reportPanel{order:1}
+ #writingTools{order:2}
+ #cleanupTools{order:3}
+ #pdfTools{order:4}
+ #wordReportTools{order:5}
+ #wordPickerOptions{order:6}
+ #aboutResults{order:7}
+ #researchTools{order:8}
+ #reportPanel{max-height:none;overflow:visible}
+ .tool-details>summary{white-space:normal;overflow-wrap:anywhere}
+ .tool-details summary span{min-width:0;overflow-wrap:anywhere}
+}
