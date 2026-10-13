@@ -76,6 +76,8 @@ jobs:
           node --check tests/scan-ai-workflow.test.cjs
           node tests/scan-ai-workflow.test.cjs
       - name: Long DOCX results layout and fail-closed AI explanation regression
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
         run: |
           node --check tests/v6-docx-layout-and-evidence.test.cjs
           node tests/v6-docx-layout-and-evidence.test.cjs
