@@ -28,7 +28,7 @@ const languages={
 
   contextLabel:'Writing context',
   pilotTitle:'Observed false-alert risk:',
-  pilotText:'In one small HC3 public benchmark, 13 of 24 human-labeled texts scored at least 80% with the main model. Labels were not independently verified. Do not treat high scores as authorship proof.',
+  pilotText:'Research false-alerts at a raw 80% signal threshold: 13/24 human-labeled HC3 texts and 5/64 human-labeled external 2026 texts. These are different, non-certified datasets, not comparable accuracy rates or proof of AI authorship.',
   pilotLink:'View test',
   evidenceTitle:'View model comparison and analyzed passages',
   noText:'Paste text or open a document before running analysis.',
@@ -48,6 +48,7 @@ const languages={
   measured:'Primary model signal (research-only, not authorship probability)',
   models:'Model comparison',
   coverage:'Document sampled',
+  rangeLabel:'Observed window range (not a confidence interval)',
   tokens:'Maximum tokens per window',
   segments:'Text passages',
   reportWindow:'Analyzed passage',
@@ -93,7 +94,7 @@ const languages={
 
   contextLabel:'نوع الكتابة',
   pilotTitle:'خطر الخطأ في التنبيه:',
-  pilotText:'في اختبار محدود على مجموعة HC3 العامة، حصل 13 من أصل 24 نصًا مصنفًا بشريًا على إشارة 80% أو أكثر من النموذج الأساسي. تسميات المصدر لم تُراجع بشكل مستقل. لا تستخدم النتيجة لإثبات هوية الكاتب.',
+  pilotText:'إنذارات خاطئة بحثية عند إشارة 80٪: ‏13/24 نصًا مصنفًا بشريًا في HC3 و5/64 في مجموعة خارجية من 2026. المجموعتان مختلفتان وتسمياتهما غير معتمدة بصورة مستقلة؛ ولا تثبت النتيجة هوية الكاتب.',
   pilotLink:'عرض الاختبار',
   evidenceTitle:'مقارنة النماذج والمقاطع التي تم فحصها',
   noText:'الصق النص أو افتح مستندًا أولًا.',
@@ -113,6 +114,7 @@ const languages={
   measured:'إشارة النموذج الأساسي (بحثية وليست احتمال إثبات الكتابة)',
   models:'مقارنة النموذجين',
   coverage:'نسبة النص المُعايَن',
+  rangeLabel:'مدى إشارات المقاطع (ليس فترة ثقة إحصائية)',
   tokens:'الحد الأعلى للرموز في المقطع',
   segments:'المقاطع المفحوصة',
   reportWindow:'مقطع مفحوص',
@@ -154,6 +156,8 @@ function reset(reason=''){
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
+ window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:null}));
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'IDLE'}}));
  const indicator=$('aiMeterScore');if(indicator?.firstChild)indicator.firstChild.textContent='—';
  set('aiShort',t().idle);status(reason);
 }
@@ -205,6 +209,7 @@ function start(){
  reset();running=true;inputSnapshot=text;
  currentRequest=String(Date.now())+'-'+String(++counter);
  $('aiRun').disabled=false;set('aiRun',t().cancel);status(t().loading);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
  $('aiMeter').scrollIntoView({block:'nearest'});
  if(!child){
   child=document.createElement('iframe');
@@ -247,6 +252,9 @@ function renderEvidence(result){
   const heading=model.model_id===PRIMARY?t().labelPrimary:t().labelSecondary;
   row(summary,heading,model.score.toFixed(1)+'%');
   row(summary,t().coverage,String(model.coverage)+'%');
+  if(Array.isArray(model.range_percent)&&model.range_percent.length===2&&
+     model.range_percent.every(v=>Number.isFinite(v)&&v>=0&&v<=100))
+   row(summary,t().rangeLabel,model.range_percent.map(v=>v.toFixed(1)).join(' – ')+'%');
   if(model.model_id!==PRIMARY)row(summary,t().modelReason,lang()==='ar'?'مقارنة مرجعية تاريخية':'Legacy cross-check');
  }
  if(Number.isFinite(result.agreementDifferencePoints)){
@@ -310,6 +318,14 @@ function render(result){
    (conflict?' '+t().modelReason:'')+
    (result.status==='AGREEMENT_UNCALIBRATED'?' '+t().statusAgreement:''));
  renderEvidence(result);
+ // Publish only numeric, text-free, real model-window evidence to the local editor.
+ window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:{
+  version:VERSION,model_id:PRIMARY,calibration:result.calibration,
+  status:result.status,sourceLength:inputSnapshot.length,
+  displayedSignalPercent:Number.isFinite(result.score)&&result.score>=0&&result.score<=100?result.score:null,
+  segments:Array.isArray(result.primary.segments)?result.primary.segments:[],
+  documentCoverage:result.primary.coverage
+ }}));
 }
 function error(code){
  $('aiRun').disabled=false;running=false;set('aiRun',t().run);
@@ -326,6 +342,7 @@ function handleMessage(event){
  if(data.op==='READY'){ready=true;postRun();return;}
  if(!currentRequest||data.requestId!==currentRequest)return;
  if(data.op==='PROGRESS'){
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:data.stage,percent:data.percent}}));
   if(data.stage==='DOWNLOADING'&&Number.isFinite(data.percent)){
    status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
   }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
@@ -333,8 +350,10 @@ function handleMessage(event){
   currentRequest='';running=false;set('aiRun',t().run);
   if($('source').value!==inputSnapshot){reset(t().expired);return;}
   lastResult=data.result;render(lastResult);
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
  }else if(data.op==='ERROR'){
   currentRequest='';running=false;error(data.code);
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'ERROR'}}));
  }
 }
 function exportResult(){

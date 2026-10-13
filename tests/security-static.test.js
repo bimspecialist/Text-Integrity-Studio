@@ -2,7 +2,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs');
 const html=fs.readFileSync('docs/index.html','utf8');
 const privacy=fs.readFileSync('docs/privacy.html','utf8');
-const scripts=['docs/app.js','docs/word-docx.js','docs/writing-lab.js','docs/docx-editor.js','docs/writing-rules.js'];
+const scripts=['docs/app.js','docs/word-docx.js','docs/writing-lab.js','docs/docx-editor.js','docs/writing-rules.js','docs/studio-insights-core.js','docs/studio-insights-ui.js'];
 for(const file of scripts){
  const text=fs.readFileSync(file,'utf8');
  assert(!/document\.createElement\(['"]style['"]\)/.test(text),'No dynamic inline styles: '+file);
