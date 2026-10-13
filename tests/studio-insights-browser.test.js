@@ -27,7 +27,8 @@ async function run(){
   await page.$eval('#source',(n,t)=>{n.value=t;n.dispatchEvent(new Event('input',{bubbles:true}));},input);
   await page.click('#scan');
   await page.waitForFunction(()=>document.querySelector('#studioReviewCards .studio-suggestion')&&document.querySelector('#studioDocumentStats')?.textContent.includes('2'));
-  await page.screenshot({path:path.join(output,'studio-v3-desktop.png'),fullPage:true});
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:path.join(output,'studio-v4-desktop.png'),fullPage:true});
   assert((await page.$eval('#studioReviewCards',n=>n.textContent)).includes('sentence'),'Real editorial guidance shown');
   assert.equal(await page.$eval('#source',n=>n.value),input,'Analysis cannot silently rewrite source');
   await page.click('.studio-suggestion button[data-studio-focus]');
@@ -73,7 +74,8 @@ async function run(){
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.$eval('#studioReviewTitle',n=>n.textContent)).includes('اقتراح'));
   await page.setViewport({width:390,height:844});
-  await page.screenshot({path:path.join(output,'studio-v3-mobile-rtl.png'),fullPage:true});
+  await page.evaluate(()=>window.scrollTo(0,0));
+  await page.screenshot({path:path.join(output,'studio-v4-mobile-rtl.png'),fullPage:true});
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth);
   assert(overflow<=8,'Mobile right-to-left editor fits narrow screens');
   const file=path.join(dir,'notes.log');fs.writeFileSync(file,'A human-authored maintenance note recorded at the site.');
