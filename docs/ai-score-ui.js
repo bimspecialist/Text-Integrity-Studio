@@ -399,18 +399,50 @@ function exportResult(){
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
+// The actual lifecycle belongs to TISAnalysisApp / AnalysisController.
+// Legacy start/handleMessage routines above are never registered or invoked.
+function presentLoading(){
+ reset();
+ running=true;inputSnapshot=$('source').value;
+ $('aiRun').disabled=false;set('aiRun',t().cancel);
+ status(t().loading);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
+}
+function presentProgress({stage='LOADING',percent=null,model=null}={}){
+ running=true;
+ $('aiRun').disabled=false;set('aiRun',t().cancel);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage,percent}}));
+ if(stage==='DOWNLOADING'&&Number.isFinite(percent)){
+  status(t().download(percent,model==='secondary'?t().labelSecondary:t().labelPrimary));
+ }else status(stage==='ANALYZING'?t().analyzing:t().loading);
+}
+function presentVerified(result,sourceText){
+ if($('source').value!==sourceText){reset(t().expired);return;}
+ inputSnapshot=sourceText;lastResult=result;running=false;
+ render(result);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
+}
+function presentUnsupported(reason){
+ reset(reason==='NO_TEXT'?t().noText:reason==='MIN_WORDS'?t().short:
+  reason==='UNSUPPORTED_LANGUAGE'?t().language:reason==='TEXT_TOO_LONG'?t().failed:t().failed);
+}
+function presentCancelled(){
+ reset(t().cancelled);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'CANCELLED'}}));
+}
 function setup(){
  if(!$('aiMeter'))return;
+ // The compact Analyze control and the Advanced action share one controller.
  $('aiRun').addEventListener('click',()=>{
-  if(running){reset(t().cancelled);return;}
-  start();
+  if(window.TISAnalysisApp?.toggle)window.TISAnalysisApp.toggle();
+  else status(t().failed);
  });
  $('aiExport').addEventListener('click',exportResult);
- $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);else if($('aiStatus').textContent)status('');});
- for(const id of ['clear','sample'])$(id)?.addEventListener('click',()=>reset());
- $('file')?.addEventListener('change',()=>reset());
  $('language')?.addEventListener('click',translate);
- window.addEventListener('message',handleMessage);
+ window.TISAiPresenter=Object.freeze({
+  presentLoading,presentProgress,presentVerified,presentUnsupported,
+  presentCancelled,clear:reset,presentError:error
+ });
  translate();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});
