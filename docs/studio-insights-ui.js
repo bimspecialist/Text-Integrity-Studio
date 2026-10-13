@@ -85,16 +85,14 @@
  const t=()=>labels[document.documentElement.lang==='ar'?'ar':'en'];
  const round=n=>Math.round(n*10)/10;
  function readinessNote(){
-  const text=source.value;if(!text.trim())return t().aiIntro;
-  const words=(text.match(/\S+/gu)||[]).length;
-  if(text.length>120000)return t().tooLong;
-  const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
-  const lat=(text.match(/[A-Za-z]/g)||[]).length;
-  const letters=(text.match(/\p{L}/gu)||[]).length;
-  if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return t().languageUnsupported;
-  if(words<120)return t().needWords(120-words);
-  if(lat<80)return t().languageUnsupported;
-  return t().readyEnglish;
+  const policy=window.TISEligibilityPolicy;
+  if(!policy||typeof policy.assess!=='function')return t().languageUnsupported;
+  const result=policy.assess(source.value);
+  if(result.eligible)return t().readyEnglish;
+  if(result.reason==='NO_TEXT')return t().aiIntro;
+  if(result.reason==='TEXT_TOO_LONG')return t().tooLong;
+  if(result.reason==='MIN_WORDS')return t().needWords(Math.max(0,120-result.words));
+  return t().languageUnsupported;
  }
  function set(id,value){if($(id))$(id).textContent=value;}
  function addHistory(label){
