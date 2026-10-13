@@ -5,6 +5,10 @@ on:
       - 'docs/browser-ai-runtime.js'
       - 'docs/ai-runtime.html'
       - 'docs/ai-score-ui.js'
+      - 'docs/index.html'
+      - 'docs/studio-insights-ui.js'
+      - 'docs/v5-public.js'
+      - 'docs/v5-public.css'
       - 'tests/browser-ai-live.test.js'
       - '.github/workflows/live-browser-ai.yml'
   workflow_dispatch:

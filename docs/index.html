@@ -8,10 +8,21 @@
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="app.css?v=20261013-v4">
+<link rel="stylesheet" href="v5-public.css?v=20261013-v5">
 </head>
 <body>
+<header class="v5-topbar" role="banner">
+  <div class="v5-brand" aria-label="Text Integrity Studio">
+    <span class="v5-brand-icon" aria-hidden="true">T.</span>
+    <div class="v5-brand-text"><strong>Text Integrity Studio</strong><span id="v5Tagline">Write with confidence.</span></div>
+  </div>
+  <div class="v5-top-actions">
+    <span id="v5PrivateLabel" class="v5-header-privacy">Private in your browser</span>
+    <button type="button" id="language" class="v5-language" aria-label="Change interface language">العربية</button>
+  </div>
+</header>
 <div class="shell">
-<header class="app-sidebar">
+<aside class="app-sidebar" aria-label="Document tools">
   <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
   <nav class="side-navigation" aria-label="Workspace navigation">
     <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
@@ -19,8 +30,8 @@
     <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
     <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
   </nav>
-  <div class="top"><span class="tag" id="localtag">● Private · On your device</span><button type="button" id="language" aria-label="Change interface language">العربية</button></div>
-</header>
+  <div class="top"><span class="tag" id="localtag">● Private · On your device</span></div>
+</aside>
 <main>
   <div id="studioWorkspaceTop" class="studio-workspace-top">
     <div class="studio-heading-path"><span class="studio-top-app">Text Integrity Studio</span><span aria-hidden="true">/</span><strong id="studioTopDocument">Untitled document</strong></div>
@@ -39,8 +50,15 @@
   <div class="workspace">
     <div class="workspace-main">
       <section class="panel input-panel" id="inputPanel" aria-labelledby="titleInput">
-        <div class="panel-heading">
-          <h2 id="titleInput">1 · Add your text or file</h2>
+        <div class="v5-editor-lead">
+          <h1 id="v5Headline">Check your text for AI content</h1>
+          <p id="v5Subtitle">Paste, type, or upload your text. One action reviews writing and checks supported English text with the on-device AI model.</p>
+          <h2 id="titleInput" class="v5-sr-only">Document editor</h2>
+        </div>
+        <div class="v5-editor-tabs" aria-label="Document input">
+          <span class="v5-input-tab" id="v5TextTab" aria-current="true">▤ &nbsp; Text input</span>
+          <label for="file" id="v5UploadTab" class="v5-upload-tab" tabindex="0">↥ &nbsp; Upload file</label>
+          <span id="v5TopCounts" class="v5-counts" aria-live="polite">0 words · 0 sections</span>
         </div>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
@@ -67,11 +85,13 @@
           <p id="studioMapCoverage" class="studio-muted"></p>
         </details>
         <div class="row main-actions">
-          <button class="primary studio-ai-main-action" id="scanAI" type="button" aria-describedby="studioAiQuickNote">Scan AI text</button>
-          <button id="scan" type="button">Review writing</button>
-          <button id="sample" type="button">Try an example</button>
-          <button id="clear" type="button">Clear</button>
+          <button class="primary studio-ai-main-action" id="scanAI" type="button" aria-describedby="v5ClickNote studioAiQuickNote">
+            <span class="v5-action-spark" aria-hidden="true">✦</span>
+            <span class="v5-action-copy"><strong class="v5-action-title">Analyze Text</strong><small class="v5-action-sub">حلّل النص</small></span>
+            <span class="v5-action-arrow" aria-hidden="true">→</span>
+          </button>
         </div>
+        <p id="v5ClickNote" class="v5-click-note">Writing review runs locally. The English research detector downloads model files only when you choose Analyze Text.</p>
         <details class="tool-details editor-options" id="editorOptions">
           <summary id="editorMore">Text statistics and undo / redo</summary>
           <div class="metrics">
@@ -80,7 +100,7 @@
             <div class="metric"><small id="m3">Sentences</small><b id="sentences">0</b></div>
             <div class="metric"><small id="m4">Flags</small><b id="flags">0</b></div>
           </div>
-          <div class="row"><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
+          <div class="row"><button id="scan" type="button">Review writing</button><button id="sample" type="button">Try an example</button><button id="clear" type="button">Clear</button><button id="undo" type="button" disabled>Undo</button><button id="redo" type="button" disabled>Redo</button></div>
         </details>
       </section>
 
@@ -104,20 +124,31 @@
     </div>
     <div class="workspace-results">
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
-        <div class="panel-heading"><h2 id="titleAudit">AI detector</h2><span id="checkedLabel" class="small">Waiting for a scan</span></div>
+        <div class="panel-heading v5-results-heading">
+          <div><h2 id="titleAudit">Analysis Results</h2><p id="v5ResultsSubtitle">AI model evidence and writing insights</p></div>
+          <span id="checkedLabel" class="small">Waiting for analysis</span>
+        </div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
         <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
-          <div class="studio-ai-quick-top">
-            <div class="studio-ai-quick-result"><small id="studioAiQuickLabel">AI model signal · research only</small><strong id="studioAiQuickValue" aria-live="polite">—</strong><span id="studioAiConfidence">Research model · not calibrated</span></div>
-            <span id="studioAiQuickBadge">EXPERIMENTAL</span>
+          <div class="v5-signal-heading">
+            <strong id="studioAiQuickLabel">AI model signal</strong><span id="studioAiQuickBadge">EXPERIMENTAL</span>
+          </div>
+          <div class="v5-signal-layout">
+            <div id="v5SignalRing" class="v5-signal-ring">
+              <div class="v5-ring-inner"><strong id="studioAiQuickValue" aria-live="polite">—</strong><span id="v5RingCaption">Research signal</span></div>
+            </div>
+            <div class="v5-signal-description">
+              <strong id="v5ResultHeadline">Ready to analyze</strong>
+              <p id="studioAiQuickNote">Paste English text of at least 120 words to run the optional research model.</p>
+              <span id="studioAiConfidence">Not a calibrated authorship probability</span>
+            </div>
           </div>
           <button id="studioAiQuickRun" type="button">Analyze with on-device model</button>
           <progress id="studioAiQuickProgress" max="100" hidden aria-label="Actual model download progress"></progress>
-          <p id="studioAiQuickNote">English text, 120+ words. Model downloads only when requested; scores are not authorship probabilities.</p>
           <p id="studioAiQuickStatus" role="status" aria-live="polite" class="studio-ai-status"></p>
         </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
-          <div class="studio-review-header"><h3 id="studioReviewTitle">Review suggestions</h3><span class="studio-count" id="studioReviewCount">0</span></div>
+          <div class="studio-review-header"><div><h3 id="studioReviewTitle">Key writing insights</h3><p id="v5InsightsSubtitle">Explainable observations — not proof of authorship</p></div><span class="studio-count" id="studioReviewCount">0</span></div>
           <div class="studio-review-tabs" role="group" aria-label="Filter writing suggestions">
             <button type="button" data-studio-filter="all" aria-pressed="true" id="studioFilterAll">All</button>
             <button type="button" data-studio-filter="clarity" aria-pressed="false" id="studioFilterClarity">Clarity</button>
@@ -139,6 +170,12 @@
             <ol id="studioHistoryList" class="studio-history-list"></ol>
           </details>
           <div class="studio-export-row"><button id="studioExportReview" type="button">Export writing report</button><span id="studioExportStatus" class="studio-muted" aria-live="polite"></span></div>
+        </section>
+        <section id="v5Breakdown" class="v5-breakdown" aria-labelledby="v5BreakdownTitle">
+          <div class="v5-breakdown-top"><h3 id="v5BreakdownTitle">Text breakdown</h3><small id="v5BreakdownCaption">Measured model windows only</small></div>
+          <div id="v5BreakdownRows" class="v5-breakdown-rows" aria-live="polite">
+            <p class="studio-muted">Research signals per analyzed paragraph appear after a supported AI scan.</p>
+          </div>
         </section>
         <details id="aiDetectorTechnical" class="studio-tech-details">
           <summary id="aiDetectorTechnicalLabel">Advanced details and analyzed passages</summary>
@@ -218,6 +255,10 @@
       </details>
     </div>
   </div>
+  <details id="v5Toolbox" class="v5-toolbox">
+    <summary id="v5ToolboxLabel">More document tools</summary>
+    <div id="v5ToolboxItems" class="v5-toolbox-items"></div>
+  </details>
 </main>
 <footer class="footer">
   <span>Text Integrity Studio</span>
@@ -239,6 +280,7 @@
 <script src="simple-ui.js"></script>
 <script src="ai-score-ui.js?v=20261013-v4"></script>
 <script src="studio-insights-core.js"></script>
-<script src="studio-insights-ui.js?v=20261013-v4"></script>
+<script src="studio-insights-ui.js?v=20261013-v5"></script>
+<script src="v5-public.js?v=20261013-v5"></script>
 </body>
 </html>

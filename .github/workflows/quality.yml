@@ -35,6 +35,13 @@ jobs:
           node --check tests/word-docx.test.js
       - name: Install test XML parser
         run: npm install --no-save --no-package-lock --ignore-scripts --save-exact @xmldom/xmldom@0.9.12 puppeteer-core@25.13.0
+      - name: Verify pinned first-party OFL fonts and license files
+        run: |
+          test -s docs/fonts/MANROPE-OFL.txt
+          test -s docs/fonts/IBM-PLEX-ARABIC-OFL.txt
+          test "$(git hash-object docs/fonts/Manrope-variable.ttf)" = 75274da58537d6123b14f2cd0c355ad4681fc2b3
+          test "$(git hash-object docs/fonts/IBMPlexSansArabic-Regular.ttf)" = e779068718b9801b809605b2bf3067121cce524c
+          test "$(git hash-object docs/fonts/IBMPlexSansArabic-Bold.ttf)" = 211ff62d8d1778bff69a1b3a906b2ad1686564bc
       - name: Static privacy and CSP checks
         run: node tests/security-static.test.js
       - name: Detector evaluation framework tests
@@ -68,6 +75,12 @@ jobs:
         run: |
           node --check tests/scan-ai-workflow.test.cjs
           node tests/scan-ai-workflow.test.cjs
+      - name: Approved one-click editor layout, self-hosted fonts and model truthfulness
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: |
+          node --check tests/approved-v5-one-click.test.cjs
+          node tests/approved-v5-one-click.test.cjs
       - name: Token-aware detector validation, coverage and disagreement safeguards
         run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)
@@ -102,3 +115,4 @@ jobs:
           path: /tmp/tis-ui-screenshots/*.png
           retention-days: 3
           if-no-files-found: ignore
+

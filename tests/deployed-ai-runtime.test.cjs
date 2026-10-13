@@ -8,6 +8,7 @@ const {chrome}=require('./pdf-browser.test.js');
 const URL_TO_TEST=process.env.TIS_TARGET_URL||'https://bimspecialist.github.io/Text-Integrity-Studio/';
 const MAX_TIME=Number(process.env.TIS_SCAN_TIMEOUT_MS||270000);
 const REQUIRE_V4=process.env.TIS_REQUIRE_V4==='true';
+const REQUIRE_V5=process.env.TIS_REQUIRE_V5==='true';
 async function run(){
  const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage']});
  const page=await browser.newPage();
@@ -26,8 +27,22 @@ async function run(){
  page.on('pageerror',err=>{if(consoleErrors.length<18)consoleErrors.push('PAGE ERROR: '+err.message.slice(0,260));});
  let diagnostics={url:URL_TO_TEST,started:false,detectorResponded:false};
  try{
-  const response=await page.goto(URL_TO_TEST,{waitUntil:'domcontentloaded',timeout:60000});
-  if(!response?.ok())throw Error('Cannot open public origin: '+response?.status());
+  await page.setCacheEnabled(false);
+  let response,publishedV5=false;
+  for(let attempt=0;attempt<(REQUIRE_V5?25:1);attempt++){
+   response=await page.goto(URL_TO_TEST,{waitUntil:'domcontentloaded',timeout:60000});
+   if(!response?.ok())throw Error('Cannot open public origin: '+response?.status());
+   if(!REQUIRE_V5)break;
+   publishedV5=await page.evaluate(()=>{
+    const title=document.querySelector('#v5Headline'),action=document.querySelector('#scanAI');
+    const box=document.querySelector('#v5Toolbox'),ring=document.querySelector('#v5SignalRing');
+    return !!title&&!!action&&!!box&&!!ring&&box.open===false&&
+      getComputedStyle(title).display!=='none'&&getComputedStyle(action).display!=='none';
+   });
+   if(publishedV5)break;
+   await new Promise(ok=>setTimeout(ok,8000));
+  }
+  if(REQUIRE_V5&&!publishedV5)throw Error('GitHub Pages did not serve approved V5 within 200 seconds');
   await page.waitForSelector('#source',{timeout:30000});
   if(REQUIRE_V4){
    await page.waitForSelector('#scanAI',{visible:true,timeout:15000});
@@ -85,7 +100,7 @@ async function run(){
     frameState:frameState.slice(0,200)
    };
   });
-  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,detectorResponded:state.evidenced,requestErrors,consoleErrors};
+  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,requireV5:REQUIRE_V5,detectorResponded:state.evidenced,requestErrors,consoleErrors};
   const output=process.env.TIS_SCREENSHOT_DIR||'/tmp/tis-ai-production';
   fs.mkdirSync(output,{recursive:true});
   await page.screenshot({path:path.join(output,'deployed-ai-runtime.png'),fullPage:true});
