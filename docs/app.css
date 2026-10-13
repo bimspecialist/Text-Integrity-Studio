@@ -398,3 +398,18 @@ mark.studio-low{background:#24574e;color:#ebfff7}
  .studio-suggestion{padding:10px}
  .studio-export-row button{width:100%}
 }
+
+
+/* Always-visible, correctly labeled model diagnostic — not an authorship meter. */
+.studio-ai-quick{border:1px solid #36516b;border-radius:10px;padding:12px 13px;background:#14263b;margin:12px 0 10px}
+.studio-ai-quick-top{display:flex;gap:10px;justify-content:space-between;align-items:center}
+.studio-ai-quick-result{display:flex;gap:6px;flex-direction:column;min-width:0}
+.studio-ai-quick-result small{font-size:10px;color:#bbd3e8;font-weight:650}
+.studio-ai-quick-result strong{font-size:20px;font-variant-numeric:tabular-nums;color:#f0f8ff;line-height:1.1}
+#studioAiQuickBadge{color:#f6d3a2;border:1px solid #816342;border-radius:5px;
+ font-size:9px;font-weight:700;padding:4px 6px;background:#403021}
+#studioAiQuickRun{width:100%;margin:10px 0 5px;background:#235e8b;border:1px solid #4689b8;
+ font-size:11px;font-weight:700;color:#ecf8ff;padding:10px}
+#studioAiQuickProgress{display:block;width:100%;height:7px;margin-top:7px;accent-color:#6bb4eb}
+#studioAiQuickProgress[hidden]{display:none!important}
+#studioAiQuickNote{color:#acc3d7;font-size:10.5px;line-height:1.5;margin:6px 0 0}
