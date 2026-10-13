@@ -352,7 +352,7 @@ function render(result){
  }}));
 }
 function error(code){
- const unrecoverable=['RUNTIME_INIT_TIMEOUT','RUNTIME_SCRIPT_FAILED'].includes(code);
+ const unrecoverable=['RUNTIME_INIT_TIMEOUT','RUNTIME_SCRIPT_FAILED','MODEL_TIMEOUT'].includes(code);
  cancel();stopTimers();currentRequest='';running=false;lastResult=null;
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').hidden=true;$('aiExport').hidden=true;$('aiEvidence').hidden=true;
