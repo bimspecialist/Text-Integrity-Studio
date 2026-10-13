@@ -26,7 +26,7 @@
    insufficient:'Not enough of this paragraph was scanned',section:i=>'Section '+i,
    uncovered:'Unscanned',modelSignal:'Model signal',more:'More analyzed sections are available in Advanced Details.',
    noText:'Paste or upload text to begin.',export:'Export report',advanced:'Advanced details',
-   action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل'
+   action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل',moreTools:'More document tools'
   },
   ar:{
    tagline:'اكتب بثقة.',privacy:'مستنداتك خاصة داخل المتصفح',
@@ -46,7 +46,7 @@
    insufficient:'لم تُفحص أجزاء كافية من هذا المقطع',section:i=>'المقطع '+i,
    uncovered:'لم يُفحص',modelSignal:'إشارة النموذج',more:'تظهر التفاصيل الإضافية في قسم التفاصيل المتقدمة.',
    noText:'الصق نصًا أو ارفع ملفًا أولًا.',export:'تصدير التقرير',advanced:'التفاصيل المتقدمة',
-   action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis'
+   action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis',moreTools:'المزيد من أدوات المستندات'
   }
  };
  const current=()=>copy[document.documentElement.lang==='ar'?'ar':'en'];
@@ -69,7 +69,7 @@
    v5ClickNote:t.click,titleAudit:t.result,v5ResultsSubtitle:t.resultSub,
    v5RingCaption:t.ring,studioAiQuickLabel:t.signal,studioAiConfidence:t.confidence,
    v5InsightsSubtitle:t.insightsSub,v5BreakdownTitle:t.breakdown,
-   v5BreakdownCaption:t.breakdownSub
+   v5BreakdownCaption:t.breakdownSub,v5ToolboxLabel:t.moreTools
   }))set(id,value);
   // The editor owns the actual ONNX start/cancel state and the action label.
   if(!state.model&&!state.active&&!source.value.trim())set('v5ResultHeadline',t.ready);
@@ -178,7 +178,35 @@
    set('v5ResultHeadline',Number.isFinite(state.model.displayedSignalPercent)?current().measured:current().inconclusive);
   if(d.stage==='ERROR'&&!state.model)set('v5ResultHeadline',current().error);
  }
+ function arrangeSecondaryTools(){
+  const toolbox=$('v5Toolbox'),items=$('v5ToolboxItems'),technical=$('aiDetectorTechnical');
+  if(!toolbox||!items||!technical)return;
+  for(const id of ['writingTools','cleanupTools','pdfTools','wordReportTools','wordPickerOptions','aboutResults','researchTools']){
+   const el=$(id);if(el)items.append(el);
+  }
+  // Hide scientific and extended editorial controls inside one advanced area.
+  for(const id of ['studioStyleGuide','studioSectionDetails','studioEditHistory','reportMore']){
+   const el=$(id);if(el)technical.append(el);
+  }
+  const history=$('studioEditHistory'),exportRow=document.querySelector('.studio-export-row');
+  if(history&&exportRow)history.append(exportRow);
+  for(const link of document.querySelectorAll('.side-navigation a[href^="#"]')){
+   link.addEventListener('click',event=>{
+    const id=link.getAttribute('href')?.slice(1);
+    if(!id||!items.contains($(id)))return;
+    event.preventDefault();
+    toolbox.open=true;
+    const details=$(id);if(details?.tagName==='DETAILS')details.open=true;
+    details?.scrollIntoView({block:'start',behavior:'auto'});
+   });
+  }
+  $('file')?.addEventListener('change',()=>{
+   const name=$('file')?.files?.[0]?.name||'';
+   if(/\.(pdf|docx)$/i.test(name))toolbox.open=true;
+  });
+ }
  function setup(){
+  arrangeSecondaryTools();
   baseline();renderEmpty();localize();
   const tab=$('v5UploadTab');
   tab?.addEventListener('keydown',e=>{
