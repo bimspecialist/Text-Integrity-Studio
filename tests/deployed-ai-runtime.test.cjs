@@ -52,12 +52,12 @@ async function run(){
   await page.$eval('#source',(el,text)=>{
    el.value=text;el.dispatchEvent(new Event('input',{bubbles:true}));
   },english);
-  const launch=await page.evaluate(()=>{
-   const button=REQUIRE_V4?document.getElementById('scanAI'):
+  const launch=await page.evaluate((requireV4)=>{
+   const button=requireV4?document.getElementById('scanAI'):
     (document.getElementById('studioAiQuickRun')||document.getElementById('aiRun'));
    if(!button)return false;
    button.click();return true;
-  });
+  },REQUIRE_V4);
   if(!launch)throw Error('No visible AI activation button in production');
   diagnostics.started=true;
   try{
