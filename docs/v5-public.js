@@ -103,7 +103,10 @@
   const isPdf=!isWord&&!!pdf&&!pdf.hidden&&source.value.trim().length>0;
   document.body.classList.toggle('v6-docx-active',isWord);
   note.hidden=!(isWord||isPdf);
-  if(isWord)note.textContent=current().wordNotice;
+  if(isWord){
+   const documentStatus=$('wordStatus')?.textContent?.trim()||'';
+   note.textContent=(documentStatus?documentStatus+' · ':'')+current().wordNotice;
+  }
   else if(isPdf)note.textContent=current().pdfNotice;
   else note.textContent='';
  }
