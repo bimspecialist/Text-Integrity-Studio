@@ -8,7 +8,10 @@
  if(root)root.TISEvidenceCore=value;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
 'use strict';
-const MIN_WORDS=120,MAX_TEXT_CHARS=120000,MAX_TOKENS=448,MAX_WINDOWS=12;
+const MIN_WORDS=120,MAX_TEXT_CHARS=120000,MAX_TOKENS=448,MAX_WINDOWS=12,MAX_WINDOWS_EXTENDED=96;
+// A whole-document number is withheld when less than 60% was actually sampled.
+// This is a transparent *sampling coverage guard*, not a validated AI threshold.
+const MIN_DOCUMENT_COVERAGE_PERCENT=60;
 function round(value,decimals=1){const k=10**decimals;return Math.round(value*k)/k;}
 function wordsWithOffsets(text){
  if(typeof text!=='string')throw TypeError('Expected document text.');
@@ -48,7 +51,7 @@ function tokenLength(tokenizer,text){
 }
 function partitionWindows(text,tokenizer,opts={}){
  const maxTokens=Math.min(MAX_TOKENS,Math.max(128,Number(opts.maxTokens)||MAX_TOKENS));
- const maxSamples=Math.min(20,Math.max(1,Number(opts.maxSamples)||MAX_WINDOWS));
+ const maxSamples=Math.min(MAX_WINDOWS_EXTENDED,Math.max(1,Math.floor(Number(opts.maxSamples)||MAX_WINDOWS)));
  const spans=wordsWithOffsets(text);
  const all=[],oversize=[];
  let cursor=0;
@@ -95,7 +98,9 @@ function partitionWindows(text,tokenizer,opts={}){
   sampledCount:windows.length,coverage:spans.length?sampledWords/spans.length:0,
   supportedCoverage:spans.length?completeWords/spans.length:0,
   oversizeCount:oversize.length,
-  maxTokens,method:'REAL_TOKENIZER_NO_SILENT_TRUNCATION_STRATIFIED_SAMPLE'
+  maxTokens,method:indices.length===all.length?
+   'REAL_TOKENIZER_FULL_DOCUMENT_NO_TRUNCATION':
+   'REAL_TOKENIZER_NO_SILENT_TRUNCATION_STRATIFIED_SAMPLE'
  };
 }
 function summarizeWindows(windows,values,options={}){
@@ -124,7 +129,7 @@ function summarizeWindows(windows,values,options={}){
 function consensus(primary,secondary=null,options={}){
  if(!primary||!Number.isFinite(primary.score))throw new TypeError('Primary model output required');
  const flags=[];
- if(primary.coverage<40)flags.push('LOW_DOCUMENT_COVERAGE');
+ if(primary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('LOW_DOCUMENT_COVERAGE');
  if(primary.consistency==='MIXED_PASSAGES')flags.push('CONFLICTING_PASSAGES');
  if(primary.dispersion>.25)flags.push('HIGH_SEGMENT_VARIANCE');
  const context=options.context||'general';
@@ -146,11 +151,20 @@ function consensus(primary,secondary=null,options={}){
    // the secondary separately for disagreement evidence.
    score=round(primary.score,1);
   }
-  if(secondary.coverage<40)flags.push('SECONDARY_LOW_COVERAGE');
+  if(secondary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)flags.push('SECONDARY_LOW_COVERAGE');
   if(secondary.consistency==='MIXED_PASSAGES')flags.push('SECONDARY_MIXED_PASSAGES');
  }
- if(primary.coverage<25||(secondary&&secondary.coverage<25)){
+ if(primary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT||
+    (secondary&&secondary.coverage<MIN_DOCUMENT_COVERAGE_PERCENT)){
+  // No overall percentage when most of the document went unobserved.
   score=null;status='INSUFFICIENT_COVERAGE';
+ }else if(primary.consistency==='MIXED_PASSAGES'||
+          primary.dispersion>.25||
+          (secondary&&(secondary.consistency==='MIXED_PASSAGES'||secondary.dispersion>.25))){
+  // Averages erase genuine disagreement between passages. Show the underlying
+  // window scores, but do not misrepresent a mixed document with one number.
+  score=null;status='HETEROGENEOUS_DOCUMENT';
+  flags.push('DOCUMENT_WIDE_SCORE_NOT_REPRESENTATIVE');
  }
  return {
   status,score,agreementDifferencePoints:agreement,
@@ -160,6 +174,7 @@ function consensus(primary,secondary=null,options={}){
   note:'Scores are uncalibrated classifier signals, not the percentage of AI-written words.'
  };
 }
-return {MIN_WORDS,MAX_TEXT_CHARS,MAX_TOKENS,MAX_WINDOWS,wordsWithOffsets,
+return {MIN_WORDS,MAX_TEXT_CHARS,MAX_TOKENS,MAX_WINDOWS,MAX_WINDOWS_EXTENDED,
+ MIN_DOCUMENT_COVERAGE_PERCENT,wordsWithOffsets,
  eligibility,validateLanguage,partitionWindows,summarizeWindows,consensus,sampleIndices};
 });
