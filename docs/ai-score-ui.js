@@ -205,15 +205,11 @@ function translate(){
  set('heroEyebrow',lang()==='ar'?'مساحة العمل / مراجعة المستند':'WORKSPACE / DOCUMENT REVIEW');
 }
 function eligible(text){
- const words=(text.match(/\S+/gu)||[]).length;
- if(!text.trim())return 'NO_TEXT';
- if(text.length>120000)return 'TEXT_TOO_LONG';
- const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length,lat=(text.match(/[A-Za-z]/g)||[]).length;
- const letters=(text.match(/\p{L}/gu)||[]).length;
- if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
- if(words<120)return 'MIN_WORDS';
- if(lat<80)return 'UNSUPPORTED_LANGUAGE';
- return null;
+ // One authoritative decision, shared with the research-model tokenizer runtime.
+ const policy=window.TISEligibilityPolicy;
+ if(!policy||typeof policy.assess!=='function')return 'UNSUPPORTED_FORMAT';
+ const decision=policy.assess(text);
+ return decision.eligible?null:decision.reason;
 }
 function start(){
  const text=$('source').value;
