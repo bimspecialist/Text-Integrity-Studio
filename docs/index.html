@@ -50,8 +50,15 @@
   <div class="workspace">
     <div class="workspace-main">
       <section class="panel input-panel" id="inputPanel" aria-labelledby="titleInput">
-        <div class="panel-heading">
-          <h2 id="titleInput">1 · Add your text or file</h2>
+        <div class="v5-editor-lead">
+          <h1 id="v5Headline">Check your text for AI content</h1>
+          <p id="v5Subtitle">Paste, type, or upload your text. One action reviews writing and checks supported English text with the on-device AI model.</p>
+          <h2 id="titleInput" class="v5-sr-only">Document editor</h2>
+        </div>
+        <div class="v5-editor-tabs" aria-label="Document input">
+          <span class="v5-input-tab" id="v5TextTab" aria-current="true">▤ &nbsp; Text input</span>
+          <label for="file" id="v5UploadTab" class="v5-upload-tab" tabindex="0">↥ &nbsp; Upload file</label>
+          <span id="v5TopCounts" class="v5-counts" aria-live="polite">0 words · 0 sections</span>
         </div>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
