@@ -62,7 +62,7 @@ async function run(){
    const original=URL.createObjectURL.bind(URL);
    URL.createObjectURL=blob=>{window.__studioExportBlob=blob;return original(blob)};
   });
-  await page.click('#studioExportReview');
+  await page.$eval('#studioExportReview',button=>button.click());
   const exported=await page.evaluate(async()=>JSON.parse(await window.__studioExportBlob.text()));
   assert.equal(exported.application,'Text Integrity Studio');
   assert.equal(exported.analysis.sections.length,2);
