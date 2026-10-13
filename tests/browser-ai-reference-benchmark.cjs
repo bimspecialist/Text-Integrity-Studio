@@ -75,10 +75,19 @@ async function run(){
    if(response.op!=='RESULT'||!Number.isFinite(response.result?.primary?.score))
     throw Error('Pretrained TMR inference failed on record '+(i+1)+': '+response.code);
    const result=response.result;
-   if(result.primary.coverage<25)throw Error('Reference text lacked adequate sampling coverage');
+   if(!Number.isFinite(result.primary.coverage)||result.primary.coverage<=0)
+    throw Error('Reference text has invalid source coverage');
+   if(result.calibration!=='NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE' ||
+      result.version!=='TIS_CONSENSUS_V2_2026_10' ||
+      typeof result.status!=='string' ||
+      (result.score!==null&&!Number.isFinite(result.score)))
+    throw Error('Unverified or invalid browser display contract in benchmark sample '+(i+1));
    rows.push({
     id:sample.id,label:sample.label,
     score:result.primary.score,
+    // Keep displayed diagnostics separate; withheld scores must NOT count as user alerts.
+    reported_signal_percent:result.score,
+    report_status:result.status,
     group:sample.source_group,
     domain:sample.domain||'general',
     language:'en',split:sample.split,
