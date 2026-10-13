@@ -107,6 +107,20 @@ class EvaluationTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"Inconsistent UI"):
             evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")
 
+    def test_model_revision_must_match_every_real_inference_record(self):
+        rows=self.samples()
+        self.assertEqual(evaluate(rows,expected_benchmark="synthetic-test",revision="fixture")["model_revision_audit"],"NOT_RECORDED")
+        for row in rows:
+            row["model_revision"]="pinned-revision-fixture"
+        verified=evaluate(rows,expected_benchmark="synthetic-test",revision="pinned-revision-fixture")
+        self.assertEqual(verified["model_revision_audit"],"ALL_RECORDS_MATCH")
+        rows[0]["model_revision"]="different-revision"
+        with self.assertRaisesRegex(ValueError,"Model revision mismatch"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="pinned-revision-fixture")
+        del rows[0]["model_revision"]
+        with self.assertRaisesRegex(ValueError,"Partial model revision"):
+            evaluate(rows,expected_benchmark="synthetic-test",revision="pinned-revision-fixture")
+
     def test_generator_family_audit_keeps_small_sample_uncertainty(self):
         rows=self.samples()
         for r in rows:
