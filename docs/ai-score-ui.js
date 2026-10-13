@@ -157,6 +157,7 @@ function reset(reason=''){
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
  window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:null}));
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'IDLE'}}));
  const indicator=$('aiMeterScore');if(indicator?.firstChild)indicator.firstChild.textContent='—';
  set('aiShort',t().idle);status(reason);
 }
@@ -208,6 +209,7 @@ function start(){
  reset();running=true;inputSnapshot=text;
  currentRequest=String(Date.now())+'-'+String(++counter);
  $('aiRun').disabled=false;set('aiRun',t().cancel);status(t().loading);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
  $('aiMeter').scrollIntoView({block:'nearest'});
  if(!child){
   child=document.createElement('iframe');
@@ -320,6 +322,7 @@ function render(result){
  window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:{
   version:VERSION,model_id:PRIMARY,calibration:result.calibration,
   status:result.status,sourceLength:inputSnapshot.length,
+  displayedSignalPercent:Number.isFinite(result.score)&&result.score>=0&&result.score<=100?result.score:null,
   segments:Array.isArray(result.primary.segments)?result.primary.segments:[],
   documentCoverage:result.primary.coverage
  }}));
@@ -339,6 +342,7 @@ function handleMessage(event){
  if(data.op==='READY'){ready=true;postRun();return;}
  if(!currentRequest||data.requestId!==currentRequest)return;
  if(data.op==='PROGRESS'){
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:data.stage,percent:data.percent}}));
   if(data.stage==='DOWNLOADING'&&Number.isFinite(data.percent)){
    status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
   }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
@@ -346,8 +350,10 @@ function handleMessage(event){
   currentRequest='';running=false;set('aiRun',t().run);
   if($('source').value!==inputSnapshot){reset(t().expired);return;}
   lastResult=data.result;render(lastResult);
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
  }else if(data.op==='ERROR'){
   currentRequest='';running=false;error(data.code);
+  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'ERROR'}}));
  }
 }
 function exportResult(){
