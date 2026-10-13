@@ -23,6 +23,8 @@ jobs:
           node --check docs/experimental-signal-ui.js
           node --check docs/simple-ui.js
           node --check docs/ai-score-ui.js
+          node --check docs/app.js
+          node --check tests/studio-insights-browser.test.js
           node --check docs/browser-ai-runtime.js
           node --check docs/ai-evidence-core.js
           node --check tests/ai-evidence-core.test.js
@@ -57,6 +59,8 @@ jobs:
           node --check docs/studio-insights-core.js
           node tests/studio-insights-core.test.js
       - name: Editor studio, accessibility, privacy and heatmap browser regression
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
         run: |
           node --check docs/studio-insights-ui.js
           node tests/studio-insights-browser.test.js
