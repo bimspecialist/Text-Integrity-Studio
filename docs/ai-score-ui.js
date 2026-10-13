@@ -154,6 +154,7 @@ function reset(reason=''){
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
+ window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:null}));
  const indicator=$('aiMeterScore');if(indicator?.firstChild)indicator.firstChild.textContent='—';
  set('aiShort',t().idle);status(reason);
 }
@@ -310,6 +311,13 @@ function render(result){
    (conflict?' '+t().modelReason:'')+
    (result.status==='AGREEMENT_UNCALIBRATED'?' '+t().statusAgreement:''));
  renderEvidence(result);
+ // Publish only numeric, text-free, real model-window evidence to the local editor.
+ window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:{
+  version:VERSION,model_id:PRIMARY,calibration:result.calibration,
+  status:result.status,sourceLength:inputSnapshot.length,
+  segments:Array.isArray(result.primary.segments)?result.primary.segments:[],
+  documentCoverage:result.primary.coverage
+ }}));
 }
 function error(code){
  $('aiRun').disabled=false;running=false;set('aiRun',t().run);
