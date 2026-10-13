@@ -1,0 +1,39 @@
+name: One-time vendor of licensed V5 fonts
+on:
+  push:
+    branches: [feature/approved-one-click-editor-v5]
+permissions:
+  contents: write
+jobs:
+  vendor:
+    if: github.repository == 'bimspecialist/Text-Integrity-Studio'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Download pinned licensed Google Fonts into same-origin assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if test -s docs/fonts/Manrope-variable.ttf && test -s docs/fonts/IBMPlexSansArabic-Regular.ttf && test -s docs/fonts/IBMPlexSansArabic-Bold.ttf; then
+            echo "Font files were already vendored"; exit 0
+          fi
+          mkdir -p docs/fonts
+          base="https://raw.githubusercontent.com/google/fonts/66928797f271fed5ee428544e7229685e2d90127/ofl"
+          curl -fLSs --retry 3 "$base/manrope/Manrope%5Bwght%5D.ttf" -o docs/fonts/Manrope-variable.ttf
+          curl -fLSs --retry 3 "$base/ibmplexsansarabic/IBMPlexSansArabic-Regular.ttf" -o docs/fonts/IBMPlexSansArabic-Regular.ttf
+          curl -fLSs --retry 3 "$base/ibmplexsansarabic/IBMPlexSansArabic-Bold.ttf" -o docs/fonts/IBMPlexSansArabic-Bold.ttf
+          curl -fLSs --retry 3 "$base/manrope/OFL.txt" -o docs/fonts/MANROPE-OFL.txt
+          curl -fLSs --retry 3 "$base/ibmplexsansarabic/OFL.txt" -o docs/fonts/IBM-PLEX-ARABIC-OFL.txt
+          test "$(git hash-object docs/fonts/Manrope-variable.ttf)" = "75274da58537d6123b14f2cd0c355ad4681fc2b3"
+          test "$(git hash-object docs/fonts/IBMPlexSansArabic-Regular.ttf)" = "e779068718b9801b809605b2bf3067121cce524c"
+          test "$(git hash-object docs/fonts/IBMPlexSansArabic-Bold.ttf)" = "211ff62d8d1778bff69a1b3a906b2ad1686564bc"
+          test "$(git hash-object docs/fonts/MANROPE-OFL.txt)" = "e271172a9ed0cddc895aabb6509f1c7d880b492d"
+          test "$(git hash-object docs/fonts/IBM-PLEX-ARABIC-OFL.txt)" = "c35c4c618fab33da8695177b3a6cefe0810b7b28"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/fonts/
+          git commit -m "assets: vendor verified OFL Manrope and IBM Plex Sans Arabic fonts"
+          git push origin HEAD:feature/approved-one-click-editor-v5
