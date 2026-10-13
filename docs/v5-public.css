@@ -280,3 +280,73 @@ html[dir="rtl"] .v5-breakdown-row{direction:rtl}
  #v5Toolbox{margin:11px 0 0}
  #v5ToolboxItems{grid-template-columns:1fr;padding:0 10px 11px}
 }
+
+
+/* V6: defensively prevent no-score states from expanding beyond the research ring.
+   DOCX inspection belongs to a secondary tools surface, not below the text input. */
+.v5-ring-inner{overflow:hidden;min-width:0}
+#v5SignalRing #studioAiQuickValue{
+ max-width:100%;min-width:0;text-align:center;white-space:nowrap;
+ font-variant-numeric:tabular-nums;overflow:hidden;text-overflow:clip
+}
+#v5SignalRing.v6-ring-inconclusive #studioAiQuickValue{
+ font-size:25px;letter-spacing:0;line-height:1.25
+}
+#studioAiQuick .v5-signal-description{overflow-wrap:anywhere}
+#v6ConclusionReason{
+ margin:10px 0 0;padding:10px 11px;
+ font-size:12px;line-height:1.65;font-weight:620;
+ background:#293147;border-inline-start:3px solid #e5b86d;
+ border-radius:7px;color:#f4d7a4;overflow-wrap:anywhere
+}
+#v6CoverageNote{
+ font-size:11px;color:#b8cee4;margin:11px 0 1px;
+ line-height:1.6;font-variant-numeric:tabular-nums
+}
+#v6DocumentNote{
+ background:#122f40;color:#cce5f5;
+ border:1px solid #356077;border-inline-start:3px solid #58b7e8;
+ border-radius:9px;padding:11px 13px;line-height:1.65;
+ font-size:12px;overflow-wrap:anywhere;margin:6px 0 13px;
+}
+body.v6-docx-active #inputPanel #source{
+ height:clamp(280px,38vh,455px)!important;
+ min-height:280px!important;
+}
+.v6-window-coverage{
+ grid-column:1/-1;
+ color:#a8bdd4;font-size:10px;line-height:1.45;
+ font-weight:550
+}
+#v5ToolboxItems .v6-word-tools{min-width:0}
+#v5ToolboxItems .v6-word-tools-inner{padding:0 12px 13px}
+#v5ToolboxItems .v6-word-tools-inner #wordDrop{
+ margin:0 0 10px;background:#192d40;border-color:#355b79;
+ padding:12px;min-width:0;overflow-wrap:anywhere
+}
+#v5ToolboxItems .v6-word-tools-inner #wordToolbar{
+ margin:0 0 10px;background:#132c38;padding:14px;
+}
+#v5ToolboxItems .v6-word-tools-inner #wordReport{
+ margin:0;border:1px solid #35536b;padding:13px;background:#122a3b;
+}
+#v5ToolboxItems .v6-word-tools-inner #wordReport .wordStats{
+ grid-template-columns:repeat(2,minmax(0,1fr))
+}
+#v5ToolboxItems .v6-word-tools-inner #wordDrop #wordPick,
+#v5ToolboxItems .v6-word-tools-inner #wordToolbar button{font-size:11px}
+#v5ToolboxItems .v6-word-tools-inner #wordDrop .wordDropLabel{min-width:0}
+#v5ToolboxItems .v6-word-tools-inner #wordDrop small{overflow-wrap:anywhere}
+@media(max-width:1150px){
+ #v6ConclusionReason{font-size:11.5px}
+ #v5ToolboxItems .v6-word-tools-inner{padding:0 9px 10px}
+}
+@media(max-width:560px){
+ #v6DocumentNote{font-size:11px;padding:9px 10px}
+ body.v6-docx-active #inputPanel #source{
+  height:290px!important;min-height:280px!important
+ }
+ #v6ConclusionReason{font-size:11px;padding:8px 9px}
+ #v6CoverageNote{font-size:10px}
+ #v5ToolboxItems .v6-word-tools-inner #wordDrop{display:flex;flex-direction:column;align-items:stretch}
+}

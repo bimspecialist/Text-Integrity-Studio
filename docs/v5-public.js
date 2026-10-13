@@ -26,7 +26,17 @@
    insufficient:'Not enough of this paragraph was scanned',section:i=>'Section '+i,
    uncovered:'Unscanned',modelSignal:'Model signal',more:'More analyzed sections are available in Advanced Details.',
    noText:'Paste or upload text to begin.',export:'Export report',advanced:'Advanced details',
-   action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل',moreTools:'More document tools'
+   action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل',moreTools:'More document tools',
+   wordTools:'Word document tools',wordNotice:'DOCX · Read-only text extraction. Your original document is unchanged. Use More document tools for Word-specific editing and export.',
+   pdfNotice:'PDF · Extracted text. Verify reading order and formulas; OCR and export are in More document tools.',
+   reasonHetero:'Model signals vary considerably between passages; one overall percentage would hide that disagreement.',
+   reasonDisagree:'The two research models disagree. Their outputs cannot justify one combined number.',
+   reasonCoverage:'Only {coverage} of this document was analyzed. The research engine requires at least 60% coverage to summarize its sampled signal.',
+   reasonOther:'The research engine withheld a document-wide score because the available evidence is inconclusive.',
+   coverageNote:'Document sampled: {coverage}. Passage signals are not authorship probabilities.',
+   windowCoverage:'{coverage} passage coverage · model-window signal',
+   signalComplete:'Research model evaluated the inspected text windows. This raw signal is not an authorship probability.',
+   signalWithheld:'Model processing completed, but a whole-document number was withheld to avoid a misleading conclusion.'
   },
   ar:{
    tagline:'اكتب بثقة.',privacy:'مستنداتك خاصة داخل المتصفح',
@@ -46,7 +56,17 @@
    insufficient:'لم تُفحص أجزاء كافية من هذا المقطع',section:i=>'المقطع '+i,
    uncovered:'لم يُفحص',modelSignal:'إشارة النموذج',more:'تظهر التفاصيل الإضافية في قسم التفاصيل المتقدمة.',
    noText:'الصق نصًا أو ارفع ملفًا أولًا.',export:'تصدير التقرير',advanced:'التفاصيل المتقدمة',
-   action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis',moreTools:'المزيد من أدوات المستندات'
+   action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis',moreTools:'المزيد من أدوات المستندات',
+   wordTools:'أدوات مستند Word',wordNotice:'DOCX · النص المستخرج للقراءة فقط. المستند الأصلي محفوظ دون تغيير. أدوات Word والتصدير موجودة تحت المزيد من أدوات المستندات.',
+   pdfNotice:'PDF · النص مستخرج. راجع ترتيب الأسطر والمعادلات؛ أدوات OCR والتصدير تحت المزيد من أدوات المستندات.',
+   reasonHetero:'إشارات النموذج تختلف بين المقاطع، لذلك النسبة الموحدة قد تخفي هذا الاختلاف.',
+   reasonDisagree:'النموذجان البحثيان مختلفان في النتيجة؛ لا يمكن دمج إشاراتهما في رقم واحد موثوق.',
+   reasonCoverage:'تم فحص {coverage} من المستند فقط. يتطلب عرض إشارة إجمالية تغطية 60% على الأقل.',
+   reasonOther:'لم يعرض المحرك نسبة شاملة لأن الأدلة البحثية المتاحة غير حاسمة.',
+   coverageNote:'نسبة المستند التي جرى فحصها: {coverage}. إشارات المقاطع ليست احتمالات تأليف.',
+   windowCoverage:'تغطية المقطع {coverage} · إشارة النموذج',
+   signalComplete:'فحص النموذج المقاطع المعاينة. الإشارة البحثية ليست احتمالًا موثوقًا لتأليف النص.',
+   signalWithheld:'اكتمل الفحص، لكن المحرك امتنع عن عرض رقم شامل للمستند لتجنب نتيجة مضللة.'
   }
  };
  const current=()=>copy[document.documentElement.lang==='ar'?'ar':'en'];
@@ -75,8 +95,50 @@
   if(!state.model&&!state.active&&!source.value.trim())set('v5ResultHeadline',t.ready);
   if($('v5UploadTab'))$('v5UploadTab').setAttribute('aria-label',t.upload);
   sectionStats();
-  if(state.model)renderBreakdown(state.model);
+  if(state.model){renderBreakdown(state.model);showConclusion(state.model);showCoverage(state.model);
+   const numeric=Number.isFinite(state.model.displayedSignalPercent)&&state.model.displayedSignalPercent>=0&&state.model.displayedSignalPercent<=100;
+   set('studioAiQuickNote',numeric?t.signalComplete:t.signalWithheld);
+  }
   else if(!$('v5BreakdownRows').querySelector('.v5-breakdown-row'))renderEmpty();
+  updateDocumentNotice();
+  set('v6WordToolsLabel',t.wordTools);
+ }
+ function updateDocumentNotice(){
+  const note=$('v6DocumentNote'),word=$('wordToolbar'),pdf=$('pdfDetails');
+  if(!note)return;
+  const isWord=!!word&&!word.hidden;
+  const isPdf=!isWord&&!!pdf&&!pdf.hidden&&source.value.trim().length>0;
+  document.body.classList.toggle('v6-docx-active',isWord);
+  note.hidden=!(isWord||isPdf);
+  if(isWord){
+   const documentStatus=$('wordStatus')?.textContent?.trim()||'';
+   note.textContent=(documentStatus?documentStatus+' · ':'')+current().wordNotice;
+  }
+  else if(isPdf)note.textContent=current().pdfNotice;
+  else note.textContent='';
+ }
+ function showCoverage(detail){
+  const note=$('v6CoverageNote');
+  if(!note)return;
+  const percent=detail&&Number.isFinite(detail.documentCoverage)&&
+   detail.documentCoverage>=0&&detail.documentCoverage<=100?detail.documentCoverage:null;
+  note.hidden=percent===null;
+  note.textContent=percent===null?'':current().coverageNote.replace('{coverage}',percent.toFixed(1)+'%');
+ }
+ function showConclusion(detail){
+  const note=$('v6ConclusionReason');
+  if(!note)return;
+  const score=detail&&Number.isFinite(detail.displayedSignalPercent)&&
+   detail.displayedSignalPercent>=0&&detail.displayedSignalPercent<=100;
+  const inconclusive=!!detail&&!score;
+  note.hidden=!inconclusive;
+  if(!inconclusive){note.textContent='';return;}
+  const t=current(),status=detail.status;
+  let explanation=status==='HETEROGENEOUS_DOCUMENT'?t.reasonHetero:
+   status==='MODEL_DISAGREEMENT'?t.reasonDisagree:status==='INSUFFICIENT_COVERAGE'?
+   t.reasonCoverage.replace('{coverage}',Number.isFinite(detail.documentCoverage)?
+    detail.documentCoverage.toFixed(1)+'%':t.uncovered):t.reasonOther;
+  note.textContent=explanation;
  }
  function renderEmpty(){
   const node=$('v5BreakdownRows');node.replaceChildren();
@@ -112,13 +174,16 @@
   const core=globalThis.TextIntegrityStudioInsights;
   if(!core||typeof core.analyzeDocument!=='function')return renderEmpty();
   let sections=[];
-  try{sections=core.analyzeDocument(source.value,{maxSections:8}).sections;}catch{return renderEmpty();}
+  try{sections=core.analyzeDocument(source.value,{maxSections:500}).sections;}catch{return renderEmpty();}
   const valid=detail.segments.filter(s=>s&&Number.isInteger(s.start)&&Number.isInteger(s.end)&&
    s.start>=0&&s.end<=source.value.length&&s.end>s.start&&
    typeof s.signal==='number'&&Number.isFinite(s.signal)&&s.signal>=0&&s.signal<=100);
   if(!valid.length||!sections.length)return renderEmpty();
+  // Sample the document rather than reporting only the opening heading blocks.
+  const sampled=sections.length<=8?sections:Array.from({length:8},(_,i)=>
+   sections[Math.round(i*(sections.length-1)/7)]);
   let count=0;
-  for(const section of sections){
+  for(const section of sampled){
    const score=textGroupScores(section,valid);
    const assessed=score&&score.coverage>=60;
    const row=document.createElement('div');row.className='v5-breakdown-row';
@@ -128,14 +193,16 @@
    const value=document.createElement('strong');
    value.textContent=assessed?score.signal.toFixed(1)+'%':current().uncovered;
    value.title=assessed?current().modelSignal+' · '+score.coverage.toFixed(0)+'% coverage':current().insufficient;
+   const coverage=document.createElement('small');coverage.className='v6-window-coverage';
+   coverage.textContent=score?current().windowCoverage.replace('{coverage}',score.coverage.toFixed(0)+'%'):current().insufficient;
    const bar=document.createElement('div');bar.className='v5-breakdown-bar';
    bar.setAttribute('aria-label',value.title);
    const fill=document.createElement('i');
    fill.style.width=assessed?score.signal.toFixed(1)+'%':'0%';
-   bar.append(fill);row.append(title,value,bar);target.append(row);count++;
+   bar.append(fill);row.append(title,value,bar,coverage);target.append(row);count++;
   }
   if(!count)renderEmpty();
-  if(sections.length===8){
+  if(sections.length>8){
    const p=document.createElement('p');p.className='studio-muted';
    p.textContent=current().more;target.append(p);
   }
@@ -148,7 +215,7 @@
   ring.style.setProperty('--v5-ring-color',color);
  }
  function clearResult(){
-  state.model=null;baseline();renderEmpty();
+  state.model=null;baseline();renderEmpty();showCoverage(null);showConclusion(null);
   if(!state.active)set('v5ResultHeadline',current().ready);
  }
  function handleEvidence(event){
@@ -159,6 +226,11 @@
     d.model_id!=='onnx-community/tmr-ai-text-detector-ONNX'||
     d.sourceLength!==source.value.length||!Array.isArray(d.segments))return;
   state.model=d;
+  const score=Number.isFinite(d.displayedSignalPercent)&&d.displayedSignalPercent>=0&&d.displayedSignalPercent<=100;
+  set('studioAiQuickNote',score?current().signalComplete:current().signalWithheld);
+  if(!score)set('studioAiQuickValue','—');
+  ring.classList.toggle('v6-ring-inconclusive',!score);
+  showCoverage(d);showConclusion(d);
   setRing(d.displayedSignalPercent);
   set('v5ResultHeadline',Number.isFinite(d.displayedSignalPercent)?current().measured:current().inconclusive);
   renderBreakdown(d);
@@ -181,6 +253,15 @@
  function arrangeSecondaryTools(){
   const toolbox=$('v5Toolbox'),items=$('v5ToolboxItems'),technical=$('aiDetectorTechnical');
   if(!toolbox||!items||!technical)return;
+  const wordDetails=document.createElement('details');wordDetails.id='v6WordTools';
+  wordDetails.className='tool-details tool-disclosure v6-word-tools';
+  const summary=document.createElement('summary');summary.id='v6WordToolsLabel';
+  summary.textContent=current().wordTools;wordDetails.append(summary);
+  const contents=document.createElement('div');contents.className='v6-word-tools-inner';
+  for(const id of ['wordDrop','wordToolbar','wordReport']){
+   const control=$(id);if(control)contents.append(control);
+  }
+  wordDetails.append(contents);items.append(wordDetails);
   for(const id of ['writingTools','cleanupTools','pdfTools','wordReportTools','wordPickerOptions','aboutResults','researchTools']){
    const el=$(id);if(el)items.append(el);
   }
@@ -200,10 +281,14 @@
     details?.scrollIntoView({block:'start',behavior:'auto'});
    });
   }
-  $('file')?.addEventListener('change',()=>{
-   const name=$('file')?.files?.[0]?.name||'';
-   if(/\.(pdf|docx)$/i.test(name))toolbox.open=true;
-  });
+  // Opening a file must not open a long advanced panel over the main CTA.
+  const refresh=()=>updateDocumentNotice();
+  for(const id of ['wordToolbar','pdfDetails']){
+   const n=$(id);if(n)new MutationObserver(refresh).observe(n,{attributes:true,attributeFilter:['hidden']});
+  }
+  for(const id of ['wordMeta','wordStatus','pdfStatus']){
+   const n=$(id);if(n)new MutationObserver(refresh).observe(n,{childList:true,subtree:true,characterData:true});
+  }
  }
  function setup(){
   arrangeSecondaryTools();
@@ -218,7 +303,7 @@
     clearResult();state.lastText=source.value;
    }
   });
-  $('file')?.addEventListener('change',()=>{clearResult();sectionStats();});
+  $('file')?.addEventListener('change',()=>{clearResult();sectionStats();updateDocumentNotice();});
   // Imported Word/PDF content may be applied without an input event.
   const count=$('studioDocumentStats');
   if(count)new MutationObserver(sectionStats).observe(count,{subtree:true,childList:true,characterData:true});

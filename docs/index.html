@@ -8,7 +8,7 @@
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="app.css?v=20261013-v4">
-<link rel="stylesheet" href="v5-public.css?v=20261013-v5">
+<link rel="stylesheet" href="v5-public.css?v=20261013-v6">
 </head>
 <body>
 <header class="v5-topbar" role="banner">
@@ -60,6 +60,7 @@
           <label for="file" id="v5UploadTab" class="v5-upload-tab" tabindex="0">↥ &nbsp; Upload file</label>
           <span id="v5TopCounts" class="v5-counts" aria-live="polite">0 words · 0 sections</span>
         </div>
+        <p id="v6DocumentNote" class="v6-document-note" role="status" aria-live="polite" hidden></p>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
           <div id="studioDocumentStats" class="studio-doc-stats" aria-live="polite">0 words · 0 sections</div>
@@ -141,11 +142,13 @@
               <strong id="v5ResultHeadline">Ready to analyze</strong>
               <p id="studioAiQuickNote">Paste English text of at least 120 words to run the optional research model.</p>
               <span id="studioAiConfidence">Not a calibrated authorship probability</span>
+              <p id="v6ConclusionReason" class="v6-conclusion-reason" role="status" aria-live="polite" hidden></p>
             </div>
           </div>
           <button id="studioAiQuickRun" type="button">Analyze with on-device model</button>
           <progress id="studioAiQuickProgress" max="100" hidden aria-label="Actual model download progress"></progress>
           <p id="studioAiQuickStatus" role="status" aria-live="polite" class="studio-ai-status"></p>
+          <p id="v6CoverageNote" class="v6-coverage-note" hidden></p>
         </section>
         <section id="studioReview" class="studio-review" aria-labelledby="studioReviewTitle">
           <div class="studio-review-header"><div><h3 id="studioReviewTitle">Key writing insights</h3><p id="v5InsightsSubtitle">Explainable observations — not proof of authorship</p></div><span class="studio-count" id="studioReviewCount">0</span></div>
@@ -272,7 +275,7 @@
 <script src="vendor/jszip.min.js"></script>
 <script src="writing-rules.js"></script>
 <script src="docx-editor.js"></script>
-<script src="word-docx.js"></script>
+<script src="word-docx.js?v=20261013-v6"></script>
 <script src="writing-lab.js"></script>
 <script src="pdf-support.js"></script>
 <script src="experimental-signal.js"></script>
@@ -281,6 +284,6 @@
 <script src="ai-score-ui.js?v=20261013-v4"></script>
 <script src="studio-insights-core.js"></script>
 <script src="studio-insights-ui.js?v=20261013-v5"></script>
-<script src="v5-public.js?v=20261013-v5"></script>
+<script src="v5-public.js?v=20261013-v6"></script>
 </body>
 </html>

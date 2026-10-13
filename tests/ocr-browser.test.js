@@ -46,6 +46,7 @@ async function run(){
    await page.waitForFunction(()=>!document.getElementById('pdfDetails').hidden,{timeout:20000});
    await page.waitForFunction(()=>document.getElementById('pdfStatus').textContent.includes('pages without readable text')||document.getElementById('pdfStatus').textContent.includes('Some pages'),{timeout:30000});
    await page.select('#pdfLanguage','eng');
+   await page.$eval('#v5Toolbox',el=>{el.open=true;});
    await page.click('#pdfOcr');
    await page.waitForFunction(()=>document.getElementById('pdfOcr').disabled===false&&/OCR finished|OCR done|اكتمل OCR/i.test(document.getElementById('pdfStatus').textContent),{timeout:110000});
    const recognized=await page.$eval('#source',el=>el.value.trim());

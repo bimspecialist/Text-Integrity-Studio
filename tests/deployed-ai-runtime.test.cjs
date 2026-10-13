@@ -9,6 +9,7 @@ const URL_TO_TEST=process.env.TIS_TARGET_URL||'https://bimspecialist.github.io/T
 const MAX_TIME=Number(process.env.TIS_SCAN_TIMEOUT_MS||270000);
 const REQUIRE_V4=process.env.TIS_REQUIRE_V4==='true';
 const REQUIRE_V5=process.env.TIS_REQUIRE_V5==='true';
+const REQUIRE_V6=process.env.TIS_REQUIRE_V6==='true';
 async function run(){
  const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage']});
  const page=await browser.newPage();
@@ -39,6 +40,10 @@ async function run(){
     return !!title&&!!action&&!!box&&!!ring&&box.open===false&&
       getComputedStyle(title).display!=='none'&&getComputedStyle(action).display!=='none';
    });
+   if(publishedV5&&REQUIRE_V6){
+    publishedV5=await page.evaluate(()=>['v6DocumentNote','v6ConclusionReason','v6CoverageNote','v6WordTools']
+      .every(id=>!!document.getElementById(id)));
+   }
    if(publishedV5)break;
    await new Promise(ok=>setTimeout(ok,8000));
   }
@@ -100,7 +105,7 @@ async function run(){
     frameState:frameState.slice(0,200)
    };
   });
-  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,requireV5:REQUIRE_V5,detectorResponded:state.evidenced,requestErrors,consoleErrors};
+  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,requireV5:REQUIRE_V5,requireV6:REQUIRE_V6,detectorResponded:state.evidenced,requestErrors,consoleErrors};
   const output=process.env.TIS_SCREENSHOT_DIR||'/tmp/tis-ai-production';
   fs.mkdirSync(output,{recursive:true});
   await page.screenshot({path:path.join(output,'deployed-ai-runtime.png'),fullPage:true});
