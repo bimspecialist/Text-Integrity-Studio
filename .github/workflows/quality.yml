@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Single revision-safe analysis controller and timeouts
+        run: |
+          node --check tests/analysis/analysis-controller.test.js
+          node tests/analysis/analysis-controller.test.js
       - name: Trustworthy lazy iframe bridge and cancel race contracts
         run: |
           node --check tests/analysis/inference-bridge.test.js
