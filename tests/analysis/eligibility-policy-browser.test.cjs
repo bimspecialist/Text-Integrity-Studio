@@ -21,31 +21,36 @@ async function run(){
   await page.waitForSelector('#scanAI',{visible:true});
   assert(await page.evaluate(()=>Boolean(window.TISEvidenceCore&&window.TISEligibilityPolicy)),
    'Page must load the same eligibility evidence core and canonical policy');
-  await page.evaluate(()=>{
-   const original=window.TISEligibilityPolicy;
-   window.__policyCalls=0;
-   window.TISEligibilityPolicy={
-    ...original,
-    assess(text,kind){
-     window.__policyCalls++;
-     const decision=original.assess(text,kind);
-     // Force an explicit gate to demonstrate both consumer UIs delegate
-     // rather than quietly reimplementing independent English/Arabic checks.
-     return {...decision,eligible:false,reason:'UNSUPPORTED_LANGUAGE'};
-    }
-   };
-  });
+  assert.equal(await page.evaluate(()=>
+   typeof window.TISAnalysisApp?.controller?.analyze==='function'),true,
+   'The single AnalysisController uses the same fixed policy as the editor');
+  const arabic=Array(130).fill('المبنى').join(' ');
+  await page.$eval('#source',(n,v)=>{n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));},arabic);
+  await page.waitForFunction(()=>/English|Arabic/i.test(
+   document.getElementById('studioAiQuickNote')?.textContent||''),{timeout:5000});
+  assert.equal(await page.evaluate(()=>
+   window.TISEligibilityPolicy.assess(document.getElementById('source').value).reason),
+   'UNSUPPORTED_LANGUAGE');
+  await page.click('#scanAI');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().status),'UNSUPPORTED');
+  assert.equal(await page.$('#tisOnDeviceModel'),null,'Arabic is never sent to an English model');
+
+  const short='A short measured engineering report with known limitations.';
+  await page.$eval('#source',(n,v)=>{n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));},short);
+  await page.click('#scanAI');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().eligibleReason),'MIN_WORDS');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().status),'WRITING_ONLY');
+  assert.equal(await page.$('#tisOnDeviceModel'),null,'Insufficient word count never starts inference');
+  assert.match(await page.$eval('#studioAiQuickStatus',n=>n.textContent),/120/);
   const english=Array(140).fill('measured').join(' ');
   await page.$eval('#source',(n,v)=>{n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));},english);
-  await page.waitForFunction(()=>window.__policyCalls>=1,{timeout:5000});
-  assert.match(await page.$eval('#studioAiQuickNote',n=>n.textContent),/English|Arabic/i,
-   'Inline readiness note must derive from canonical policy');
+  assert.equal(await page.evaluate(()=>
+   window.TISEligibilityPolicy.assess(document.getElementById('source').value).eligible),true);
   await page.click('#scanAI');
-  assert((await page.evaluate(()=>window.__policyCalls))>=2,
-   'The click handler must consult the canonical policy independently of view notes');
-  assert.equal(await page.$('#tisOnDeviceModel'),null,
-   'A canonical rejection must not create or download a model runtime');
-  assert.match(await page.$eval('#studioAiQuickStatus',n=>n.textContent),/English|Arabic/i);
+  await page.waitForSelector('#tisOnDeviceModel');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().status),'LOADING');
+  await page.click('#scanAI');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().status),'CANCELLED');
   assert.deepEqual(errors,[],'No exceptions during eligibility UI');
   console.log('PASS browser readiness + Analyze Text use one canonical eligibility policy, no unintended model load');
  }finally{
