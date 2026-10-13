@@ -11,8 +11,18 @@
 <link rel="stylesheet" href="v5-public.css?v=20261013-v5">
 </head>
 <body>
+<header class="v5-topbar" role="banner">
+  <div class="v5-brand" aria-label="Text Integrity Studio">
+    <span class="v5-brand-icon" aria-hidden="true">T.</span>
+    <div class="v5-brand-text"><strong>Text Integrity Studio</strong><span id="v5Tagline">Write with confidence.</span></div>
+  </div>
+  <div class="v5-top-actions">
+    <span id="v5PrivateLabel" class="v5-header-privacy">Private in your browser</span>
+    <button type="button" id="language" class="v5-language" aria-label="Change interface language">العربية</button>
+  </div>
+</header>
 <div class="shell">
-<header class="app-sidebar">
+<aside class="app-sidebar" aria-label="Document tools">
   <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
   <nav class="side-navigation" aria-label="Workspace navigation">
     <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
@@ -20,8 +30,8 @@
     <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
     <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
   </nav>
-  <div class="top"><span class="tag" id="localtag">● Private · On your device</span><button type="button" id="language" aria-label="Change interface language">العربية</button></div>
-</header>
+  <div class="top"><span class="tag" id="localtag">● Private · On your device</span></div>
+</aside>
 <main>
   <div id="studioWorkspaceTop" class="studio-workspace-top">
     <div class="studio-heading-path"><span class="studio-top-app">Text Integrity Studio</span><span aria-hidden="true">/</span><strong id="studioTopDocument">Untitled document</strong></div>
