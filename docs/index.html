@@ -107,6 +107,13 @@
               </label>
               <p id="aiDeepHelp">An independent GPT-2-era model checks agreement, but may disagree with newer detectors. Adds around 126 MB of model downloads and more processing. Agreement is not proof of accuracy.</p>
             </div>
+            <div class="ai-option">
+              <label class="ai-option-toggle">
+                <input type="checkbox" id="aiFullScan">
+                <span id="aiFullScanLabel">Check more of long documents (slower)</span>
+              </label>
+              <p id="aiFullScanHelp">Uses up to 96 real-token windows rather than 12. This improves the proportion of text inspected, not the detector's proven accuracy. May be slow on older devices.</p>
+            </div>
             <label class="ai-context-label" for="aiContext" id="aiContextLabel">Writing context</label>
             <select id="aiContext">
               <option value="general">General writing</option>
