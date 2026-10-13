@@ -159,37 +159,41 @@
   if(selected.length>first.length)root.append(E('p','studio-muted',
    (selected.length-first.length)+' '+(document.documentElement.lang==='ar'?'ملاحظات إضافية في التقرير':'additional notes available in export')));
  }
- function modelPerSection(span){
+ function modelProjection(){
   if(!state.model)return null;
-  const valid=state.model.segments.filter(x=>Number.isInteger(x.start)&&Number.isInteger(x.end)
-     &&Number.isFinite(x.signal)&&x.start<span.end&&x.end>span.start);
-  if(!valid.length)return {coverage:0,signal:null};
-  const points=[span.start,span.end];
-  for(const s of valid){points.push(Math.max(span.start,s.start),Math.min(span.end,s.end));}
-  points.sort((a,b)=>a-b);
-  const unique=points.filter((x,i)=>i===0||x!==points[i-1]);
-  let covered=0,weighted=0;
-  for(let i=1;i<unique.length;i++){
-   const begin=unique[i-1],end=unique[i];
-   if(end<=begin)continue;
-   const hit=valid.filter(x=>x.start<end&&x.end>begin);
-   if(!hit.length)continue;
-   const width=end-begin;
-   covered+=width;weighted+=width*hit.reduce((n,x)=>n+x.signal,0)/hit.length;
-  }
-  const coverage=span.end>span.start?round(covered/(span.end-span.start)*100):0;
-  return {coverage,signal:coverage>=60&&covered?round(weighted/covered):null};
+  const documents=globalThis.TISDocumentSession;
+  const mapping=globalThis.TISEvidenceProjection;
+  if(!documents?.createDocumentSession||!mapping?.projectEvidence)return null;
+  try{
+   const snapshot=documents.createDocumentSession(source.value).read();
+   const signal=Number.isFinite(state.model.displayedSignalPercent)?
+    state.model.displayedSignalPercent:null;
+   return mapping.projectEvidence(snapshot,{
+    revision:snapshot.revision,
+    kind:signal===null?'INCONCLUSIVE':'RESEARCH_SIGNAL',
+    signal,documentCoverageWordsPercent:state.model.documentCoverage,
+    segments:state.model.segments
+   },{maxOverviewSections:Math.min(1000,Math.max(1,snapshot.paragraphs.length))});
+  }catch{return null;}
+ }
+ function modelPerSection(span,projected){
+  if(!state.model)return null;
+  const found=projected?.sections?.find(x=>x.start===span.start&&x.end===span.end);
+  return found?{
+   coverage:found.paragraphCoverageCharactersPercent,signal:found.windowSignal
+  }:{coverage:0,signal:null};
  }
  function renderSections(){
   const root=$('studioSectionList');root.replaceChildren();
   const profile=state.profile;
   if(!source.value.trim()||!profile?.sections.length){root.append(E('p','studio-muted',t().add));return;}
   const shown=profile.sections.slice(0,24);
+  const projection=modelProjection();
   for(const sec of shown){
    const card=E('div','studio-section-item'),m=sec.statistics;
    card.append(E('strong','',t().section+' '+sec.id+' · '+m.words+' '+t().words));
    card.append(E('small','',t().avg+': '+m.averageSentenceWords+' · '+t().diversity+': '+m.lexicalDiversity));
-   const signal=modelPerSection(sec);
+   const signal=modelPerSection(sec,projection);
    if(signal){
     card.append(E('small','',t().coverage+': '+signal.coverage+'% · '+(signal.signal===null?t().limited:t().modelSignal+': '+signal.signal+'%')));
    }else card.append(E('small','',t().unseen));
@@ -248,7 +252,7 @@
     model_id:state.model.model_id,
     revision:'Browser-provided model revision; see original AI evidence export',
     status:state.model.status,
-    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s)}))
+    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s,modelProjection())}))
    }:null,
    disclaimer:'No source text, original file name, copied passages or individual authorship inference is included. Local editable text stays in the current tab.'
   };
