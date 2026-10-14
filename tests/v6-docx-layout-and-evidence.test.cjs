@@ -39,7 +39,13 @@ async function run(){
     note:document.getElementById('v6DocumentNote')?.textContent||'',
     sectionCount:document.getElementById('v5TopCounts')?.textContent||'',
     sideReportTop:pos('reportPanel').top,
-    actionVisible:!!document.getElementById('scanAI').getClientRects().length
+    actionVisible:!!document.getElementById('scanAI').getClientRects().length,
+    sourceRect:pos('source'),
+    sourceHeight:getComputedStyle(document.getElementById('source')).height,
+    sourceReadOnly:document.getElementById('source').readOnly,
+    docxClass:document.body.className,
+    v8Css:[...document.styleSheets].some(x=>x.href?.includes('workspace-v8.css')),
+    editorNoteHeight:document.getElementById('v6DocumentNote')?.getBoundingClientRect().height
    };
   });
   assert.equal(workflow.toolbarInInput,false,'Word controls must not appear between editor and Analyze button');
