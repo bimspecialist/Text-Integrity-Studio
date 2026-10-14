@@ -23,7 +23,8 @@
    stale:'The original text changed. Your draft was kept, but it cannot be applied until you reset it to the new version.',
    protected:'The draft changes a number, citation, measurement or URL. Review and edit the original manually.',
    docx:'DOCX source is read-only for this draft. Copy the draft and use the existing Word tools; the original remains intact.',
-   reset:'Reset draft',copy:'Copy draft',apply:'Apply reviewed draft',undo:'Undo apply',
+   reset:'Reset draft',restoreReset:'Restore discarded draft',copy:'Copy draft',apply:'Apply reviewed draft',undo:'Undo apply',
+   restored:'Your discarded draft was restored. The original text is still unchanged.',
    applied:'Reviewed draft applied. Previous AI results are invalid until you choose Analyze Text again.',
    undone:'Previous text restored. Analyze Text again for new research evidence.',
    copied:'Draft copied to the clipboard.',copyError:'Clipboard is unavailable. Select and copy the draft manually.',
@@ -42,7 +43,8 @@
    stale:'تغيّر النص الأصلي. احتفظنا بالمسودة، لكن لا يمكن تطبيقها قبل إعادة ضبطها على الإصدار الجديد.',
    protected:'تغيّر رقم أو مرجع أو وحدة قياس أو رابط. راجع النص وعدّل النسخة الأصلية يدويًا.',
    docx:'ملف Word للقراءة فقط في هذه المسودة. انسخها واستخدم أدوات Word الموجودة؛ يبقى الأصل محفوظًا.',
-   reset:'إعادة ضبط',copy:'نسخ المسودة',apply:'تطبيق المسودة بعد المراجعة',undo:'التراجع',
+   reset:'إعادة ضبط',restoreReset:'استعادة المسودة',copy:'نسخ المسودة',apply:'تطبيق المسودة بعد المراجعة',undo:'التراجع',
+   restored:'استُعيدت المسودة السابقة دون تعديل النص الأصلي.',
    applied:'طُبّقت المسودة بموافقتك. نتائج الكشف السابقة غير صالحة حتى تضغط تحليل النص مرة أخرى.',
    undone:'استُرجع النص السابق. اضغط تحليل النص لإجراء فحص جديد.',
    copied:'نُسخت المسودة.',copyError:'تعذّر النسخ تلقائيًا. حدّد النص وانسخه يدويًا.',
@@ -64,7 +66,7 @@
    status=el('tisDraftStatus'),generator=el('tisLocalRewrite'),tabs=modes.map(m=>el(ids[m]));
   if(!textarea||!reset||!apply||!undo||!copy||!status||!generator||tabs.some(t=>!t))
    throw Error('L7 dual pane HTML controls are not loaded');
-  let disposed=false,mode='detection',base=session.read(),draftFlag='SYNCED',history=[],ownWrite=false;
+  let disposed=false,mode='detection',base=session.read(),draftFlag='SYNCED',history=[],ownWrite=false,resetBackup=null;
   const t=()=>words[locale()==='ar'?'ar':'en'];
   const put=(id,value)=>{const e=el(id);if(e)e.textContent=value;};
   function notify(message){status.textContent=message;}
@@ -87,6 +89,10 @@
    // Undo applies to a prior committed version; doing it while a newer
    // handwritten draft exists would silently discard that unsaved draft.
    undo.disabled=!canUndo()||different;
+   // After explicit Reset, the same control offers a one-step recovery while
+   // the canonical source revision remains unchanged. No disk persistence.
+   reset.textContent=resetBackup&&!different&&!isStale&&
+    resetBackup.revision===current.revision?t().restoreReset:t().reset;
    textarea.dir='auto';
    const label=readonly?'docx':isStale?'stale':protectedChange?'protected':undoPending?'undoPending':different?draftFlag:'untouched';
    const translation=t();
@@ -105,6 +111,7 @@
   }
   function onSourceChange(snapshot){
    if(disposed||ownWrite)return;
+   resetBackup=null; // A newer source must never revive discarded stale text.
    history=[];
    if(changed()){draftFlag='STALE';render();}
    else resetDraft();
@@ -112,7 +119,28 @@
   const unlisten=session.subscribe(onSourceChange);
   function onInput(){
    if(disposed)return;
+   resetBackup=null; // New typing supersedes the one-step reset recovery.
    draftFlag=changed()?'EDITED':'SYNCED';render();
+  }
+  function onResetClick(){
+   if(disposed)return;
+   const current=session.read();
+   // Recovery is allowed only for the exact source revision on which the
+   // draft was discarded. Restore goes to the draft pane, never the source.
+   if(resetBackup&&!changed()&&!stale()&&
+      resetBackup.revision===current.revision){
+    const prior=resetBackup;
+    resetBackup=null;
+    textarea.value=prior.text;
+    textarea.dispatchEvent(new Event('input',{bubbles:true}));
+    draftFlag=prior.flag;
+    render();notify(t().restored);
+    return;
+   }
+   resetBackup=changed()&&!stale()?Object.freeze({
+    revision:current.revision,text:textarea.value,flag:draftFlag
+   }):null;
+   resetDraft(true);
   }
   function setMode(next,{focus=false}={}){
    if(!modes.includes(next))return false;
@@ -160,6 +188,7 @@
    try{updated=session.replaceText(newText,sourceSnapshot.sourceKind);}
    finally{ownWrite=false;}
    if(updated.revision===sourceSnapshot.revision){render();return;}
+   resetBackup=null;
    history.push({beforeText:sourceSnapshot.text,beforeKind:sourceSnapshot.sourceKind,
     afterRevision:updated.revision,afterText:updated.text});
    if(history.length>15)history.shift();
@@ -174,6 +203,7 @@
    }
    const item=history[history.length-1];
    if(!item||!canUndo()){history=[];render();return;}
+   resetBackup=null;
    history.pop();ownWrite=true;
    let restored;
    try{restored=session.replaceText(item.beforeText,item.beforeKind);}
@@ -203,6 +233,7 @@
     base.text.slice(item.start,item.end)!==item.original)return false;
    // Never erase hand-written unsaved edits to show an advisor preview.
    if(changed()&&draftFlag==='EDITED'){notify(t().reviewFirst);return false;}
+   resetBackup=null;
    textarea.value=base.text.slice(0,item.start)+item.proposedReplacement+base.text.slice(item.end);
    draftFlag='PREVIEW';
    setMode('humanize');return true;
@@ -223,7 +254,7 @@
    const n=el(ids[name]);listen(n,'click',()=>setMode(name));listen(n,'keydown',onTabKey);
   }
   listen(textarea,'input',onInput);
-  listen(reset,'click',()=>resetDraft(true));
+  listen(reset,'click',onResetClick);
   listen(apply,'click',applyDraft);listen(undo,'click',undoDraft);
   listen(copy,'click',copyDraft);
   listen(el('language'),'click',onLanguage);
