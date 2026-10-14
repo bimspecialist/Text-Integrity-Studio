@@ -52,15 +52,18 @@ async function getLibrary(){
    return pdfjs;
  }catch(error){throw new Error(t('missing')+' '+error.message);}
 }
-async function loadPdf(file){
+async function loadPdf(file,ticket){
  if(busy)return;
  if(!file||!file.name.toLowerCase().endsWith('.pdf')||file.size>MAX_FILE){status('size','',true);return;}
  const bytes=new Uint8Array(await file.arrayBuffer());
+ // A delayed PDF read is never allowed to replace a newer user edit/file.
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
  if(new TextDecoder('latin1').decode(bytes.subarray(0,8)).indexOf('%PDF-')<0){status('error','Not a PDF file',true);return;}
  busy=true;status('loading',file.name);$('pdfDetails').hidden=false;
  if(globalThis.TextIntegrityWordBridge?.isActive())globalThis.TextIntegrityWordBridge.reset();
  await reset();
  try{
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    await new Promise(r=>setTimeout(r,0));
    const lib=await getLibrary();
    const task=lib.getDocument({
@@ -69,16 +72,25 @@ async function loadPdf(file){
      cMapUrl:new URL('./vendor/pdfjs/cmaps/',document.baseURI).href,cMapPacked:true
    });
    const pdf=await task.promise;
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await pdf.destroy();return;
+   }
    const count=Math.min(MAX_PAGES,pdf.numPages);
    const pages=[], warnings=[];
    for(let number=1;number<=count;number++){
      const page=await pdf.getPage(number);
      const content=await page.getTextContent();
+     if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+      page.cleanup();await pdf.destroy();return;
+     }
      const text=content.items.filter(x=>typeof x.str==='string').map(x=>x.str+(x.hasEOL?'\n':' ')).join('').trim();
      pages.push({number,extracted:text.slice(0,MAX_TEXT),ocr:''});
      if(number%3===0||number===count)status('loading',number+'/'+count+' '+t('pages'));
      if(pages.reduce((n,p)=>n+p.extracted.length,0)>MAX_TEXT){warnings.push('Text limit 350,000');break;}
      page.cleanup();
+   }
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await pdf.destroy();return;
    }
    session={file,pdf,pages,warnings,fullPageCount:pdf.numPages};
    setText();
@@ -88,8 +100,14 @@ async function loadPdf(file){
    status('finished',pages.length+'/'+pdf.numPages+(pdf.numPages>count?' · '+t('partial'):''));
    if(pages.some(p=>p.extracted.trim().length<20))status('scanWarning',pages.filter(p=>p.extracted.trim().length<20).length+' '+t('pages'));
  }catch(error){
-   await reset();status('error',error?.message||'Unknown error',true);
- }finally{busy=false;$('file').value='';}
+   if(globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await reset();status('error',error?.message||'Unknown error',true);
+   }
+ }finally{
+   busy=false;
+   // A stale job must never clear the picker for a newer file.
+   if($('file').files?.[0]===file)$('file').value='';
+ }
 }
 function getFullText(){
  if(!session)return '';
@@ -162,10 +180,14 @@ function setup(){
  $('language').addEventListener('click',updateLabels);
  ['clear','sample'].forEach(id=>$(id).addEventListener('click',()=>{void reset();}));
  const older=readFile;
- readFile=async function(file){
+ readFile=async function(file,ticket){
    if(!file)return;
-   if(/\.pdf$/i.test(file.name))return loadPdf(file);
-   await reset();return older(file);
+   const request=ticket||globalThis.TISFileImportGuard.begin(file);
+   if(/\.pdf$/i.test(file.name))return loadPdf(file,request);
+   if(!globalThis.TISFileImportGuard.isCurrent(request))return;
+   await reset();
+   if(!globalThis.TISFileImportGuard.isCurrent(request))return;
+   return older(file,request);
  };
  $('file').accept='.pdf,.docx,.txt,.md,.csv,.json';
  const wordPick=$('wordDrop');
