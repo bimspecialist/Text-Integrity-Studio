@@ -9,7 +9,7 @@ const A='http://schemas.openxmlformats.org/drawingml/2006/main';
 const MAX_FILE=18*1024*1024,MAX_UNPACKED=115*1024*1024,MAX_XML=16*1024*1024,MAX_ENTRIES=1200;
 // Check inflated sizes BEFORE decompressing ZIP content (CRC checking would decompress too early).
 const TEXT_PART=/^word\/(?:document|header\d+|footer\d+|footnotes|endnotes|comments)\.xml$/i;
-let session=null,busy=false;
+let session=null,busy=false,queuedWord=null;
 let editorialSelection=new Set(),editorialMode='academic';
 const ui={
 en:{
@@ -96,7 +96,11 @@ function checkZipLimits(zip,file){
  if(Object.keys(zip.files).some(n=>/vbaProject\.bin$/i.test(n)))throw Error('Macro-enabled Word documents are not supported. Save a macro-free DOCX.');
 }
 async function loadWord(file,ticket){
- if(busy)return; if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
+ // A second selection while the prior archive is expanding must not be lost.
+ // Keep only the latest queued intent; no source text is stored here.
+ if(busy){queuedWord={file,ticket};setNotice(tr('busy')+' · '+file.name);return;}
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
+ if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
  if(typeof JSZip==='undefined'){setNotice('JSZip library did not load. Please refresh the page.',true);return;}
  busy=true;setNotice(tr('busy'));document.getElementById('wordDrop').classList.add('is-loading');
  try{
@@ -135,7 +139,12 @@ async function loadWord(file,ticket){
    document.getElementById('wordMeta').textContent=labels.join(' · ');
    if(!$('source').value)toast(tr('empty'));
  }catch(error){if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
- finally{busy=false;document.getElementById('wordDrop').classList.remove('is-loading');}
+ finally{
+   busy=false;document.getElementById('wordDrop').classList.remove('is-loading');
+   const latest=queuedWord;queuedWord=null;
+   if(latest&&globalThis.TISFileImportGuard.isCurrent(latest.ticket))
+    void loadWord(latest.file,latest.ticket);
+ }
 }
 function mode(){return $('mode').value;}
 function editorialPlan(requestedMode){
