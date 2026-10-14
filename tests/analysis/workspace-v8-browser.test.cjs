@@ -90,6 +90,9 @@ async function run(){
   // Responsive RTL laptop: hiding the sidebar must release its entire grid
   // width, not leave a giant empty column to the left of the writing panes.
   await page.setViewport({width:1150,height:730});
+  // First-screen checks must begin at the top. The preceding 320px phone
+  // view can retain a scroll offset when Chromium expands the viewport.
+  await page.evaluate(()=>scrollTo(0,0));
   const mid=await page.evaluate(()=>{
    const main=document.querySelector('main').getBoundingClientRect();
    const workspace=document.querySelector('.workspace').getBoundingClientRect();
@@ -102,10 +105,14 @@ async function run(){
    'RTL tablet/laptop must not waste half the viewport: '+JSON.stringify(mid));
   const shortLaptop=await page.evaluate(()=>{
    const pane=document.getElementById('tisRevisedPane').getBoundingClientRect();
+   const original=document.getElementById('inputPanel').getBoundingClientRect();
+   const source=document.getElementById('source').getBoundingClientRect();
    const apply=document.getElementById('tisDraftApply').getBoundingClientRect();
    const undo=document.getElementById('tisDraftUndo').getBoundingClientRect();
-   return {height:innerHeight,top:pane.top,applyBottom:apply.bottom,
-    undoBottom:undo.bottom,applyWidth:apply.width};
+   return {height:innerHeight,scrollY,top:pane.top,originalTop:original.top,
+    sourceTop:source.top,sourceBottom:source.bottom,
+    layout:getComputedStyle(document.querySelector('.workspace')).display,
+    applyBottom:apply.bottom,undoBottom:undo.bottom,applyWidth:apply.width};
   });
   assert(shortLaptop.applyBottom<=shortLaptop.height &&
    shortLaptop.undoBottom<=shortLaptop.height,
