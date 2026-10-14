@@ -29,7 +29,8 @@
    copied:'Draft copied to the clipboard.',copyError:'Clipboard is unavailable. Select and copy the draft manually.',
    safeMode:'Manual local editing only',generator:'Rewrite locally',generatorNotice:'Local generative rewriting is not yet available: a verified, licensed on-device model and real WebGPU tests are required. No cloud fallback.',
    discarded:'Draft reset from the latest original.',noChange:'Nothing changed.',noHistory:'No draft change to undo.',
-   reviewFirst:'Review the changes in the revised draft before applying them.'
+   reviewFirst:'Review the changes in the revised draft before applying them.',
+   undoPending:'Your draft has unsaved changes. Apply, copy or reset this draft before undoing an earlier applied revision.'
   },
   ar:{
    group:'أوضاع مساحة العمل',detection:'كشف AI',humanize:'تحسين الكتابة',editor:'محرر الكتابة',
@@ -48,7 +49,8 @@
    safeMode:'تحرير محلي يدوي فقط',generator:'إعادة الصياغة محليًا',
    generatorNotice:'إعادة الصياغة التوليدية المحلية غير متاحة بعد؛ يلزم نموذج مرخّص ومختبَر فعليًا باستخدام WebGPU. لا يوجد بديل سحابي.',
    discarded:'أُعيدت المسودة من النسخة الأصلية الحالية.',noChange:'لم يتغيّر النص.',noHistory:'لا يوجد تعديل يمكن التراجع عنه.',
-   reviewFirst:'راجع النسخة المحسّنة قبل تطبيقها.'
+   reviewFirst:'راجع النسخة المحسّنة قبل تطبيقها.',
+   undoPending:'توجد تعديلات غير مطبّقة في المسودة. طبّقها أو انسخها أو أعد ضبط المسودة قبل التراجع عن تعديل سابق.'
   }
  };
  function mount({source,session,controller,root:panel=document,
@@ -81,12 +83,16 @@
    const current=session.read(),different=changed(),isStale=stale(),readonly=current.sourceKind==='docx',
     protectedChange=different&&!isStale&&checks().flags?.some(f=>f==='PROTECTED_FACT_CHANGED'||f==='UNVERIFIED_PERSONAL_CLAIM');
    apply.disabled=!different||isStale||readonly||protectedChange;
-   undo.disabled=!canUndo();
+   const undoPending=canUndo()&&different;
+   // Undo applies to a prior committed version; doing it while a newer
+   // handwritten draft exists would silently discard that unsaved draft.
+   undo.disabled=!canUndo()||different;
    textarea.dir='auto';
-   const label=readonly?'docx':isStale?'stale':protectedChange?'protected':different?draftFlag:'untouched';
+   const label=readonly?'docx':isStale?'stale':protectedChange?'protected':undoPending?'undoPending':different?draftFlag:'untouched';
    const translation=t();
    const messages={
     docx:translation.docx,stale:translation.stale,protected:translation.protected,
+    undoPending:translation.undoPending,
     PREVIEW:translation.preview,EDITED:translation.changed,
     SYNCED:translation.idle,untouched:translation.untouched
    };
@@ -162,6 +168,10 @@
    resetDraft();notify(t().applied);
   }
   function undoDraft(){
+   if(disposed)return;
+   if(changed()){
+    render();notify(t().undoPending);return;
+   }
    const item=history[history.length-1];
    if(!item||!canUndo()){history=[];render();return;}
    history.pop();ownWrite=true;
