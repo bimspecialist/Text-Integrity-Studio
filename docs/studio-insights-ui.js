@@ -333,6 +333,15 @@
   // The one AnalysisController runs local writing review first, then the
   // optional eligible English detector. Never start two competing scans.
   $('scanAI').addEventListener('click',()=>{
+   const mode=document.body.dataset.tisMode||'detection';
+   // Selecting Humanize or Writing Editor explicitly requests the local
+   // advisor, not an unprompted ~126 MB research model download.
+   if(!state.aiRunning&&mode!=='detection'){
+    window.TISAnalysisApp?.reviewWritingOnly?.();
+    return;
+   }
+   // Detection mode and Cancel continue through the single authoritative
+   // AnalysisController; do not start a competing scan.
    $('aiRun')?.click();
   });
   $('studioExportTop').addEventListener('click',()=>{$('studioExportReview')?.click();});
