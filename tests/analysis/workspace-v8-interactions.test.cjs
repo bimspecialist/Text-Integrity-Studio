@@ -1,0 +1,102 @@
+'use strict';
+/* V8.1 interaction regression — real Chromium, no network model downloads.
+ * Files and text are synthetic; real DOCX/PDF/OCR flows covered by existing CI.
+ */
+const assert=require('node:assert/strict');
+const puppeteer=require('puppeteer-core');
+const {serve,chrome}=require('../pdf-browser.test.js');
+async function run(){
+ const server=serve();await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+ const browser=await puppeteer.launch({headless:true,executablePath:chrome,
+  args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+ const errors=[],remote=[],broken=[];
+ try{
+  const page=await browser.newPage();
+  await page.setViewport({width:1360,height:900});
+  page.on('pageerror',err=>errors.push(err.message));
+  page.on('request',r=>{if(new URL(r.url()).hostname!=='127.0.0.1')remote.push(r.url());});
+  page.on('response',r=>{if(r.status()>=400)broken.push(r.url()+':'+r.status());});
+  await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
+  // Canonical source and revision must reflect programmatic sample/clear
+  // as faithfully as the input listener reflects ordinary typing.
+  await page.click('#tisV8Example');
+  let state=await page.evaluate(()=>({
+   text:document.getElementById('source').value,
+   snapshot:window.TISAnalysisApp.session.read(),
+   detection:window.TISAnalysisApp.controller.getState().status
+  }));
+  assert(state.text.length>10,'sample must load actual text');
+  assert.equal(state.snapshot.text,state.text,'sample must publish a source revision');
+  assert(state.snapshot.revision>0,'programmatic source changes are not invisible to controller');
+  assert(await page.$('#tisV8DropOverlay'),'file drag-and-drop guidance belongs to the editor');
+  assert(await page.$('#tisV8AnalysisStatus'),'detector state must be visible without Advanced Details');
+
+  const imported='Local engineering note with measurements 5 m and 2.5 mm. Local file delivery.';
+  await page.$eval('#inputPanel',(panel,text)=>{
+   const data=new DataTransfer();
+   data.items.add(new File([text],'engineering-note.md',{type:'text/markdown'}));
+   const mk=type=>new DragEvent(type,{bubbles:true,cancelable:true,dataTransfer:data});
+   panel.dispatchEvent(mk('dragenter'));
+   panel.dispatchEvent(mk('dragover'));
+   panel.dispatchEvent(mk('drop'));
+  },imported);
+  await page.waitForFunction(text=>document.getElementById('source').value===text,{timeout:12000},imported);
+  state=await page.evaluate(()=>({
+   text:document.getElementById('source').value,
+   snapshot:window.TISAnalysisApp.session.read(),
+   fileName:document.getElementById('file').files?.[0]?.name,
+   dropMessage:document.getElementById('tisV8FileState')?.textContent
+  }));
+  assert.equal(state.text,imported);
+  assert.equal(state.snapshot.text,imported,'dropped text file must use canonical session');
+  assert.equal(state.snapshot.sourceKind,'txt','Markdown should be treated as text');
+  assert.equal(state.fileName,'engineering-note.md','drop must route through one file picker');
+  assert(/engineering-note\.md/.test(state.dropMessage),'the selected file is acknowledged');
+  const revision=state.snapshot.revision;
+  await page.$eval('#inputPanel',panel=>{
+   const data=new DataTransfer();
+   data.items.add(new File(['not allowed'],'suspicious.exe',{type:'application/octet-stream'}));
+   panel.dispatchEvent(new DragEvent('drop',{bubbles:true,cancelable:true,dataTransfer:data}));
+  });
+  const rejected=await page.evaluate(()=>({
+   revision:window.TISAnalysisApp.session.read().revision,
+   text:document.getElementById('source').value,
+   selected:document.getElementById('file').files?.[0]?.name,
+   message:document.getElementById('tisV8FileState')?.textContent
+  }));
+  assert.equal(rejected.revision,revision,'unsupported drop must never replace existing document');
+  assert.equal(rejected.text,imported);
+  assert.equal(rejected.selected,'engineering-note.md','rejecting a drop preserves previous input');
+  assert(rejected.message.length>5,'unsupported extension gets inline explanatory feedback');
+  // A short text must run writing checks without downloading the AI model.
+  await page.click('#scanAI');
+  await page.waitForFunction(()=>['WRITING_ONLY','UNSUPPORTED'].includes(
+   window.TISAnalysisApp.controller.getState().status),{timeout:8000});
+  let stateLabel=await page.$eval('#tisV8AnalysisStatus',el=>({
+   text:el.textContent.trim(),kind:el.dataset.state
+  }));
+  assert.equal(stateLabel.kind,'WRITING_ONLY');
+  assert(/writing|short|words|مؤهل|كتابة/i.test(stateLabel.text),'explain writing-only outcome');
+  // First post-analysis edit invalidates evidence and stays visible.
+  await page.$eval('#source',el=>{
+   el.value+=' A later edit.';el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  stateLabel=await page.$eval('#tisV8AnalysisStatus',el=>({
+   text:el.textContent.trim(),kind:el.dataset.state
+  }));
+  assert.equal(stateLabel.kind,'STALE','source edit invalidates scan state');
+  assert(/rescan|analyze|الفحص|التحليل/i.test(stateLabel.text),'guide user to intentional rescan');
+  await page.click('#language');
+  assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
+  stateLabel=await page.$eval('#tisV8AnalysisStatus',el=>({text:el.textContent,kind:el.dataset.state}));
+  assert.equal(stateLabel.kind,'STALE');
+  assert(/[\u0600-\u06ff]/u.test(stateLabel.text),'status localizes to Arabic');
+  await page.setViewport({width:320,height:700});
+  assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8);
+  assert.deepEqual(remote,[],'only a real opt-in may download external AI assets');
+  assert.deepEqual(broken,[],'new UI assets all load');
+  assert.deepEqual(errors,[],'no unhandled browser exceptions');
+  console.log('PASS V8.1 Chromium: synthetic sample/source revisions, local drag/drop, rejected files, writing-only/stale state, RTL and offline privacy');
+ }finally{await browser.close();await new Promise(ok=>server.close(ok));}
+}
+run().catch(error=>{console.error(error);process.exitCode=1;});
