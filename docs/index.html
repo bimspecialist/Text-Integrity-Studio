@@ -55,7 +55,7 @@
       <span id="tisV8Eyebrow">YOUR WORKSPACE</span>
       <strong id="tisV8ContextTitle">Review a document</strong>
     </div>
-    <p id="tisV8Privacy"><span class="tis-v8-privacy-indicator" aria-hidden="true"></span> Private draft · Optional local AI model download</p>
+    <p id="tisV8Privacy"><span class="tis-v8-privacy-indicator" aria-hidden="true"></span><span id="tisV8PrivacyText">Private draft · Optional model asset download</span></p>
   </div>
   <div id="tisModes" class="tis-modes" role="tablist" aria-label="Workspace modes">
     <button type="button" class="tis-mode-tab" role="tab" id="tisTabDetection" aria-selected="true" aria-controls="tisModePanel" tabindex="0">AI Detection</button>
@@ -159,6 +159,10 @@
           <span id="tisDraftBadge">Manual local editing only</span>
         </div>
         <p id="tisDraftIntro">Edit this local draft or preview a writing suggestion. Your original text stays unchanged until you apply.</p>
+        <div class="tis-v8-writing-actions" aria-label="Writing review feedback">
+          <p id="tisV8WritingFeedback" role="status" aria-live="polite">Review writing locally without downloading a detector model.</p>
+          <button type="button" id="tisV8ReviewSuggestions" aria-controls="humanizeSuggestions" hidden>View suggestions</button>
+        </div>
         <label id="tisRevisedLabel" for="tisRevisedText">After</label>
         <textarea id="tisRevisedText" dir="auto" spellcheck="true" aria-describedby="tisDraftStatus tisGeneratorNotice"></textarea>
         <div class="tis-draft-actions">
