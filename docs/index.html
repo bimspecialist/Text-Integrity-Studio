@@ -9,6 +9,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="app.css?v=20261013-v4">
 <link rel="stylesheet" href="v5-public.css?v=20261013-v6">
+<link rel="stylesheet" href="analysis/dual-pane-editor.css?v=20261014-l7">
 </head>
 <body>
 <header class="v5-topbar" role="banner">
@@ -46,6 +47,11 @@
     <span id="stepInput">1 · Add text</span>
     <span id="stepScan">2 · Check</span>
     <span id="stepSave">3 · Review and save</span>
+  </div>
+  <div id="tisModes" class="tis-modes" role="tablist" aria-label="Workspace modes">
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabDetection" aria-selected="true" aria-controls="tisModePanel" tabindex="0">AI Detection</button>
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabHumanize" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Humanize</button>
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabEditor" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Writing Editor</button>
   </div>
   <div class="workspace">
     <div class="workspace-main">
@@ -123,7 +129,27 @@
         </section>
       </details>
     </div>
-    <div class="workspace-results">
+    <div class="workspace-results" id="tisModePanel" role="tabpanel" aria-labelledby="tisTabDetection">
+      <section id="tisRevisedPane" aria-labelledby="tisRevisedHeading">
+        <div class="tis-revised-head">
+          <h2 id="tisRevisedHeading">Revised draft</h2>
+          <span id="tisDraftBadge">Manual local editing only</span>
+        </div>
+        <p id="tisDraftIntro">Edit this local draft or preview a writing suggestion. Your original text stays unchanged until you apply.</p>
+        <label id="tisRevisedLabel" for="tisRevisedText">After</label>
+        <textarea id="tisRevisedText" dir="auto" spellcheck="true" aria-describedby="tisDraftStatus tisGeneratorNotice"></textarea>
+        <div class="tis-draft-actions">
+          <button type="button" id="tisDraftReset">Reset draft</button>
+          <button type="button" id="tisDraftCopy">Copy draft</button>
+          <button type="button" id="tisDraftApply" disabled>Apply reviewed draft</button>
+          <button type="button" id="tisDraftUndo" disabled>Undo apply</button>
+        </div>
+        <p id="tisDraftStatus" role="status" aria-live="polite">No draft changes to apply.</p>
+        <div class="tis-generator-gate">
+          <button type="button" id="tisLocalRewrite" disabled>Rewrite locally</button>
+          <p id="tisGeneratorNotice">Local generative rewriting is not yet available. A verified on-device model is required; there is no cloud fallback.</p>
+        </div>
+      </section>
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
         <div class="panel-heading v5-results-heading">
           <div><h2 id="titleAudit">Analysis Results</h2><p id="v5ResultsSubtitle">AI model evidence and writing insights</p></div>
@@ -310,6 +336,8 @@
 <script src="analysis/editorial-review.js?v=20261014-h3"></script>
 <script src="analysis/humanize-ui.js?v=20261014-h3"></script>
 <script src="analysis/scan-comparison.js?v=20261014-h4"></script>
-<script src="analysis/app-adapter.js?v=20261013-path-a-r8"></script>
+<script src="analysis/rewrite-integrity-check.js?v=20261014-l7"></script>
+<script src="analysis/dual-pane-editor.js?v=20261014-l7"></script>
+<script src="analysis/app-adapter.js?v=20261014-l7"></script>
 </body>
 </html>
