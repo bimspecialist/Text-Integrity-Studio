@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bimspecialist.github.io/Text-Integrity-Studio/research/performance-baseline-schema.json",
+  "title": "TIS V7 Research-Only Performance Evidence",
+  "description": "Aggregate measurements only. Synthetic stubs are never equivalent to real ONNX WebGPU inference. No source text or individual scores.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "commitSha",
+    "modelRevisions",
+    "deviceProfile",
+    "browserVersion",
+    "networkProfile",
+    "documentWordCount",
+    "documentCharacterCount",
+    "coldStart",
+    "downloadBytesIfObserved",
+    "medianMs",
+    "p95Ms",
+    "peakHeapBytesIfAvailable",
+    "measurementMethod",
+    "sampleMode",
+    "runs",
+    "notes"
+  ],
+  "properties": {
+    "version": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 80
+    },
+    "commitSha": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{40}$"
+    },
+    "modelRevisions": {
+      "type": "object",
+      "required": [
+        "primary",
+        "secondary"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "primary": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{40}$"
+        },
+        "secondary": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}$"
+            }
+          ]
+        }
+      }
+    },
+    "deviceProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "platform",
+        "viewport",
+        "cpuThrottle"
+      ],
+      "properties": {
+        "platform": {
+          "type": "string",
+          "maxLength": 80
+        },
+        "viewport": {
+          "type": "string",
+          "maxLength": 40
+        },
+        "cpuThrottle": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "browserVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 140
+    },
+    "networkProfile": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    },
+    "documentWordCount": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "documentCharacterCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 120000
+    },
+    "coldStart": {
+      "type": "boolean"
+    },
+    "downloadBytesIfObserved": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "medianMs": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "p95Ms": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "peakHeapBytesIfAvailable": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "exclusiveMinimum": 0
+    },
+    "measurementMethod": {
+      "enum": [
+        "CHROMIUM_REAL_ONNX",
+        "CHROMIUM_LOCAL_STUB",
+        "CHROMIUM_EDITOR_NO_MODEL"
+      ]
+    },
+    "sampleMode": {
+      "enum": [
+        "REAL_MODEL",
+        "NON_REAL_PERFORMANCE"
+      ]
+    },
+    "runs": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 300
+    }
+  }
+}
