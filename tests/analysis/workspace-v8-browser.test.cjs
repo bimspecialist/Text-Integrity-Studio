@@ -39,11 +39,18 @@ async function run(){
   assert(layout.top.bottom<=900,'primary Analyze Text is visible at 900px desktop height');
   assert(layout.source.y>layout.modes.y,'document follows the mode tabs');
   assert(layout.background!=='rgb(255, 255, 255)');
+  const navWidth=await page.$eval('aside.app-sidebar .side-navigation .nav-item',
+   e=>e.getBoundingClientRect().width);
+  assert(navWidth>=130,'sidebar labels must not wrap into old 47px icon buttons: '+navWidth);
   assert.equal(await page.$eval('#tisLocalRewrite',n=>n.disabled),true,
    'the unverified local generator cannot be enabled by design alone');
   assert.equal(await page.$('#tisOnDeviceModel'),null,'no pre-consent AI download');
 
   await page.$eval('#source',(el,txt)=>{el.value=txt;el.dispatchEvent(new Event('input',{bubbles:true}));},first.repeat(2));
+  const firstEditMessage=await page.evaluate(()=>
+   ['v6ConclusionReason','studioAiQuickNote'].map(id=>document.getElementById(id)?.textContent||'').join(' '));
+  assert(!/text changed|analyze this version/i.test(firstEditMessage),
+   'first draft entry before scanning must not falsely warn of stale detector evidence');
   await page.click('#tisTabHumanize');
   assert.equal(await page.$eval('#tisRevisedPane',n=>getComputedStyle(n).display!=='none'),true);
   const dual=await page.evaluate(()=>{
