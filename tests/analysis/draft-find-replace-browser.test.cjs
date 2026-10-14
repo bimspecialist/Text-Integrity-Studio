@@ -90,6 +90,11 @@ async function run(){
   await page.setViewport({width:390,height:844});
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,
    'Arabic narrow viewport must not clip Find/Replace controls');
+  if(process.env.TIS_V8_EMBED_VISUAL==='1'){
+   await page.setViewport({width:1150,height:900});
+   const jpeg=await page.screenshot({type:'jpeg',quality:45});
+   console.log('TIS_V8_FIND_REPLACE_JPEG_B64='+jpeg.toString('base64'));
+  }
   assert.deepEqual(egress,[],'draft editing never starts external inference');
   assert.deepEqual(errors,[],'no JS runtime exceptions in Arabic/English flows');
   console.log('PASS V8.8: literal find/next/replace all, no regex or $& corruption, citation Apply protection, Arabic RTL/mobile, no upload');
