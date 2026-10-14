@@ -137,7 +137,7 @@ body[data-tis-mode=editor] .workspace{grid-template-columns:minmax(0,1fr) minmax
 .tis-v8-source-kind{font-size:10px;line-height:1.5;color:var(--v8-faint);
  background:#222332;border:1px solid var(--v8-stroke);padding:3px 9px;border-radius:100px}
 #inputPanel #source,#tisRevisedPane #tisRevisedText{
- height:clamp(308px,39vh,402px)!important;min-height:308px!important;
+ height:clamp(286px,33vh,480px)!important;min-height:286px!important;
  width:100%;font-size:13.5px;line-height:1.82;padding:18px 19px;
  border:1px solid #30364b;border-radius:12px;
  background:var(--v8-editor);color:var(--v8-text);
