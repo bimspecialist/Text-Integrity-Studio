@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="app.css?v=20261013-v4">
 <link rel="stylesheet" href="v5-public.css?v=20261013-v6">
 <link rel="stylesheet" href="analysis/dual-pane-editor.css?v=20261014-l7">
+<link rel="stylesheet" href="analysis/workspace-v8.css?v=20261014-v8">
 </head>
 <body>
 <header class="v5-topbar" role="banner">
@@ -49,6 +50,13 @@
     <span id="stepScan">2 · Check</span>
     <span id="stepSave">3 · Review and save</span>
   </div>
+  <div id="tisV8Context" class="tis-v8-context" aria-label="Workspace overview">
+    <div class="tis-v8-context-name">
+      <span id="tisV8Eyebrow">YOUR WORKSPACE</span>
+      <strong id="tisV8ContextTitle">Review a document</strong>
+    </div>
+    <p id="tisV8Privacy"><span class="tis-v8-privacy-indicator" aria-hidden="true"></span> Private draft · Optional local AI model download</p>
+  </div>
   <div id="tisModes" class="tis-modes" role="tablist" aria-label="Workspace modes">
     <button type="button" class="tis-mode-tab" role="tab" id="tisTabDetection" aria-selected="true" aria-controls="tisModePanel" tabindex="0">AI Detection</button>
     <button type="button" class="tis-mode-tab" role="tab" id="tisTabHumanize" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Humanize</button>
@@ -67,6 +75,12 @@
           <label for="file" id="v5UploadTab" class="v5-upload-tab" tabindex="0">↥ &nbsp; Upload file</label>
           <span id="v5TopCounts" class="v5-counts" aria-live="polite">0 words · 0 sections</span>
         </div>
+        <div class="tis-v8-quick-tools" role="group" aria-label="Text editing shortcuts">
+          <button id="tisV8Paste" type="button"><span aria-hidden="true">⌘</span> Paste text</button>
+          <button id="tisV8Example" type="button"><span aria-hidden="true">✳</span> Try example</button>
+          <span id="tisV8Shortcut">Ctrl + Enter to analyze</span>
+          <span id="tisV8ActionStatus" role="status" aria-live="polite"></span>
+        </div>
         <p id="v6DocumentNote" class="v6-document-note" role="status" aria-live="polite" hidden></p>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
@@ -80,7 +94,10 @@
           </span>
           <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.tsv,.json,.log,.yaml,.yml,.tex,.srt,.vtt,text/plain" aria-describedby="fileDescription">
         </label>
-        <label for="source" class="source-label" id="sourceLabel">Text to check</label>
+        <div class="tis-v8-source-heading">
+          <label for="source" class="source-label" id="sourceLabel">Text to check</label>
+          <span id="tisSourceLabel" class="tis-v8-source-kind">Before</span>
+        </div>
         <textarea id="source" placeholder="Paste your text here…" aria-label="Text input" spellcheck="true"></textarea>
         <div class="input-summary" aria-live="polite" id="quickInputState">0 words · Ready to check</div>
         <details id="studioEvidence" class="studio-heatmap-disclosure" hidden>
@@ -340,5 +357,6 @@
 <script src="analysis/rewrite-integrity-check.js?v=20261014-l7"></script>
 <script src="analysis/dual-pane-editor.js?v=20261014-l7"></script>
 <script src="analysis/app-adapter.js?v=20261014-l7"></script>
+<script src="analysis/workspace-v8.js?v=20261014-v8"></script>
 </body>
 </html>
