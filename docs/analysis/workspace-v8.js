@@ -518,6 +518,9 @@
   findText?.addEventListener('input',onFindQueryInput);
   findCase?.addEventListener('change',onFindQueryInput);
   revised?.addEventListener('input',scheduleFindState);
+  // A pristine dual draft may be replaced synchronously by a new source
+  // revision without dispatching its own textarea input event.
+  source.addEventListener('input',scheduleFindState);
   findNextButton?.addEventListener('click',onFindNextClick);
   replaceNextButton?.addEventListener('click',onReplaceNextClick);
   replaceAllButton?.addEventListener('click',onReplaceAllClick);
@@ -558,6 +561,7 @@
     findText?.removeEventListener('input',onFindQueryInput);
     findCase?.removeEventListener('change',onFindQueryInput);
     revised?.removeEventListener('input',scheduleFindState);
+    source.removeEventListener('input',scheduleFindState);
     findNextButton?.removeEventListener('click',onFindNextClick);
     replaceNextButton?.removeEventListener('click',onReplaceNextClick);
     replaceAllButton?.removeEventListener('click',onReplaceAllClick);
