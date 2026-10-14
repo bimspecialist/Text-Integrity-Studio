@@ -80,6 +80,19 @@ async function run(){
   await page.setViewport({width:320,height:700});
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,
    'narrow 320px viewport does not lose primary controls');
+  // Responsive RTL laptop: hiding the sidebar must release its entire grid
+  // width, not leave a giant empty column to the left of the writing panes.
+  await page.setViewport({width:1150,height:730});
+  const mid=await page.evaluate(()=>{
+   const main=document.querySelector('main').getBoundingClientRect();
+   const workspace=document.querySelector('.workspace').getBoundingClientRect();
+   const shell=document.querySelector('.shell').getBoundingClientRect();
+   return {mainWidth:main.width,mainLeft:main.left,
+    workspaceWidth:workspace.width,shellWidth:shell.width,
+    columns:getComputedStyle(document.querySelector('.shell')).gridTemplateColumns};
+  });
+  assert(mid.mainWidth>=1050&&mid.workspaceWidth>=1000,
+   'RTL tablet/laptop must not waste half the viewport: '+JSON.stringify(mid));
   for(const id of ['scanAI','file','wordToolbar','aiEvidence','pdfTools','v5Toolbox','studioExportTop'])
    assert(await page.$('#'+id),'retain existing analysis and document flow #'+id);
   assert.deepEqual(egress,[],'no egress before a user starts model scan');
