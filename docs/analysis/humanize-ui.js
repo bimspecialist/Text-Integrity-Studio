@@ -22,7 +22,9 @@
    undone:'Previous edit restored. Model results remain cleared until the next analysis.',
    extra:'More optional suggestions',reference:'Writing guidance',
    notAllowed:'Only a reviewed low-risk suggestion may be applied.',failure:'The edit could not be applied.',
-   applied:'Reviewed change applied. You can undo it.',section:'Section'
+   applied:'Reviewed change applied. You can undo it.',section:'Section',
+   compare:'Change in uncalibrated research signal',points:'points',
+   unavailable:'Research-signal comparison unavailable',notAuthorship:'This does not establish who wrote the text.'
   },
   ar:{
    title:'اجعل الكتابة أكثر طبيعية',local:'مقترحات تحرير محلية، وليست دليلًا على مصدر كتابة النص',
@@ -36,7 +38,9 @@
    undone:'تم استرجاع التعديل. ستظل نتائج الكشف السابقة ملغاة حتى الفحص التالي.',
    extra:'مقترحات إضافية',reference:'مرجع إرشادي للكتابة',
    notAllowed:'يمكن فقط تطبيق التعديلات الآمنة بعد المراجعة.',failure:'تعذّر تطبيق التعديل.',
-   applied:'تم تطبيق التعديل بعد موافقتك. يمكنك التراجع عنه.',section:'فقرة'
+   applied:'تم تطبيق التعديل بعد موافقتك. يمكنك التراجع عنه.',section:'فقرة',
+   compare:'التغير في إشارة النموذج البحثية غير المعايرة',points:'نقطة',
+   unavailable:'لا تتوفر مقارنة موثوقة بين نتيجتي النموذج',notAuthorship:'لا يثبت هذا من كتب النص.'
   }
  };
  const text=(node,value)=>{if(node)node.textContent=String(value??'');return node;};
@@ -46,7 +50,7 @@
   if(value!==undefined)text(node,value);
   return node;
  };
- function mount({root,session,review,controller,locale}={}){
+ function mount({root,session,review,controller,locale,onApplied,onUndoApplied}={}){
   if(!root||!session||typeof session.read!=='function'||
    !review||typeof review.getSuggestions!=='function'||
    !controller||typeof controller.getState!=='function')
@@ -56,9 +60,19 @@
    undo=root.querySelector('#humanizeUndo'),
    subtitle=root.querySelector('#humanizeSubtitle'),
    expand=root.querySelector('#humanizeMore'),
-   moreCards=root.querySelector('#humanizeMoreCards');
-  if(!cards||!status||!undo||!subtitle||!expand||!moreCards)throw Error('Missing Humanize markup');
-  let disposed=false,analyzedRevision=null,allowUndo=false;
+   moreCards=root.querySelector('#humanizeMoreCards'),
+   comparison=root.querySelector('#humanizeComparison');
+  if(!cards||!status||!undo||!subtitle||!expand||!moreCards||!comparison)throw Error('Missing Humanize markup');
+  let disposed=false,analyzedRevision=null,allowUndo=false,lastComparison=null;
+  function showComparison(result){
+   lastComparison=result||null;
+   if(!result){comparison.hidden=true;text(comparison,'');return;}
+   const d=tr();
+   const message=result.comparable===true&&Number.isFinite(result.differencePoints)?
+    d.compare+': '+(result.differencePoints>0?'+':'')+result.differencePoints.toFixed(1)+' '+d.points+'. '+d.notAuthorship:
+    d.unavailable+'. '+d.notAuthorship;
+   text(comparison,message);comparison.hidden=false;
+  }
   const tr=()=>copy[(locale?locale():document.documentElement.lang)==='ar'?'ar':'en'];
   function note(value){text(status,value);}
   function card(item){
@@ -90,6 +104,8 @@
    apply.disabled=readonly||item.risk!=='low'||item.proposedReplacement===null;
    apply.setAttribute('aria-label',d.apply+' · '+d.section+' '+item.section);
    apply.addEventListener('click',()=>{
+    const verified=controller.getState();
+    const before=verified.status==='RESEARCH_SIGNAL'?verified.evidence:null;
     const result=review.apply(item.id);
     if(!result.applied){
      note(result.reason==='WORD_READ_ONLY'?d.docx:
@@ -97,6 +113,7 @@
      return;
     }
     allowUndo=true;
+    if(typeof onApplied==='function')onApplied(before);
     const input=document.getElementById('source');
     if(input){
      input.value=result.snapshot.text;
@@ -150,6 +167,7 @@
   const unsubscribe=session.subscribe(snapshot=>{
    if(disposed||analyzedRevision===null||snapshot.revision===analyzedRevision)return;
    analyzedRevision=null;
+   showComparison(null);
    cards.replaceChildren();moreCards.replaceChildren();expand.hidden=true;
    undo.disabled=!allowUndo;
    note(tr().edited);
@@ -158,6 +176,7 @@
    if(!allowUndo)return;
    const restored=review.undo();
    if(!restored.restored){allowUndo=false;undo.disabled=true;note(tr().stale);return;}
+   if(typeof onUndoApplied==='function')onUndoApplied();
    const input=document.getElementById('source');
    if(input){
     input.value=restored.snapshot.text;
@@ -175,6 +194,7 @@
    text(expand.querySelector('summary'),tr().extra);
    if(root.hidden)return;
    if(analyzedRevision===session.read().revision)renderSuggestions();
+   if(lastComparison)showComparison(lastComparison);
   });
   undo.addEventListener('click',onUndo);
   const languageButton=document.getElementById('language');
@@ -186,7 +206,7 @@
    undo.removeEventListener('click',onUndo);
    languageButton?.removeEventListener('click',onLang);
   }
-  return Object.freeze({refresh,dispose});
+  return Object.freeze({refresh,showComparison,clearComparison:()=>showComparison(null),dispose});
  }
  return Object.freeze({mount});
 });
