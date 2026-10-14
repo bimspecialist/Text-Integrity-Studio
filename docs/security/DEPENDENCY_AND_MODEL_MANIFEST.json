@@ -1,0 +1,67 @@
+{
+  "schemaVersion": "TIS_DEPENDENCY_MODEL_MANIFEST_V1",
+  "verificationLevel": "SOURCE_PINS_CHECKED_RUNTIME_AND_LICENSE_REVIEW_HOLD",
+  "reviewDate": "2026-10-14",
+  "detector": {
+    "runtime": {
+      "uri": "https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1",
+      "packageVersion": "3.8.1",
+      "integrityStatus": "UNVERIFIED_NO_SRI",
+      "licenseStatus": "UNKNOWN_NOT_INDEPENDENTLY_REVIEWED",
+      "purpose": "Optional client-side English ONNX inference",
+      "trustBoundary": "EXECUTABLE_REMOTE_CODE_IN_SAME_ORIGIN_IFRAME"
+    },
+    "models": {
+      "primary": {
+        "id": "onnx-community/tmr-ai-text-detector-ONNX",
+        "revision": "b9aa251e5bcda7e429fcc936767d921435945b60",
+        "licenseStatus": "UNVERIFIED_RESEARCH_ONLY",
+        "binaryIntegrityStatus": "MODEL_REVISION_PIN_ONLY_NO_LOCAL_HASH_CHECK"
+      },
+      "secondary": {
+        "id": "onnx-community/roberta-base-openai-detector-ONNX",
+        "revision": "54895bd11f34b47a01369d25b2255224717409b8",
+        "licenseStatus": "UNVERIFIED_RESEARCH_ONLY",
+        "binaryIntegrityStatus": "MODEL_REVISION_PIN_ONLY_NO_LOCAL_HASH_CHECK"
+      }
+    }
+  },
+  "bundledLicenses": [
+    {
+      "path": "docs/vendor/JSZIP_LICENSE.txt",
+      "declared": "MIT",
+      "expectedEvidence": "MIT License"
+    },
+    {
+      "path": "docs/vendor/pdfjs/LICENSE",
+      "declared": "Apache-2.0",
+      "expectedEvidence": "Apache License"
+    },
+    {
+      "path": "docs/fonts/MANROPE-OFL.txt",
+      "declared": "OFL-1.1",
+      "expectedEvidence": "SIL OPEN FONT LICENSE"
+    },
+    {
+      "path": "docs/fonts/IBM-PLEX-ARABIC-OFL.txt",
+      "declared": "OFL-1.1",
+      "expectedEvidence": "SIL OPEN FONT LICENSE"
+    }
+  ],
+  "localGenerator": {
+    "productionDefault": null,
+    "candidateId": "onnx-community/Qwen3-0.6B-ONNX",
+    "candidateRevision": "558750086ed49d78cb701ed6fa85af33fd16453f",
+    "convertedLicenseStatus": "UNVERIFIED",
+    "realModelVerified": false,
+    "candidateModelFileSha256": "9e33a5911974174761d0dfdcc0bec975d9c45af0eae5e9eb647b8ba9442a8f91",
+    "binaryHashStatus": "DECLARED_RESEARCH_METADATA_NOT_DOWNLOADED",
+    "webgpuTrialStatus": "NOT_RUN"
+  },
+  "scientificDeploymentAllowed": false,
+  "notes": [
+    "External JS can run in a same-origin model iframe under current sandbox flags; this is a privacy blocker until runtime isolation and supply-chain review.",
+    "Pinned model repository revisions are not equivalent to independently verified per-file binary integrity or license.",
+    "Generative rewrite must stay disabled until real multilingual model and device acceptance."
+  ]
+}
