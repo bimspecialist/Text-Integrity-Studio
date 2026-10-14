@@ -11,7 +11,7 @@
  const PATTERNS=[
   ['url',/https?:\/\/[^\s<>"']+/gu],
   ['citation',/\[(?:[\d\u0660-\u0669]+(?:\s*[,;\-]\s*[\d\u0660-\u0669]+)*)\]/gu],
-  ['measurement',/[+\-]?[\d\u0660-\u0669]+(?:[.,٫][\d\u0660-\u0669]+)?\s*(?:kPa|MPa|kN|kV|mA|mm|cm|km|kg|Hz|W|V|m²|m³|%|٪)\b?/giu],
+  ['measurement',/[+\-]?[\d\u0660-\u0669]+(?:[.,٫][\d\u0660-\u0669]+)?\s*(?:kPa|MPa|kN|kV|mA|mm|cm|km|kg|Hz|W|V|m²|m³|%|٪)/giu],
   ['numeric',/[+\-]?[\d\u0660-\u0669]+(?:[.,٫][\d\u0660-\u0669]+)?(?:%|٪)?/gu]
  ];
  function extractProtectedFacts(source){
