@@ -333,6 +333,22 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
  .tis-mode-tab{font-size:10px}
  .v5-counts{flex-basis:100%;margin-inline-start:0}
 }
+/* V8.5 fast local-only review feedback in the visible draft workspace. */
+.tis-v8-writing-actions{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;margin:0 0 13px;padding:10px 12px;border:1px solid #393e54;
+ border-radius:10px;background:#1d2030}
+#tisV8WritingFeedback{flex:1 1 auto;min-width:0;margin:0;color:var(--v8-body);
+ font-size:11.5px;line-height:1.55}
+#tisRevisedPane #tisV8ReviewSuggestions{flex:0 0 auto;font-size:11px;
+ font-weight:710;min-height:36px;padding:8px 12px;border:1px solid #7466a6;
+ border-radius:8px;background:var(--v8-tint);color:#e5ddff}
+#tisRevisedPane #tisV8ReviewSuggestions:hover{background:#45396b}
+@media(max-width:560px){
+ .tis-v8-writing-actions{align-items:stretch;flex-direction:column}
+ #tisV8WritingFeedback{font-size:11px}
+ #tisRevisedPane #tisV8ReviewSuggestions{width:100%}
+}
+
 /* V8.4 export the reviewed draft, never the original DOCX bytes. */
 .tis-v8-draft-export{display:flex;align-items:center;justify-content:space-between;
  gap:10px;flex-wrap:wrap;margin:8px 0 2px}
