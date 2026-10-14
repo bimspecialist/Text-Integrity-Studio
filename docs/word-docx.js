@@ -95,24 +95,28 @@ function checkZipLimits(zip,file){
  if(!zip.file('[Content_Types].xml')||!zip.file('word/document.xml'))throw Error('Not a supported DOCX package.');
  if(Object.keys(zip.files).some(n=>/vbaProject\.bin$/i.test(n)))throw Error('Macro-enabled Word documents are not supported. Save a macro-free DOCX.');
 }
-async function loadWord(file){
+async function loadWord(file,ticket){
  if(busy)return; if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
  if(typeof JSZip==='undefined'){setNotice('JSZip library did not load. Please refresh the page.',true);return;}
  busy=true;setNotice(tr('busy'));document.getElementById('wordDrop').classList.add('is-loading');
  try{
    await new Promise(r=>setTimeout(r,16));
    const bytes=await file.arrayBuffer();
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    const zip=await JSZip.loadAsync(bytes,{checkCRC32:false});
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    checkZipLimits(zip,file);
    const names=Object.keys(zip.files).filter(k=>TEXT_PART.test(k)).sort((x,y)=>x==='word/document.xml'?-1:y==='word/document.xml'?1:x.localeCompare(y));
    const parts=[];let hidden=0,revisions=0,watermarks=0;
    for(const name of names){
       const xml=await zip.file(name).async('string');
+      if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
       if(xml.length>MAX_XML)throw Error('Word XML part exceeds safety limit.');
       const doc=parseXML(xml,name),check=inspectDoc(doc,name);
       hidden+=check.hiddenRuns;revisions+=check.revisions;watermarks+=check.possibleWatermarkShapes;
       parts.push({name,xml,text:extract(doc),check});
    }
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    session={name:file.name,bytes,parts,hidden,revisions,watermarks,zip,
      signed:Object.keys(zip.files).some(n=>n.startsWith('_xmlsignatures/'))};
    editorialSelection=new Set();editorialMode='academic';
@@ -130,7 +134,7 @@ async function loadWord(file){
    const labels=[tr('loaded'),file.name,parts.length+' '+tr('parts')];if(session.signed)labels.push(lang==='ar'?'قد يبطل التوقيع الرقمي':'digitally signed: edits may invalidate signature');if(hidden)labels.push(hidden+' '+tr('hidden'));
    document.getElementById('wordMeta').textContent=labels.join(' · ');
    if(!$('source').value)toast(tr('empty'));
- }catch(error){resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
+ }catch(error){if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
  finally{busy=false;document.getElementById('wordDrop').classList.remove('is-loading');}
 }
 function mode(){return $('mode').value;}
@@ -283,7 +287,7 @@ function setup(){
  $('wordDrop').addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
  $('file').accept='.docx,.txt,.md,.csv,.json';
  const oldRead=readFile;
- readFile=async function(file){if(!file)return;if(/\.docx$/i.test(file.name))return loadWord(file);resetWord();return oldRead(file);};
+ readFile=async function(file,ticket){if(!file)return;const request=ticket||globalThis.TISFileImportGuard.begin(file);if(/\.docx$/i.test(file.name))return loadWord(file,request);if(!globalThis.TISFileImportGuard.isCurrent(request))return;resetWord();return oldRead(file,request);};
  const oldPreview=$('preview').onclick;
  $('preview').onclick=function(){return session?previewWord():oldPreview();};
  const oldApply=$('apply').onclick;
