@@ -38,11 +38,13 @@ function checks(extra={}){
  assert.match(RELEASE_MARKER,/^TIS_V8_PATH_A_20261014_S5_[A-Z0-9_]+$/);
  assert(html.includes('name="tis-release-marker" content="'+RELEASE_MARKER+'"'));
  for(const asset of ['app.js','analysis/app-adapter.js',
-  'analysis/workspace-v8.js','analysis/draft-diff-preview.js']){
-  assert(html.includes('src="'+asset+'?v=20261014-v8-4-rc2"'),
+  'analysis/workspace-v8.js','analysis/draft-diff-preview.js',
+  'studio-insights-ui.js','analysis/editor-comparison-core.js',
+  'analysis/draft-find-replace-core.js']){
+  assert(html.includes('src="'+asset+'?v=20261014-v8-8-rc3"'),
    'release candidate must cache-bust modified JavaScript: '+asset);
  }
- assert(html.includes('href="analysis/workspace-v8.css?v=20261014-v8-4-rc2"'),
+ assert(html.includes('href="analysis/workspace-v8.css?v=20261014-v8-8-rc3"'),
   'release candidate must cache-bust redesigned CSS');
  assert.equal(verifyPublishedApp(published()).status,'VERIFIED_DEPLOYED_CANDIDATE');
  assert.equal(verifyPublishedApp(published({observedMarker:null})).status,'BLOCKED');
