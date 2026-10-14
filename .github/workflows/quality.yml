@@ -91,6 +91,12 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Local rewrite WebGPU capability and informed consent enforcement
+        run: |
+          node --check tests/analysis/rewrite-capability-policy.test.js
+          node tests/analysis/rewrite-capability-policy.test.js
+          node --check tests/analysis/local-model-registry.test.js
+          node tests/analysis/local-model-registry.test.js
       - name: Local WebGPU generator research provenance and no-auto-download gate
         run: |
           node --check tests/analysis/local-model-manifest.test.js
