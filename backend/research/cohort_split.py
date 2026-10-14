@@ -179,6 +179,15 @@ def split_cohorts(
         "case_id_sha256": {
             name: sorted(_hash(r["id"]) for r in assigned[name]) for name in PARTITIONS
         },
+        # Structural freeze for offline E4 leakage checks. Group hashes
+        # are UNSALTED and must not be released with real author identities;
+        # a keyed/pseudonymized research store is required for real cohorts.
+        "group_hashes_sha256": {
+            name: sorted({_hash(field + "\\x00" + value)
+                          for r in assigned[name] for field, value in _key_list(r)})
+            for name in PARTITIONS
+        },
+        "group_hash_privacy": "UNSALTED_RESEARCH_ONLY_DO_NOT_PUBLISH",
         "release_test_sha256": _hash("|".join(sorted(_hash(r["id"]) for r in assigned["release_test"]))),
         "source_revisions": sorted({str(r.get("source_revision", "")) for r in rows}),
     }
