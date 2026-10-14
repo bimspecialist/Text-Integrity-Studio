@@ -1,0 +1,114 @@
+/* V7 L7 — local dual editor. Preserve existing report/UI and one Analyze action.
+   Applies only to named V7 controls; does not recolor prior tools. */
+.tis-modes{
+ display:flex;gap:7px;flex-wrap:wrap;align-items:center;min-width:0;
+ margin:0 0 14px;padding:6px;border:1px solid var(--v5-stroke,#2a3b53);
+ border-radius:13px;background:#101d2e
+}
+.tis-mode-tab{
+ flex:1 1 145px;min-width:0;max-width:100%;padding:11px 13px;min-height:44px;
+ border:1px solid transparent;border-radius:9px;background:transparent;
+ color:#bfd1e8;font-size:12px;font-weight:750;line-height:1.4;
+ cursor:pointer;text-align:center
+}
+.tis-mode-tab[aria-selected="true"]{
+ background:#203b5c;border-color:#407caf;color:#f1f8ff;
+ box-shadow:inset 0 -2px #63b8f7
+}
+.tis-mode-tab:hover{border-color:#517ea3;color:#fff}
+.tis-mode-tab:focus-visible,#tisRevisedPane button:focus-visible,
+#tisRevisedText:focus-visible{outline:3px solid #91d4ff;outline-offset:3px}
+.tis-mode-tab[aria-selected="true"]:focus-visible{outline-offset:2px}
+#tisRevisedPane{display:none;min-width:0;padding:19px 19px 16px;
+ margin:0 0 13px;background:linear-gradient(160deg,#152338,#101e30);
+ border:1px solid #37516d;border-radius:14px;box-shadow:0 5px 20px #050b1629;
+ color:#e7f1ff
+}
+body[data-tis-mode="humanize"] #tisRevisedPane,
+body[data-tis-mode="editor"] #tisRevisedPane{display:block}
+.tis-revised-head{display:flex;align-items:flex-start;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;margin-bottom:8px}
+#tisRevisedHeading{font-size:17px;color:#eef7ff;letter-spacing:-.2px;
+ margin:0;line-height:1.4}
+#tisDraftBadge{font-size:10px;color:#b9d9ed;background:#17334b;
+ border:1px solid #315b79;border-radius:20px;padding:6px 9px;line-height:1.5}
+#tisDraftIntro{font-size:11.5px;line-height:1.7;color:#b3cbe0;margin:0 0 12px}
+#tisRevisedLabel{display:block;font-size:12px;color:#cde5fa;
+ font-weight:700;margin:0 0 8px}
+#tisRevisedPane #tisRevisedText{
+ width:100%;min-width:0;display:block;resize:vertical;max-width:100%;
+ height:clamp(335px,50vh,620px);min-height:260px;padding:16px 17px;
+ color:#f2f7ff;background:#0b1828;border:1px solid #3c5b7b;
+ font-size:14px;line-height:1.85;border-radius:11px;
+ white-space:pre-wrap;overflow-wrap:break-word;box-shadow:inset 0 1px 8px #040e193a
+}
+.tis-draft-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+ margin-top:12px}
+#tisRevisedPane .tis-draft-actions button,#tisLocalRewrite{
+ border:1px solid #466b89;border-radius:8px;color:#dcedff;
+ background:#1e3953;min-height:40px;padding:9px 12px;
+ font-size:11.5px;font-weight:700;line-height:1.35;cursor:pointer
+}
+#tisRevisedPane #tisDraftApply{
+ background:#245a83;border-color:#4c99cf;color:#f5fbff
+}
+#tisRevisedPane button:hover:not(:disabled){background:#2b5777;border-color:#77b6df}
+#tisRevisedPane button:disabled{opacity:.55;cursor:not-allowed}
+#tisDraftStatus{min-height:1.5em;font-size:11px;line-height:1.65;
+ margin:11px 0 0;color:#bed3e5;overflow-wrap:anywhere}
+.tis-generator-gate{border-top:1px solid #2d4661;margin-top:12px;
+ padding-top:11px}
+#tisGeneratorNotice{margin:8px 0 0;color:#b9cbd9;font-size:11px;
+ line-height:1.6;overflow-wrap:anywhere}
+body[data-tis-mode="editor"] .tis-generator-gate{display:none}
+body[data-tis-mode="humanize"] .workspace,
+body[data-tis-mode="editor"] .workspace{
+ grid-template-columns:minmax(0,1fr) minmax(0,1fr)
+}
+body[data-tis-mode="humanize"] #studioAiQuick,
+body[data-tis-mode="humanize"] #studioReview,
+body[data-tis-mode="humanize"] #v5Breakdown,
+body[data-tis-mode="humanize"] #aiDetectorTechnical,
+body[data-tis-mode="humanize"] #reportPanel>.report-actions,
+body[data-tis-mode="humanize"] #reportPanel>#reportMore,
+body[data-tis-mode="editor"] #studioAiQuick,
+body[data-tis-mode="editor"] #humanizeSuggestions,
+body[data-tis-mode="editor"] #v5Breakdown,
+body[data-tis-mode="editor"] #aiDetectorTechnical,
+body[data-tis-mode="editor"] #reportPanel>.report-actions,
+body[data-tis-mode="editor"] #reportPanel>#reportMore{
+ display:none!important
+}
+body[data-tis-mode="humanize"] #reportPanel{
+ border:0;box-shadow:none;background:transparent;
+ padding:0;margin:0
+}
+body[data-tis-mode="humanize"] #reportPanel>.v5-results-heading,
+body[data-tis-mode="editor"] #reportPanel>.v5-results-heading{display:none}
+body[data-tis-mode="humanize"] #humanizeSuggestions{margin-top:0}
+body[data-tis-mode="editor"] #reportPanel{padding:16px}
+body[data-tis-mode="editor"] #reportPanel #studioReview{margin:0}
+@media(max-width:900px){
+ body[data-tis-mode="humanize"] .workspace,
+ body[data-tis-mode="editor"] .workspace{
+  display:flex;flex-direction:column;align-items:stretch
+ }
+ #tisRevisedPane{order:1;width:100%;max-width:100%;min-width:0}
+ body[data-tis-mode="humanize"] #reportPanel,
+ body[data-tis-mode="editor"] #reportPanel{order:2}
+ #tisRevisedPane #tisRevisedText{height:330px;min-height:270px}
+}
+@media(max-width:560px){
+ .tis-modes{gap:4px;padding:5px;margin-bottom:11px}
+ .tis-mode-tab{flex:1 1 30%;font-size:11px;min-height:45px;padding:8px 6px}
+ #tisRevisedPane{padding:13px 13px 14px}
+ #tisRevisedHeading{font-size:16px}
+ #tisDraftBadge{font-size:9px}
+ #tisRevisedPane #tisRevisedText{height:290px;min-height:245px;
+  font-size:13.5px;padding:12px 13px}
+ .tis-draft-actions{gap:6px}
+ #tisRevisedPane .tis-draft-actions button{flex:1 1 auto;min-height:43px;padding:8px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .tis-mode-tab,#tisRevisedPane button{transition:none!important}
+}
