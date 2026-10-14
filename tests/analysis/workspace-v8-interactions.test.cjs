@@ -86,6 +86,30 @@ async function run(){
   }));
   assert.equal(stateLabel.kind,'STALE','source edit invalidates scan state');
   assert(/rescan|analyze|الفحص|التحليل/i.test(stateLabel.text),'guide user to intentional rescan');
+  // Before / After preview must remain browser-local and never mutate the
+  // canonical original until an independently authorized Apply.
+  await page.click('#tisTabHumanize');
+  const canonical=await page.$eval('#source',el=>el.value);
+  const proposed=canonical+' Additional explanation <img src=x onerror=alert(1)>.';
+  await page.$eval('#tisRevisedText',(el,value)=>{
+   el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+  },proposed);
+  assert(await page.$('#tisV8DiffReview'),'explicit local change-review affordance');
+  await page.click('#tisV8DiffReview > summary');
+  await page.waitForFunction(()=>
+   document.getElementById('tisV8DiffRevised')?.textContent.includes('Additional explanation'),
+   {timeout:5000});
+  const comparison=await page.evaluate(()=>({
+   before:document.getElementById('tisV8DiffOriginal').textContent,
+   after:document.getElementById('tisV8DiffRevised').textContent,
+   source:document.getElementById('source').value,
+   injected:!!document.querySelector('#tisV8DiffReview img'),
+   note:document.getElementById('tisV8DiffNote').textContent
+  }));
+  assert.equal(comparison.source,canonical,'opening difference preview preserves source');
+  assert(comparison.after.includes('<img src=x'),'user text is shown literally');
+  assert.equal(comparison.injected,false,'source snippets may not create DOM markup');
+  assert(comparison.note.length>10,'preview scope should be explicit');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   stateLabel=await page.$eval('#tisV8AnalysisStatus',el=>({text:el.textContent,kind:el.dataset.state}));
