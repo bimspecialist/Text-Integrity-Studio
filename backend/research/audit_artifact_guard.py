@@ -53,7 +53,7 @@ METRICS_KEYS = {
 NUMERIC_FIELDS = METRICS_KEYS - {
     "system", "model_revision", "model_revision_audit", "benchmark", "ground_truth",
     "license_audit", "domain_audit", "generator_family_audit", "ui_selection",
-    "release_readiness", "notes",
+    "confusion_matrix_at_80", "release_readiness", "notes",
 }
 FORBIDDEN_KEYS = {
     "raw_text", "text", "document_text", "per_document_predictions", "document",
