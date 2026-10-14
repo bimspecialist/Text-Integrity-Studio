@@ -171,6 +171,14 @@
           <button type="button" id="tisDraftApply" disabled>Apply reviewed draft</button>
           <button type="button" id="tisDraftUndo" disabled>Undo apply</button>
         </div>
+        <div class="tis-v8-compare-tools" role="group" aria-label="Before and after navigation">
+          <span id="tisV8WordComparison" aria-label="Original and revised word count"
+            data-before-words="0" data-after-words="0" data-delta-words="0">Original 0 · Draft 0 · 0 words</span>
+          <label class="tis-v8-scroll-label" for="tisV8ScrollLink">
+            <input id="tisV8ScrollLink" type="checkbox">
+            <span id="tisV8ScrollLinkLabel">Link scrolling</span>
+          </label>
+        </div>
         <p id="tisDraftStatus" role="status" aria-live="polite">No draft changes to apply.</p>
         <div class="tis-v8-draft-export">
           <button id="tisV8SaveDraft" type="button" disabled>Download draft TXT</button>
