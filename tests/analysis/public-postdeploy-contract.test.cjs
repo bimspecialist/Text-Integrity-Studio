@@ -114,7 +114,10 @@ function checks(extra={}){
  assert.equal(pending.localGeneratorStatus,'HOLD');
  assert.equal(pending.mergeAuthorized,false);
  const approved=assessEngineeringGate(checks({ownerApproved:true}));
- assert.equal(approved.status,'ENGINEERING_GO_OWNER_APPROVED');
+ assert.equal(approved.status,'REVIEW_REQUIRED',
+  'caller-supplied boolean cannot authenticate a real GitHub merge approval');
+ assert.equal(approved.mergeAuthorized,false);
+ assert(approved.reasons.includes('OWNER_IDENTITY_NOT_AUTHENTICATED'));
  assert.equal(approved.scientificStatus,'HOLD');
  assert.equal(approved.localGeneratorStatus,'HOLD');
  assert.equal(approved.releasedProbability,false);
