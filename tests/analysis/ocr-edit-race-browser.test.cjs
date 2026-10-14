@@ -6,8 +6,8 @@
 const assert=require('node:assert/strict');
 const puppeteer=require('puppeteer-core');
 const {serve,chrome}=require('../pdf-browser.test.js');
-function pdfBytes(){
- const data='BT /F1 16 Tf 72 700 Td (A) Tj ET';
+function pdfBytes(text='A'){
+ const data='BT /F1 16 Tf 72 700 Td ('+text+') Tj ET';
  const objects=[
   '<< /Type /Catalog /Pages 2 0 R >>',
   '<< /Type /Pages /Count 1 /Kids [3 0 R] >>',
@@ -67,6 +67,23 @@ async function run(){
    'stale OCR must not advance authoritative document revision');
   assert(await page.$eval('#pdfStatus',n=>n.textContent.length>8),
    'discarding an OCR result should display understandable local status');
+  // Separate concurrency case: a newly selected PDF must supersede OCR
+  // still in progress and then load automatically when the old worker exits.
+  await page.evaluate(()=>{window.__recognizeRelease=null;window.__ocrFinished=false;});
+  await page.click('#pdfOcr');
+  await page.waitForFunction(()=>typeof window.__recognizeRelease==='function',{timeout:20000});
+  await page.evaluate(bytes=>{
+   const input=document.getElementById('file'),data=new DataTransfer();
+   data.items.add(new File([new Uint8Array(bytes)],'latest-queued-while-ocr.pdf',
+    {type:'application/pdf'}));
+   input.files=data.files;input.dispatchEvent(new Event('change',{bubbles:true}));
+  },pdfBytes('LATEST PDF AFTER OCR'));
+  await page.evaluate(()=>window.__recognizeRelease());
+  await page.waitForFunction(()=>document.getElementById('source').value.includes(
+   'LATEST PDF AFTER OCR'),{timeout:16000});
+  assert.equal(await page.$eval('#source',el=>el.value.trim()),'LATEST PDF AFTER OCR',
+   'newer PDF selected during OCR must load instead of being overwritten');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.session.read().sourceKind),'pdf');
   assert.deepEqual(egress,[],'no remote text or OCR requests');
   assert.deepEqual(errors,[],'no browser exceptions');
   console.log('PASS V8.10 Chromium: delayed OCR completion preserves latest source and session; real engine is separately verified');
