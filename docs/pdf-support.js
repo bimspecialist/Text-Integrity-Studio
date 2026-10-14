@@ -16,6 +16,7 @@ en:{
   scanWarning:'Some pages have no extractable text. Select a page range, then use OCR.',
   noImage:'OCR is limited to 12 pages per run; select a smaller range.',
   finished:'PDF text imported. Review it before editing.',done:'OCR finished. Review recognition accuracy.',loading:'Extracting PDF locally',progress:'OCR processing',
+  stale:'The document changed during OCR. The outdated result was discarded; your latest text was kept.',
   missing:'Local PDF/OCR assets are not yet available. Check the GitHub Pages deployment and reload.',nothing:'No text available yet.'
 },
 ar:{
@@ -27,6 +28,7 @@ ar:{
   scanWarning:'بعض الصفحات لا تحتوي على نص قابل للاستخراج. حدد الصفحات واستخدم OCR.',
   noImage:'يسمح OCR بحد أقصى 12 صفحة في كل عملية. حدد نطاقًا أصغر.',
   finished:'تم استخراج النص. راجعه قبل تعديله.',done:'اكتمل OCR. راجع دقة التعرف الضوئي.',loading:'جارٍ استخراج PDF محليًا',progress:'جارٍ التعرف الضوئي',
+  stale:'تغيّر المستند أثناء OCR؛ تجاهلنا النتيجة القديمة وحافظنا على أحدث تعديل للنص.',
   missing:'مكتبات PDF/OCR المحلية غير متاحة بعد. تحقق من نشر GitHub Pages وحدّث الصفحة.',nothing:'لا يوجد نص مستخرج حتى الآن.'
 }};
 function t(k){return strings[lang][k];}
@@ -132,6 +134,13 @@ function loadScript(source){
 }
 async function doOCR(){
  if(busy||!session)return;
+ const startedSession=session,startedText=$('source').value;
+ const startedRevision=globalThis.TISAnalysisApp?.session?.read().revision;
+ const current=()=>session===startedSession&&$('source').value===startedText&&
+  (startedRevision===undefined||
+   globalThis.TISAnalysisApp?.session?.read().revision===startedRevision);
+ const stale=()=>{status('stale');};
+ const recognized=new Map();
  let from=Number($('pdfFrom').value),to=Number($('pdfTo').value);
  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<from||to>session.pages.length){status('error','Invalid page range',true);return;}
  if(to-from+1>MAX_OCR_PAGES){status('noImage','',true);return;}
@@ -141,6 +150,7 @@ async function doOCR(){
  let worker=null;
  try{
    const tesseract=await loadScript(new URL('./vendor/tesseract/tesseract.min.js',document.baseURI).href);
+   if(!current()){stale();return;}
    const config={
      workerPath:new URL('./vendor/tesseract/worker.min.js',document.baseURI).href,
      corePath:new URL('./vendor/tesseract/core/',document.baseURI).href,
@@ -148,22 +158,33 @@ async function doOCR(){
      workerBlobURL:false,cacheMethod:'none',gzip:true
    };
    worker=await tesseract.createWorker($('pdfLanguage').value,1,config);
+   if(!current()){stale();return;}
    for(let i=0;i<wanted.length;i++){
+     if(!current()){stale();return;}
      const p=wanted[i];
-     status('progress',p.number+'/'+session.fullPageCount);
-     const page=await session.pdf.getPage(p.number);
+     status('progress',p.number+'/'+startedSession.fullPageCount);
+     const page=await startedSession.pdf.getPage(p.number);
+     if(!current()){page.cleanup();stale();return;}
      const viewport=page.getViewport({scale:1.8});
      const canvas=document.createElement('canvas');
      canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
      if(canvas.width*canvas.height>16000000)throw new Error('Page image too large for OCR');
      const context=canvas.getContext('2d',{willReadFrequently:true});
      await page.render({canvasContext:context,canvas,viewport}).promise;
+     if(!current()){
+      canvas.width=0;canvas.height=0;page.cleanup();stale();return;
+     }
      const outcome=await worker.recognize(canvas);
-     p.ocr=String(outcome?.data?.text||'').trim();
      canvas.width=0;canvas.height=0;page.cleanup();
+     if(!current()){stale();return;}
+     // Keep interim OCR output private; commit it atomically only when
+     // the same document revision still owns the original source.
+     recognized.set(p.number,String(outcome?.data?.text||'').trim());
    }
+   if(!current()){stale();return;}
+   for(const p of wanted)p.ocr=recognized.get(p.number)||'';
    setText();updateLabels();status('done',wanted.length+' '+t('pages'));
- }catch(error){status('error',error?.message||t('missing'),true);}
+ }catch(error){if(!current())stale();else status('error',error?.message||t('missing'),true);}
  finally{
    if(worker)try{await worker.terminate();}catch{}
    busy=false;$('pdfOcr').disabled=false;
