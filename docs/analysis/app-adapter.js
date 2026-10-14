@@ -14,6 +14,7 @@
   const presenter=root.TISAiPresenter;
   const session=root.TISDocumentSession.createDocumentSession(source.value);
   let pendingSourceKind=null,rawResult=null,lastProgress=null,presentedId=null,disposed=false;
+  let humanizeView=null;
   const dict=()=>{
    const ar=document.documentElement.lang==='ar';
    return {expired:ar?'تغيّر النص. أعد الفحص للنسخة الحالية.':'The text changed. Analyze this version again.'};
@@ -94,8 +95,21 @@
   const controller=root.TISAnalysisController.createAnalysisController({
    session,policy:root.TISEligibilityPolicy,bridge,
    validator:root.TISEvidenceContract,onState:showState,
-   onWritingReview:()=>{el('scan')?.click();}
+   onWritingReview:()=>{
+    el('scan')?.click();
+    humanizeView?.refresh();
+   }
   });
+  const review=root.TISEditorialReview?.createEditorialReview({
+   session,advisor:root.TISNaturalWritingAdvisor
+  })||null;
+  const humanizeRoot=el('humanizeSuggestions');
+  if(review&&humanizeRoot&&root.TISHumanizeUI?.mount){
+   humanizeView=root.TISHumanizeUI.mount({
+    root:humanizeRoot,session,review,controller,
+    locale:()=>document.documentElement.lang
+   });
+  }
   function analyze(){
    syncSource();
    return controller.analyze({
@@ -129,9 +143,10 @@
    source.removeEventListener('input',onInput);
    fileInput?.removeEventListener('change',onFile);
    root.removeEventListener('pagehide',onUnload);
+   humanizeView?.dispose();
    controller.dispose();
   }
-  return Object.freeze({controller,session,analyze,toggle,cancel:()=>controller.cancel(),dispose});
+  return Object.freeze({controller,session,review,analyze,toggle,cancel:()=>controller.cancel(),dispose});
  }
  function setup(){
   if(!document.getElementById('source'))return;
