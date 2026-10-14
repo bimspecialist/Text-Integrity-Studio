@@ -146,6 +146,23 @@ async function run(){
   stateLabel=await page.$eval('#tisV8AnalysisStatus',el=>({text:el.textContent,kind:el.dataset.state}));
   assert.equal(stateLabel.kind,'STALE');
   assert(/[\u0600-\u06ff]/u.test(stateLabel.text),'status localizes to Arabic');
+  const arabicDraft='تم قياس الجدار بمقدار 5 mm حسب المخطط [2].';
+  await page.$eval('#tisRevisedText',(element,value)=>{
+   element.value=value;element.dispatchEvent(new Event('input',{bubbles:true}));
+  },arabicDraft);
+  await page.click('#tisV8SaveDraft');
+  const arabicExport=await page.evaluate(async()=>({
+   name:window.__tisSavedName,
+   body:await window.__tisSavedBlob?.text(),
+   source:document.getElementById('source').value,
+   snapshot:window.TISAnalysisApp.session.read().text,
+   button:document.getElementById('tisV8SaveDraft').textContent
+  }));
+  assert.equal(arabicExport.name,'Text-Integrity-Studio-Draft.txt');
+  assert.equal(arabicExport.body,arabicDraft,'Arabic + engineering units survive UTF-8 TXT export');
+  assert.equal(arabicExport.source,canonical);
+  assert.equal(arabicExport.snapshot,canonical);
+  assert(/[\u0600-\u06ff]/u.test(arabicExport.button),'export label localizes to Arabic');
   await page.setViewport({width:320,height:700});
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8);
   assert.deepEqual(remote,[],'only a real opt-in may download external AI assets');
