@@ -103,6 +103,8 @@ async function run(){
   });
   assert(mid.mainWidth>=1050&&mid.workspaceWidth>=1000,
    'RTL tablet/laptop must not waste half the viewport: '+JSON.stringify(mid));
+  assert.equal(await page.$eval('.workspace-results',el=>el.firstElementChild.id),
+   'tisRevisedPane','revised draft must precede the secondary report in DOM order');
   const shortLaptop=await page.evaluate(()=>{
    const pane=document.getElementById('tisRevisedPane').getBoundingClientRect();
    const original=document.getElementById('inputPanel').getBoundingClientRect();
