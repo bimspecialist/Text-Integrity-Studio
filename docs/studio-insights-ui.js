@@ -267,9 +267,13 @@
   const button=$('scanAI'),first=button?.querySelector('.v5-action-title'),second=button?.querySelector('.v5-action-sub');
   if(!first||!second){set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);return;}
   const arabic=document.documentElement.lang==='ar';
-  first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):(arabic?'تحليل النص باستخدام AI':'Analyze Text');
-  second.textContent=state.aiRunning?(arabic?'Cancel analysis':'إلغاء التحليل'):(arabic?'Analyze Text':'حلّل النص');
-  button.setAttribute('aria-label',first.textContent);
+  const writing=document.body.dataset.tisMode==='humanize'||document.body.dataset.tisMode==='editor';
+  first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):
+   (arabic?'تحليل النص':'Analyze Text');
+  second.textContent=state.aiRunning?(arabic?'إيقاف فحص النموذج':'Stop model analysis'):
+   writing?(arabic?'مراجعة الكتابة محليًا':'Local writing review'):
+   (arabic?'كشف AI البحثي':'Research AI detection');
+  button.setAttribute('aria-label',first.textContent+' — '+second.textContent);
  }
  function translate(){
   setAnalyzeLabel();
@@ -327,6 +331,11 @@
    setTimeout(refresh,400);
   });
   $('language').addEventListener('click',()=>{translate();});
+  // Native mode tabs change body state. Keep button copy honest even when
+  // no model-progress event fires (editing never starts inference).
+  new MutationObserver(setAnalyzeLabel).observe(document.body,{
+   attributes:true,attributeFilter:['data-tis-mode']
+  });
   $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
   // A single explicit user action runs safe writing review first, then the
   // optional English model only when eligibility checks in ai-score-ui pass.
