@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.9 no stale TXT DOCX or PDF import overwrites recent edits
+        run: |
+          node --check tests/analysis/import-race-browser.test.cjs
+          node tests/analysis/import-race-browser.test.cjs
       - name: V8.8 literal Unicode find replace safety unit tests
         run: |
           node --check docs/analysis/draft-find-replace-core.js
