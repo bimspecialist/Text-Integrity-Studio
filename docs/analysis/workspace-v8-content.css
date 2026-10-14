@@ -1,0 +1,76 @@
+/* V8 Help / Privacy companion design.
+ * Deliberately scoped to body.tis-v8-content: no editor grid or handlers.
+ */
+@font-face{font-family:"TIS Manrope";src:url("../fonts/Manrope-variable.ttf") format("truetype");font-style:normal;font-weight:200 800;font-display:swap}
+@font-face{font-family:"TIS Plex Arabic";src:url("../fonts/IBMPlexSansArabic-Regular.ttf") format("truetype");font-style:normal;font-weight:400;font-display:swap}
+@font-face{font-family:"TIS Plex Arabic";src:url("../fonts/IBMPlexSansArabic-Bold.ttf") format("truetype");font-style:normal;font-weight:700;font-display:swap}
+:root{--v8-bg:#0b0d13;--v8-rail:#10121a;--v8-surface:#141721;--v8-stroke:#303346;
+ --v8-text:#f3f3fb;--v8-body:#d4d7e6;--v8-muted:#a5acc4;--v8-accent:#b4aaff;
+ --v8-safe:#75d9b2;--v8-focus:#b2aaff;color-scheme:dark}
+body.tis-v8-content{margin:0;min-height:100vh;min-width:0;
+ background:var(--v8-bg)!important;color:var(--v8-body);
+ font-family:"TIS Manrope","TIS Plex Arabic","Segoe UI",system-ui,sans-serif;
+ line-height:1.75;overflow-wrap:anywhere}
+body.tis-v8-content main.shell{display:block!important;grid-template-columns:none!important;
+ width:min(100%,1040px);max-width:1040px;margin:0 auto;padding:0 clamp(16px,4vw,42px) 45px}
+body.tis-v8-content header{height:auto;min-height:73px;
+ display:flex;justify-content:space-between;align-items:center;
+ gap:15px;margin:0 0 20px;padding:15px 0;
+ background:transparent;border-bottom:1px solid var(--v8-stroke)}
+body.tis-v8-content header .brand{font-size:16px;font-weight:780;
+ letter-spacing:-.4px;color:var(--v8-text)}
+body.tis-v8-content header a.privacyLink{
+ display:inline-flex;align-items:center;justify-content:center;
+ text-decoration:none;background:#252339;border:1px solid #4e486f;
+ border-radius:11px;color:#e1dcff;padding:8px 14px;font-size:12px;
+ min-height:42px;font-weight:720;white-space:nowrap}
+body.tis-v8-content a:hover{color:#fff}
+body.tis-v8-content a:focus-visible,body.tis-v8-content summary:focus-visible{
+ outline:3px solid var(--v8-focus);outline-offset:3px}
+body.tis-v8-content .hero{max-width:none;margin:0 0 28px;
+ padding:21px 0 17px;text-align:start}
+body.tis-v8-content .eyebrow{font-size:10px;letter-spacing:1.45px;
+ font-weight:800;color:var(--v8-accent)}
+body.tis-v8-content .hero h1{font-size:clamp(29px,4.3vw,45px);
+ line-height:1.16;color:var(--v8-text);letter-spacing:-1.1px;
+ font-weight:790;margin:9px 0 10px}
+body.tis-v8-content .hero h1 span{color:var(--v8-accent)}
+body.tis-v8-content .hero p{font-size:13px;color:var(--v8-muted);
+ line-height:1.8;max-width:710px}
+body.tis-v8-content .panel{padding:clamp(18px,3vw,28px);
+ border:1px solid var(--v8-stroke);background:var(--v8-surface);
+ box-shadow:none;border-radius:16px;margin:0 0 15px}
+body.tis-v8-content .panel h2{font-size:19px;line-height:1.4;
+ color:var(--v8-text);margin:0 0 12px}
+body.tis-v8-content .panel h3{font-size:15px;color:var(--v8-text);
+ margin:18px 0 9px}
+body.tis-v8-content .panel p,body.tis-v8-content .panel li{
+ max-width:85ch;font-size:13.5px;line-height:1.87;color:var(--v8-body);
+ margin-block:10px}
+body.tis-v8-content .panel strong{color:#fff}
+body.tis-v8-content .panel a{color:var(--v8-accent);text-underline-offset:3px}
+body.tis-v8-content .notice{color:var(--v8-muted);
+ background:#1e2030;border-inline-start:3px solid #796db8;
+ padding:12px 15px;border-radius:9px;font-size:12px}
+body.tis-v8-content [lang=ar],body.tis-v8-content [dir=rtl]{
+ font-family:"TIS Plex Arabic","TIS Manrope",Tahoma,sans-serif;
+ text-align:start}
+body.tis-v8-content .footer{margin:15px 0 0;padding:20px 0 10px;
+ display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+ border-top:1px solid var(--v8-stroke);color:var(--v8-muted)}
+body.tis-v8-content .footer a{color:var(--v8-accent)}
+@media(max-width:560px){
+ body.tis-v8-content main.shell{width:100%;padding:0 15px 30px}
+ body.tis-v8-content header{min-height:65px;gap:10px}
+ body.tis-v8-content header .brand{font-size:14px}
+ body.tis-v8-content header a.privacyLink{font-size:11px;padding:7px 10px;
+  min-height:39px;white-space:normal}
+ body.tis-v8-content .hero{padding:15px 0 12px;margin-bottom:17px}
+ body.tis-v8-content .hero h1{font-size:29px}
+ body.tis-v8-content .panel{padding:16px;border-radius:13px}
+ body.tis-v8-content .panel p,body.tis-v8-content .panel li{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tis-v8-content *,body.tis-v8-content *:before,body.tis-v8-content *:after{
+  scroll-behavior:auto!important;transition:none!important}
+}
