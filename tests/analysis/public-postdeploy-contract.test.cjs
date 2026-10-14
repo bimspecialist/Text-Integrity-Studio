@@ -18,7 +18,7 @@ function published(extra={}){
   observedMarker:RELEASE_MARKER,modelInferenceObserved:true,
   inferenceSource:'CHROMIUM_REAL_ONNX_DEPLOYED_ORIGIN',
   evidence:{kind:'INCONCLUSIVE',calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE',
-   requestId:'tis-1-synthetic',revision:1,scanOptions:{deep:true,full:false,context:'general'},
+   requestId:'tis-1-1728571296000',revision:1,scanOptions:{deep:true,full:false,context:'general'},
    primary:{model_id:'onnx-community/tmr-ai-text-detector-ONNX',revision:PRIMARY,score:38.2,coverage:95.5},
    secondary:{model_id:'onnx-community/roberta-base-openai-detector-ONNX',revision:SECONDARY,score:62.1,coverage:93.0}},
   consoleErrors:[],failedNetworkHosts:[],...extra
