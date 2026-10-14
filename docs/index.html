@@ -179,6 +179,30 @@
             <span id="tisV8ScrollLinkLabel">Link scrolling</span>
           </label>
         </div>
+        <details id="tisV8FindPanel" class="tis-v8-find-panel">
+          <summary id="tisV8FindTitle">Find &amp; replace in draft</summary>
+          <div class="tis-v8-find-body">
+            <div class="tis-v8-find-fields">
+              <label for="tisV8FindText"><span id="tisV8FindLabel">Find</span>
+                <input id="tisV8FindText" type="text" maxlength="512" autocomplete="off" spellcheck="false">
+              </label>
+              <label for="tisV8ReplaceText"><span id="tisV8ReplaceLabel">Replace with</span>
+                <input id="tisV8ReplaceText" type="text" autocomplete="off" spellcheck="false">
+              </label>
+            </div>
+            <div class="tis-v8-find-options">
+              <label for="tisV8CaseSensitive"><input id="tisV8CaseSensitive" type="checkbox">
+                <span id="tisV8CaseLabel">Match case</span></label>
+              <span id="tisV8FindCount" data-count="0">0 matches</span>
+            </div>
+            <div class="tis-v8-find-actions">
+              <button id="tisV8FindNext" type="button" disabled>Find next</button>
+              <button id="tisV8ReplaceNext" type="button" disabled>Replace next</button>
+              <button id="tisV8ReplaceAll" type="button" disabled>Replace all in draft</button>
+            </div>
+            <p id="tisV8FindStatus" role="status" aria-live="polite">Changes stay in the draft. Review protected facts before Apply.</p>
+          </div>
+        </details>
         <p id="tisDraftStatus" role="status" aria-live="polite">No draft changes to apply.</p>
         <div class="tis-v8-draft-export">
           <button id="tisV8SaveDraft" type="button" disabled>Download draft TXT</button>
@@ -397,6 +421,7 @@
 <script src="analysis/dual-pane-editor.js?v=20261014-l7"></script>
 <script src="analysis/app-adapter.js?v=20261014-v8-4-rc2"></script>
 <script src="analysis/editor-comparison-core.js?v=20261014-v8-7"></script>
+<script src="analysis/draft-find-replace-core.js?v=20261014-v8-8"></script>
 <script src="analysis/draft-diff-preview.js?v=20261014-v8-4-rc2"></script>
 <script src="analysis/workspace-v8.js?v=20261014-v8-4-rc2"></script>
 </body>
