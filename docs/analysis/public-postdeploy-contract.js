@@ -87,13 +87,14 @@
    !['PASS','HOLD'].includes(checks.scientificCalibration))
    reasons.push('UNVERIFIED_AUTHORSHIP_PROBABILITY_NOT_DISABLED');
   const blocked=reasons.length>0;
-  if(!blocked&&checks.ownerApproved!==true)
-   reasons.push('OWNER_APPROVAL_REQUIRED');
-  const approved=!blocked&&checks.ownerApproved===true;
+  // A caller-supplied boolean is NOT signed/verified owner authorization.
+  // Readiness is informational only; approval and merge remain separate actions.
+  if(!blocked)reasons.push(checks.ownerApproved===true?
+   'OWNER_IDENTITY_NOT_AUTHENTICATED':'OWNER_APPROVAL_REQUIRED');
   return Object.freeze({
-   status:blocked?'BLOCKED':approved?'ENGINEERING_GO_OWNER_APPROVED':'APPROVAL_REQUIRED',
+   status:blocked?'BLOCKED':checks.ownerApproved===true?'REVIEW_REQUIRED':'APPROVAL_REQUIRED',
    reasons:Object.freeze([...new Set(reasons)].sort()),
-   mergeAuthorized:approved,
+   mergeAuthorized:false,
    scientificStatus:checks.scientificCalibration||'UNKNOWN',
    localGeneratorStatus:checks.localGenerator||'UNKNOWN',
    localGeneratorEnabled:false,
