@@ -6,17 +6,13 @@ on:
       - 'backend/research/evaluate_model_outputs.py'
       - 'tests/browser-ai-reference-benchmark.cjs'
       - 'tests/test_external_benchmark.py'
-      - 'backend/research/dataset_manifest.py'
-      - 'backend/research/cohort_split.py'
-      - 'backend/research/selective_metrics.py'
-      - 'backend/research/calibration_validation.py'
-      - 'backend/research/release_decision.py'
-      - 'backend/research/audit_artifact_guard.py'
-      - 'tests/test_research_release_decision.py'
-      - 'tests/test_research_artifact_publication.py'
-      - 'backend/research/RELEASE_TEST_PROTOCOL.md'
       - '.github/workflows/external-detector-audit.yml'
   workflow_dispatch:
+# Only re-run the expensive public-corpus/model study when its actual
+# benchmark source, runner, evaluator or this workflow changes.
+concurrency:
+  group: tis-external-research-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 permissions:
   contents: read
 jobs:
@@ -67,7 +63,7 @@ jobs:
             --model-revision b9aa251e5bcda7e429fcc936767d921435945b60
       - name: Block non-aggregate artifacts and independent-ground-truth claims
         run: |
-          python backend/research/audit_artifact_guard.py \
+          python -m backend.research.audit_artifact_guard \
             --manifest /tmp/tis-external2026/source-manifest.json \
             --metrics /tmp/tis-external2026/research-metrics.json \
             --output /tmp/tis-external2026/release-status.json
