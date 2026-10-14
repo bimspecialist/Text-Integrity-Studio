@@ -63,7 +63,7 @@
    moreCards=root.querySelector('#humanizeMoreCards'),
    comparison=root.querySelector('#humanizeComparison');
   if(!cards||!status||!undo||!subtitle||!expand||!moreCards||!comparison)throw Error('Missing Humanize markup');
-  let disposed=false,analyzedRevision=null,allowUndo=false,lastComparison=null;
+  let disposed=false,analyzedRevision=null,allowUndo=false,lastComparison=null,disclosureSerial=0;
   function showComparison(result){
    lastComparison=result||null;
    if(!result){comparison.hidden=true;text(comparison,'');return;}
@@ -83,6 +83,11 @@
    const before=element('p','humanize-before',item.original);
    const after=element('p','humanize-after',item.proposedReplacement??d.manual);
    const previewBlock=element('div','humanize-preview-detail');
+   // A unique explicit relationship lets keyboard/screen-reader users know
+   // which Before/After excerpt the Preview button expands.
+   previewBlock.id='tis-humanize-preview-'+(++disclosureSerial);
+   previewBlock.setAttribute('role','region');
+   previewBlock.setAttribute('aria-label',d.preview+' · '+d.section+' '+item.section);
    previewBlock.hidden=true;
    previewBlock.append(
     element('strong','',d.before),element('blockquote','humanize-quote',item.original),
@@ -92,6 +97,8 @@
    const preview=element('button','humanize-preview',d.preview);
    preview.type='button';
    preview.setAttribute('aria-label',d.preview+' · '+d.section+' '+item.section);
+   preview.setAttribute('aria-controls',previewBlock.id);
+   preview.setAttribute('aria-expanded','false');
    preview.addEventListener('click',()=>{
     const current=review.preview(item.id);
     if(!current){note(d.stale);return;}
