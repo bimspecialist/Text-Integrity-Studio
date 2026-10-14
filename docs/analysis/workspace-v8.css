@@ -164,6 +164,8 @@ body[data-tis-mode=editor] .workspace{grid-template-columns:minmax(0,1fr) minmax
 #inputPanel #editorOptions>summary{color:var(--v8-muted);font-size:11px;padding:12px 2px}
 #inputPanel #studioEvidence{border-color:var(--v8-stroke)}
 body.v6-docx-active #inputPanel #source{height:clamp(205px,24vh,260px)!important;min-height:205px!important}
+/* Import implementations may mark readOnly before adding a body class. Use the actual protected control state. */
+#inputPanel #source[readonly]{height:clamp(205px,24vh,260px)!important;min-height:205px!important}
 .v6-document-note{color:var(--v8-warn);font-size:11px}
 textarea[readonly]{cursor:text;opacity:.91}
 
