@@ -17,7 +17,9 @@
    diffNote=get('tisV8DiffNote'),diffBefore=get('tisV8DiffOriginal'),
    diffAfter=get('tisV8DiffRevised'),draftDownload=get('tisV8SaveDraft'),
    writingStatus=get('tisV8WritingFeedback'),
-   suggestButton=get('tisV8ReviewSuggestions');
+   suggestButton=get('tisV8ReviewSuggestions'),
+   wordComparison=get('tisV8WordComparison'),scrollLink=get('tisV8ScrollLink'),
+   scrollLinkLabel=get('tisV8ScrollLinkLabel');
   const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
@@ -42,6 +44,8 @@
     diffChanged:'Compact first differing range; review both complete editors before Apply.',
     diffLong:'Long differences have been shortened here. Review both full texts before Apply.',
     diffUnavailable:'The preview is unavailable; review both editors instead.',
+    scrollLabel:'Link scrolling',
+    words:(a,b,d)=>'Original '+a+' · Draft '+b+' · '+d+' words',
     saveDraft:'Download draft TXT',
     saveHelp:'Plain text copy · original preserved',
     saveDone:'UTF-8 TXT saved locally. Your original text and Word file were not changed.',
@@ -96,6 +100,8 @@
     diffChanged:'عرض مختصر لأول نطاق مختلف. راجع النصّين كاملين قبل التطبيق.',
     diffLong:'اختُصرت الفروقات الطويلة هنا. راجع النصّين كاملين قبل التطبيق.',
     diffUnavailable:'المعاينة غير متاحة؛ راجع المحررين مباشرة.',
+    scrollLabel:'ربط التمرير',
+    words:(a,b,d)=>'الأصل '+a+' · المسودة '+b+' · '+d+' كلمة',
     saveDraft:'تنزيل المسودة TXT',
     saveHelp:'نسخة نصية فقط · الملف الأصلي محفوظ',
     saveDone:'حُفظت نسخة TXT محليًا. لم يتغيّر النص الأصلي أو ملف Word.',
@@ -132,7 +138,48 @@
    document.body.dataset.tisMode:'detection';
   const language=()=>document.documentElement.lang==='ar'?'ar':'en';
   let disposed=false,lastStatus='',lastFileStatus=null,lastFileName='',everScanned=false;
-  let diffTimer=null,writingResult=null;
+  let diffTimer=null,writingResult=null,comparisonTimer=null;
+  let programmaticScroll=new WeakMap();
+  function updateWordComparison(){
+   if(disposed||!wordComparison||!revised)return;
+   const comparison=root.TISEditorComparisonCore?.compareWords;
+   if(typeof comparison!=='function')return;
+   const result=comparison(source.value,revised.value);
+   wordComparison.dataset.beforeWords=String(result.before);
+   wordComparison.dataset.afterWords=String(result.after);
+   wordComparison.dataset.deltaWords=String(result.delta);
+   const nf=new Intl.NumberFormat(language()==='ar'?'ar-SA':'en-US');
+   const amount=result.delta>0?'+'+nf.format(result.delta):
+    result.delta<0?'−'+nf.format(Math.abs(result.delta)):'0';
+   wordComparison.textContent=t().words(nf.format(result.before),
+    nf.format(result.after),amount);
+  }
+  function scheduleWordComparison(){
+   if(disposed||!wordComparison)return;
+   if(comparisonTimer!==null){clearTimeout(comparisonTimer);comparisonTimer=null;}
+   if(source.value.length+revised.value.length>30000){
+    comparisonTimer=setTimeout(()=>{comparisonTimer=null;updateWordComparison();},180);
+   }else updateWordComparison();
+  }
+  function onPaneScroll(event){
+   if(disposed||!scrollLink?.checked||!revised)return;
+   const from=event.currentTarget;
+   const programmed=programmaticScroll.get(from);
+   programmaticScroll.delete(from);
+   if(Number.isFinite(programmed)&&Math.abs(from.scrollTop-programmed)<=1)return;
+   const target=from===source?revised:source;
+   const map=root.TISEditorComparisonCore?.proportionalScroll;
+   if(typeof map!=='function')return;
+   const next=map(from.scrollTop,from.scrollHeight,from.clientHeight,
+    target.scrollHeight,target.clientHeight);
+   if(Math.abs(target.scrollTop-next)>1){
+    programmaticScroll.set(target,next);target.scrollTop=next;
+   }
+  }
+  function onScrollLinkChange(){
+   programmaticScroll=new WeakMap();
+   if(scrollLink?.checked)onPaneScroll({currentTarget:source});
+  }
   function renderWritingReview(){
    if(!writingStatus||!suggestButton)return;
    const current=root.TISAnalysisApp?.session?.read();
@@ -252,6 +299,8 @@
    put('tisV8DiffRevisedLabel',dict.diffAfter);
    put('tisV8SaveDraft',dict.saveDraft);
    put('tisV8SaveHelp',dict.saveHelp);
+   put('tisV8ScrollLinkLabel',dict.scrollLabel);
+   scheduleWordComparison();
    syncDraftDownload();
    scheduleDiff();
    if(fileState&&lastFileStatus)
@@ -367,6 +416,14 @@
   suggestButton?.addEventListener('click',jumpToSuggestions);
   revised?.addEventListener('input',syncDraftDownload);
   draftDownload?.addEventListener('click',downloadDraft);
+  source.addEventListener('scroll',onPaneScroll,{passive:true});
+  revised?.addEventListener('scroll',onPaneScroll,{passive:true});
+  scrollLink?.addEventListener('change',onScrollLinkChange);
+  source.addEventListener('input',scheduleWordComparison);
+  revised?.addEventListener('input',scheduleWordComparison);
+  for(const id of ['tisDraftReset','tisDraftApply','tisDraftUndo']){
+   get(id)?.addEventListener('click',scheduleWordComparison);
+  }
   get('language')?.addEventListener('click',()=>queueMicrotask(render));
   for(const tab of document.querySelectorAll('#tisModes [role=tab]')){
    tab.addEventListener('click',()=>queueMicrotask(render));
@@ -379,6 +436,7 @@
    dispose:()=>{
     if(disposed)return;disposed=true;observe.disconnect();
     if(diffTimer!==null)clearTimeout(diffTimer);
+    if(comparisonTimer!==null)clearTimeout(comparisonTimer);
     diffReview?.removeEventListener('toggle',scheduleDiff);
     source.removeEventListener('input',scheduleDiff);
     revised?.removeEventListener('input',scheduleDiff);
@@ -387,6 +445,14 @@
     suggestButton?.removeEventListener('click',jumpToSuggestions);
     revised?.removeEventListener('input',syncDraftDownload);
     draftDownload?.removeEventListener('click',downloadDraft);
+    source.removeEventListener('scroll',onPaneScroll);
+    revised?.removeEventListener('scroll',onPaneScroll);
+    scrollLink?.removeEventListener('change',onScrollLinkChange);
+    source.removeEventListener('input',scheduleWordComparison);
+    revised?.removeEventListener('input',scheduleWordComparison);
+    for(const id of ['tisDraftReset','tisDraftApply','tisDraftUndo']){
+     get(id)?.removeEventListener('click',scheduleWordComparison);
+    }
     paste.removeEventListener('click',pasteFromClipboard);
     sample.removeEventListener('click',useExample);
     document.removeEventListener('keydown',shortcut);
