@@ -79,6 +79,18 @@ async function main(){
   await page.click('#scanAI');
   await page.waitForSelector('#tisOnDeviceModel',{timeout:9000});
   assert.equal(mockFrames,1,'real research model path remains opt-in in Detection');
+  // In-flight run must remain cancellable after switching to an editing tab.
+  await page.click('#tisTabHumanize');
+  await page.click('#scanAI');
+  await page.waitForFunction(()=>
+   window.TISAnalysisApp.controller.getState().status==='CANCELLED',{timeout:4000});
+  assert.equal(mockFrames,1,'cancel must not start another model');
+  // The next click resumes lightweight editing rather than restarting the
+  // model that was just canceled.
+  await page.click('#scanAI');
+  assert.equal(mockFrames,1,'Humanize after cancellation must stay local');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.controller.getState().status),
+   'CANCELLED','reviewing locally cannot revive canceled detector evidence');
   assert.deepEqual(unexpected,[],'no external request while model iframe is paused');
   assert.deepEqual(errors,[],'no uncaught errors');
   console.log('PASS V8.5: writing modes are local without ONNX download, metadata-only review, Arabic feedback, Detection still starts model path');
