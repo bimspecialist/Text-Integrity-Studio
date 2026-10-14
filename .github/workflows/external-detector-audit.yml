@@ -6,6 +6,15 @@ on:
       - 'backend/research/evaluate_model_outputs.py'
       - 'tests/browser-ai-reference-benchmark.cjs'
       - 'tests/test_external_benchmark.py'
+      - 'backend/research/dataset_manifest.py'
+      - 'backend/research/cohort_split.py'
+      - 'backend/research/selective_metrics.py'
+      - 'backend/research/calibration_validation.py'
+      - 'backend/research/release_decision.py'
+      - 'backend/research/audit_artifact_guard.py'
+      - 'tests/test_research_release_decision.py'
+      - 'tests/test_research_artifact_publication.py'
+      - 'backend/research/RELEASE_TEST_PROTOCOL.md'
       - '.github/workflows/external-detector-audit.yml'
   workflow_dispatch:
 permissions:
@@ -26,6 +35,12 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_external_benchmark.py' -v
           python -m unittest discover -s tests -p 'test_detector_benchmark.py' -v
+          python -m unittest discover -s tests -p 'test_dataset_manifest.py' -v
+          python -m unittest discover -s tests -p 'test_cohort_split.py' -v
+          python -m unittest discover -s tests -p 'test_selective_metrics.py' -v
+          python -m unittest discover -s tests -p 'test_calibration_validation.py' -v
+          python -m unittest discover -s tests -p 'test_research_release_decision.py' -v
+          python -m unittest discover -s tests -p 'test_research_artifact_publication.py' -v
           node --check tests/browser-ai-reference-benchmark.cjs
       - name: Install lightweight public-dataset and headless-browser dependencies
         run: |
@@ -50,13 +65,21 @@ jobs:
             --output /tmp/tis-external2026/research-metrics.json \
             --benchmark TEXTSIGHT_2026_EXTERNAL_VENDOR_BENCHMARK \
             --model-revision b9aa251e5bcda7e429fcc936767d921435945b60
-      - name: Keep only aggregate evidence, never dataset text or per-document predictions
+      - name: Block non-aggregate artifacts and independent-ground-truth claims
+        run: |
+          python backend/research/audit_artifact_guard.py \
+            --manifest /tmp/tis-external2026/source-manifest.json \
+            --metrics /tmp/tis-external2026/research-metrics.json \
+            --output /tmp/tis-external2026/release-status.json
+          python -c "import json; from pathlib import Path; x=json.loads(Path('/tmp/tis-external2026/release-status.json').read_text()); assert x['decision']=='BLOCKED' and x['public_probability_enabled'] is False"
+      - name: Keep only VALIDATED aggregate research evidence; never upload on failed privacy gate
         uses: actions/upload-artifact@v4
-        if: always()
+        if: success()
         with:
           name: RESEARCH-ONLY-external-2026-AI-detector-evaluation
           path: |
             /tmp/tis-external2026/research-metrics.json
             /tmp/tis-external2026/source-manifest.json
+            /tmp/tis-external2026/release-status.json
           retention-days: 7
           if-no-files-found: ignore
