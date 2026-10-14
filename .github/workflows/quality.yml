@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: S3 reproducible performance-budget evidence contracts
+        run: |
+          node --check tests/analysis/performance-budget.test.js
+          node tests/analysis/performance-budget.test.js
       - name: S2 pinned model and dependency supply-chain evidence
         run: |
           node --check tests/analysis/model-provenance.test.js
