@@ -15,7 +15,7 @@
    statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText'),
    revised=get('tisRevisedText'),diffReview=get('tisV8DiffReview'),
    diffNote=get('tisV8DiffNote'),diffBefore=get('tisV8DiffOriginal'),
-   diffAfter=get('tisV8DiffRevised');
+   diffAfter=get('tisV8DiffRevised'),draftDownload=get('tisV8SaveDraft');
   const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
@@ -40,6 +40,11 @@
     diffChanged:'Compact first differing range; review both complete editors before Apply.',
     diffLong:'Long differences have been shortened here. Review both full texts before Apply.',
     diffUnavailable:'The preview is unavailable; review both editors instead.',
+    saveDraft:'Download draft TXT',
+    saveHelp:'Plain text copy · original preserved',
+    saveDone:'UTF-8 TXT saved locally. Your original text and Word file were not changed.',
+    saveEmpty:'Write in the draft editor before saving.',
+    saveError:'Local download failed. Use Copy draft instead.',
     dropLabel:'Drop Word, PDF or text here',
     selected:name=>'Selected file: '+name,
     invalidFile:'Unsupported file. Choose DOCX, PDF or a text format.',
@@ -81,6 +86,11 @@
     diffChanged:'عرض مختصر لأول نطاق مختلف. راجع النصّين كاملين قبل التطبيق.',
     diffLong:'اختُصرت الفروقات الطويلة هنا. راجع النصّين كاملين قبل التطبيق.',
     diffUnavailable:'المعاينة غير متاحة؛ راجع المحررين مباشرة.',
+    saveDraft:'تنزيل المسودة TXT',
+    saveHelp:'نسخة نصية فقط · الملف الأصلي محفوظ',
+    saveDone:'حُفظت نسخة TXT محليًا. لم يتغيّر النص الأصلي أو ملف Word.',
+    saveEmpty:'أضف نصًا إلى المسودة أولًا.',
+    saveError:'تعذّر تنزيل الملف محليًا. استخدم زر نسخ المسودة.',
     dropLabel:'أفلت ملف Word أو PDF أو نص هنا',
     selected:name=>'الملف المحدد: '+name,
     invalidFile:'صيغة غير مدعومة. اختر DOCX أو PDF أو ملفًا نصيًا.',
@@ -123,6 +133,28 @@
   }
   const put=(id,value)=>{const node=get(id);if(node&&node.textContent!==value)node.textContent=value;};
   const t=()=>labels[language()];
+  function syncDraftDownload(){
+   if(draftDownload)draftDownload.disabled=!revised?.value;
+  }
+  function downloadDraft(){
+   if(disposed||!draftDownload||!revised)return;
+   const note=get('tisDraftStatus');
+   if(!revised.value){
+    if(note)note.textContent=t().saveEmpty;return;
+   }
+   try{
+    const bytes=new Blob([revised.value],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(bytes);
+    const link=document.createElement('a');
+    link.href=url;link.download='Text-Integrity-Studio-Draft.txt';
+    document.body.append(link);
+    try{link.click();}
+    finally{link.remove();setTimeout(()=>URL.revokeObjectURL(url),1500);}
+    if(note)note.textContent=t().saveDone;
+   }catch{
+    if(note)note.textContent=t().saveError;
+   }
+  }
   function renderDiff(){
    if(disposed||!diffReview?.open||!diffBefore||!diffAfter||!diffNote||!revised)return;
    const algorithm=root.TISDraftDiffPreview?.firstDifference;
@@ -172,6 +204,9 @@
    put('tisV8DiffTitle',dict.diffTitle);
    put('tisV8DiffOriginalLabel',dict.diffBefore);
    put('tisV8DiffRevisedLabel',dict.diffAfter);
+   put('tisV8SaveDraft',dict.saveDraft);
+   put('tisV8SaveHelp',dict.saveHelp);
+   syncDraftDownload();
    scheduleDiff();
    if(fileState&&lastFileStatus)
     fileState.textContent=typeof dict[lastFileStatus]==='function'?
@@ -281,6 +316,9 @@
   diffReview?.addEventListener('toggle',scheduleDiff);
   source.addEventListener('input',scheduleDiff);
   revised?.addEventListener('input',scheduleDiff);
+  source.addEventListener('input',syncDraftDownload);
+  revised?.addEventListener('input',syncDraftDownload);
+  draftDownload?.addEventListener('click',downloadDraft);
   get('language')?.addEventListener('click',()=>queueMicrotask(render));
   for(const tab of document.querySelectorAll('#tisModes [role=tab]')){
    tab.addEventListener('click',()=>queueMicrotask(render));
@@ -296,6 +334,9 @@
     diffReview?.removeEventListener('toggle',scheduleDiff);
     source.removeEventListener('input',scheduleDiff);
     revised?.removeEventListener('input',scheduleDiff);
+    source.removeEventListener('input',syncDraftDownload);
+    revised?.removeEventListener('input',syncDraftDownload);
+    draftDownload?.removeEventListener('click',downloadDraft);
     paste.removeEventListener('click',pasteFromClipboard);
     sample.removeEventListener('click',useExample);
     document.removeEventListener('keydown',shortcut);
