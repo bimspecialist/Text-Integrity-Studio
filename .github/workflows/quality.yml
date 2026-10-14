@@ -91,6 +91,12 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Local WebGPU generator research provenance and no-auto-download gate
+        run: |
+          node --check tests/analysis/local-model-manifest.test.js
+          node tests/analysis/local-model-manifest.test.js
+          node --check tests/analysis/local-rewriter-feasibility-browser.test.cjs
+          node tests/analysis/local-rewriter-feasibility-browser.test.cjs
       - name: Comparable pinned post-edit signals and user-authorized browser rescan
         run: |
           node --check tests/analysis/scan-comparison.test.js
