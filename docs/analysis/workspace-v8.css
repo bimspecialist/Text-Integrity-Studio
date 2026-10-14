@@ -163,7 +163,7 @@ body[data-tis-mode=editor] .workspace{grid-template-columns:minmax(0,1fr) minmax
 #inputPanel #editorOptions{border-top:1px solid var(--v8-stroke);margin-top:12px}
 #inputPanel #editorOptions>summary{color:var(--v8-muted);font-size:11px;padding:12px 2px}
 #inputPanel #studioEvidence{border-color:var(--v8-stroke)}
-body.v6-docx-active #inputPanel #source{height:clamp(250px,29vh,325px)!important;min-height:250px!important}
+body.v6-docx-active #inputPanel #source{height:clamp(205px,24vh,260px)!important;min-height:205px!important}
 .v6-document-note{color:var(--v8-warn);font-size:11px}
 textarea[readonly]{cursor:text;opacity:.91}
 
