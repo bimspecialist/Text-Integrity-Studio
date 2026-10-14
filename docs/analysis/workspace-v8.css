@@ -333,6 +333,33 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
  .tis-mode-tab{font-size:10px}
  .v5-counts{flex-basis:100%;margin-inline-start:0}
 }
+/* V8.2 compare changed passage on demand. No full draft text copied
+   to new storage, no heavy diff on every keystroke. */
+.tis-v8-diff-review{border:1px solid var(--v8-stroke);background:#191c28;
+ border-radius:11px;margin:12px 0 0;min-width:0}
+.tis-v8-diff-review>summary{color:var(--v8-body);font-size:11.5px;
+ padding:11px 13px;font-weight:730;min-height:42px}
+.tis-v8-diff-review[open]{border-color:#575078}
+.tis-v8-diff-review[open]>summary{border-bottom:1px solid var(--v8-stroke)}
+.tis-v8-diff-note{padding:2px 13px 0;font-size:11px;line-height:1.6;
+ margin:11px 0;color:var(--v8-muted)}
+.tis-v8-diff-pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:9px;margin:0;padding:0 13px 13px;min-width:0}
+.tis-v8-diff-pair>div{min-width:0}
+.tis-v8-diff-pair strong{display:block;color:var(--v8-body);font-size:10px;
+ margin:0 0 6px;line-height:1.5}
+.tis-v8-diff-pair pre{display:block;margin:0;max-height:140px;min-height:70px;
+ overflow-y:auto;overflow-x:hidden;white-space:pre-wrap;
+ overflow-wrap:anywhere;unicode-bidi:plaintext;direction:auto;
+ background:#11141e;border:1px solid #34374b;
+ border-radius:8px;padding:11px;color:var(--v8-text);
+ font-family:inherit;font-size:11.5px;line-height:1.75}
+.tis-v8-diff-review[data-diff-status=UNCHANGED] .tis-v8-diff-pair{display:none}
+@media(max-width:560px){
+ .tis-v8-diff-pair{grid-template-columns:1fr}
+ .tis-v8-diff-pair pre{max-height:110px;min-height:45px}
+}
+
 /* V8.1 workflow feedback and secure local file drop — non-modal. */
 #inputPanel{position:relative}
 #tisV8FileState{font-size:11px;color:var(--v8-safe);line-height:1.55;
