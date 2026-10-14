@@ -100,6 +100,17 @@ async function run(){
   });
   assert(mid.mainWidth>=1050&&mid.workspaceWidth>=1000,
    'RTL tablet/laptop must not waste half the viewport: '+JSON.stringify(mid));
+  const shortLaptop=await page.evaluate(()=>{
+   const pane=document.getElementById('tisRevisedPane').getBoundingClientRect();
+   const apply=document.getElementById('tisDraftApply').getBoundingClientRect();
+   const undo=document.getElementById('tisDraftUndo').getBoundingClientRect();
+   return {height:innerHeight,top:pane.top,applyBottom:apply.bottom,
+    undoBottom:undo.bottom,applyWidth:apply.width};
+  });
+  assert(shortLaptop.applyBottom<=shortLaptop.height &&
+   shortLaptop.undoBottom<=shortLaptop.height,
+   '730px laptop should expose reviewed Apply/Undo without scrolling: '+
+    JSON.stringify(shortLaptop));
   for(const id of ['scanAI','file','wordToolbar','aiEvidence','pdfTools','v5Toolbox','studioExportTop'])
    assert(await page.$('#'+id),'retain existing analysis and document flow #'+id);
   assert.deepEqual(egress,[],'no egress before a user starts model scan');
