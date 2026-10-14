@@ -2,6 +2,26 @@
 
 'use strict';
 const $=s=>document.getElementById(s);let lang='en', tab='unicode', history=[],future=[],cleaned='',lastReport=null,longAuditTimer=null;
+/* File reads finish asynchronously; the latest user edit or file selection
+ * owns the editor. Import tokens contain NO document data or persistent state.
+ * Word/PDF wrappers pass the same token to their lower-level reader.
+ */
+const TISFileImportGuard=(function(){
+ let serial=0,active=null;
+ const source=$('source');
+ source.addEventListener('input',()=>{active=null;});
+ function begin(file){
+  if(!file)return null;
+  const token=Object.freeze({id:++serial,initialText:source.value});
+  active=token;
+  return token;
+ }
+ function isCurrent(token){
+  return !!token&&token===active&&source.value===token.initialText;
+ }
+ return Object.freeze({begin,isCurrent});
+})();
+globalThis.TISFileImportGuard=TISFileImportGuard;
 const I={
 en:{heading:'Check and improve your text.',subtitle:'Paste text or upload Word, PDF, or TXT. Review your writing and optionally run an experimental English AI classifier.',chip1:'Free forever',chip2:'Works inside your browser',chip3:'Arabic + English',chip4:'No accounts or API keys',titleInput:'Document',loadText:'Choose a Word, PDF, or text file',m1:'Words',m2:'Characters',m3:'Sentences',m4:'Flags',scan:'Review writing',sample:'Try an example',clear:'Clear',undo:'Undo',redo:'Redo',titleClean:'Clean hidden characters',previewOnly:'Preview first · No original overwritten',modeLabel:'Cleaning mode',modeNotice:'Safe mode removes selected invisible characters while retaining bidirectional markers used in Arabic/English and emoji joiners. Thorough mode may change appearance.',preview:'Preview cleanup',copy:'Copy result',download:'Export clean TXT',beforeLabel:'Original fragment',afterLabel:'Cleaned fragment',apply:'Apply cleanup',titleAudit:'AI detector',tabUnicode:'Unicode',tabQuality:'Writing quality',tabSecurity:'Security',json:'Export JSON',markdown:'Export Markdown',limitationsTitle:'AI origin & watermarks',limitations:'Invisible Unicode is not an AI watermark. An optional English-language browser classifier may display an experimental model signal, not a verified authorship probability or a proportion of AI-written words. No statistical watermark removal is claimed.',privacyNote:'The regular editor stays local. The optional AI model downloads external software and weights only after you click; document text is not intentionally submitted to an AI API.',footerText:'Private by design · Verify changes before applying',localtag:'● Local & private'},
 ar:{heading:'افحص نصك وحسّنه بسهولة.',subtitle:'الصق النص أو ارفع Word أو PDF أو TXT، وراجع التحسينات، ويمكنك تشغيل نموذج AI إنجليزي تجريبي عند الرغبة.',chip1:'مجاني بالكامل',chip2:'يعمل داخل متصفحك',chip3:'العربية والإنجليزية',chip4:'بدون حساب أو مفاتيح API',titleInput:'المستند',loadText:'اختر ملف Word أو PDF أو نص',m1:'الكلمات',m2:'الأحرف',m3:'الجمل',m4:'الملاحظات',scan:'مراجعة الكتابة',sample:'جرّب مثالًا',clear:'مسح',undo:'تراجع',redo:'إعادة',titleClean:'تنظيف الأحرف المخفية',previewOnly:'المعاينة أولًا · لا تعديل على الملف الأصلي',modeLabel:'وضع التنظيف',modeNotice:'الوضع الآمن يزيل أحرفًا مخفية محددة مع المحافظة على علامات اتجاه العربية والإنجليزية وموصلات الإيموجي. قد يؤثر الوضع الشامل على العرض.',preview:'معاينة التنظيف',copy:'نسخ النتيجة',download:'تصدير TXT',beforeLabel:'مقتطف أصلي',afterLabel:'مقتطف بعد التنظيف',apply:'اعتماد التنظيف',titleAudit:'كاشف AI',tabUnicode:'Unicode',tabQuality:'جودة الكتابة',tabSecurity:'الأمان',json:'تصدير JSON',markdown:'تصدير Markdown',limitationsTitle:'حول نسبة AI والعلامات المائية',limitations:'الأحرف المخفية ليست دليلًا على وجود علامة مائية. يمكن تشغيل نموذج إنجليزي داخل المتصفح لإظهار إشارة AI تجريبية غير معتمدة؛ لا تمثل نسبة الكلمات المكتوبة بالذكاء الاصطناعي، ولا تُستخدم لإثبات الكاتب.',privacyNote:'تتم معالجة النص محليًا. نموذج AI الاختياري ينزّل كود التشغيل والأوزان من مصادر خارجية بعد طلبك فقط، ولا يرسل التطبيق النص عمدًا إلى API لتحليل AI.',footerText:'خصوصية افتراضية · راجع التغييرات قبل اعتمادها',localtag:'● خاص ومحلي'}
@@ -48,7 +68,7 @@ function download(filename,contents,type){const url=URL.createObjectURL(new Blob
 $('download').onclick=()=>{if($('resultbox').hidden){toast(t('Preview cleanup first','اعرض المعاينة أولًا'));return;}download('cleaned-text.txt',cleaned,'text/plain;charset=utf-8');};
 $('json').onclick=()=>{analyze();download('text-integrity-report.json',JSON.stringify(lastReport,null,2),'application/json');};
 $('markdown').onclick=()=>{analyze();const r=lastReport;let markdown='# Text Integrity Report\n\n> Not evidence of AI authorship.\n\n- Words: '+r.statistics.words+'\n- Sentences: '+r.statistics.sentences+'\n- Unusual Unicode: '+r.unicode.count+'\n\n';for(const x of [...r.writing_quality,...r.security])markdown+='- '+x.name+': '+x.count+'\n';download('text-integrity-report.md',markdown,'text/markdown;charset=utf-8');};
-async function readFile(f){if(!f)return;if(!/\.(txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/i.test(f.name)||f.size>3000000){toast(t('Supported plain-text files only (TXT, MD, CSV, TSV, JSON, LOG, YAML, TEX, SRT, VTT) under 3 MB','يدعم الملفات النصية فقط بحجم أقل من 3 ميجابايت؛ ملفات الصيغ الثنائية غير المدعومة لا تُقرأ'));return;}snapshot();setText(await f.text());}
+async function readFile(f,token){if(!f)return;if(!/\.(txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/i.test(f.name)||f.size>3000000){toast(t('Supported plain-text files only (TXT, MD, CSV, TSV, JSON, LOG, YAML, TEX, SRT, VTT) under 3 MB','يدعم الملفات النصية فقط بحجم أقل من 3 ميجابايت؛ ملفات الصيغ الثنائية غير المدعومة لا تُقرأ'));return;}const ticket=token||TISFileImportGuard.begin(f);const text=await f.text();if(!TISFileImportGuard.isCurrent(ticket))return;snapshot();setText(text);}
 $('file').onchange=e=>readFile(e.target.files[0]);$('source').ondragover=e=>{e.preventDefault();$('source').classList.add('drag');};$('source').ondragleave=()=>$('source').classList.remove('drag');$('source').ondrop=e=>{e.preventDefault();$('source').classList.remove('drag');readFile(e.dataTransfer.files[0]);};
 $('source').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click();}});
 translate();analyze();
