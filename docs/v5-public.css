@@ -399,3 +399,9 @@ body.v6-docx-active #inputPanel #source{
 .humanize-empty{font-size:11px;line-height:1.7;margin:0;color:#bbd2e5}
 @media(max-width:560px){.humanize-card{padding:10px}.humanize-footer{align-items:stretch}
  #humanizeReviewStatus{min-width:100%}}
+
+/* H4: comparative research metadata appears only after a fresh opted-in scan. */
+#humanizeComparison[hidden]{display:none!important}
+#humanizeComparison{margin:0 13px 13px;padding:11px 12px;background:#192d42;
+ border:1px solid #3c647b;border-inline-start:3px solid #8caccf;
+ border-radius:8px;color:#cce2f5;line-height:1.7;font-size:11px;overflow-wrap:anywhere}
