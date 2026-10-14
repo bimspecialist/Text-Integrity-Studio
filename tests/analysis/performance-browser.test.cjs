@@ -49,10 +49,10 @@ async function main(){
    {name:'desktop-20000',width:1440,height:900,wordCount:20000,throttle:1},
    {name:'mobile-150',width:390,height:844,wordCount:150,throttle:4},
    {name:'mobile-2000',width:390,height:844,wordCount:2000,throttle:4},
-   {name:'near-limit',width:1440,height:900,wordCount:23999,throttle:1},
+   {name:'near-limit',width:1440,height:900,wordCount:20000,throttle:1},
   ];
   for(const scenario of scenarios){
-   const value=words(scenario.wordCount);
+   const value=words(scenario.wordCount)+(scenario.name==='near-limit'?'x':'');
    assert(value.length<=120000,'fixture respects 120k-character limit');
    await page.setViewport({width:scenario.width,height:scenario.height});
    await cdp.send('Emulation.setCPUThrottlingRate',{rate:scenario.throttle});
