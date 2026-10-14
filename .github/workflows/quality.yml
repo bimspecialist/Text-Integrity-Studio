@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: L8 no-external-text-request and real Worker fail-closed browser check
+        run: |
+          node --check tests/analysis/local-rewriter-network-privacy.test.cjs
+          node tests/analysis/local-rewriter-network-privacy.test.cjs
       - name: L7 dual-pane editor browser and RTL integration
         run: |
           node --check tests/analysis/dual-pane-editor-browser.test.cjs
