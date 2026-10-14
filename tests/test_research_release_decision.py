@@ -141,6 +141,20 @@ class ResearchReleaseTests(unittest.TestCase):
         self.assertIn("CALIBRATION_MODEL_REVISION_MISMATCH",
                       decide_release(audit, metrics, wrong, criteria)["reasons"])
 
+    def test_weak_preregistration_cannot_lower_required_safety_thresholds(self):
+        audit, metrics, cal, criteria = evidence()
+        criteria["max_fpr_upper"] = .75
+        with self.assertRaisesRegex(ValueError, "CRITERIA"):
+            decide_release(audit, metrics, cal, criteria)
+        criteria["max_fpr_upper"] = .01
+        criteria["min_per_class"] = 40
+        with self.assertRaisesRegex(ValueError, "CRITERIA"):
+            decide_release(audit, metrics, cal, criteria)
+        criteria["min_per_class"] = 400
+        criteria["max_ece"] = .50
+        with self.assertRaisesRegex(ValueError, "CRITERIA"):
+            decide_release(audit, metrics, cal, criteria)
+
     def test_unregistered_thresholds_and_changed_model_block(self):
         audit, metrics, cal, criteria = evidence()
         criteria["preregistered"] = False
