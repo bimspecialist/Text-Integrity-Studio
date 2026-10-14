@@ -82,6 +82,23 @@ function checks(extra={}){
  assert.equal(verdict.status,'BLOCKED');
  assert(verdict.reasons.includes('REAL_MODEL_INFERENCE_NOT_OBSERVED'));
 })();
+(function protectedMainWorkflowCannotMistakePRBaselineForPostDeploy(){
+ const workflow=fs.readFileSync(path.join(__dirname,'../../.github/workflows/deployed-ai-diagnostic.yml'),'utf8');
+ const testSource=fs.readFileSync(path.join(__dirname,'../deployed-ai-runtime.test.cjs'),'utf8');
+ const live=fs.readFileSync(path.join(__dirname,'../../.github/workflows/live-browser-ai.yml'),'utf8');
+ const quality=fs.readFileSync(path.join(__dirname,'../../.github/workflows/quality.yml'),'utf8');
+ assert(workflow.includes("TIS_REQUIRE_S5: ${{ github.event_name != 'pull_request' }}"));
+ assert(workflow.includes("continue-on-error: ${{ github.event_name == 'pull_request' }}"));
+ assert(testSource.includes("await page.click('#aiDeep')"),
+  'public candidate must exercise secondary ONNX, not only primary');
+ assert(testSource.includes("releaseAudit:productionAudit"));
+ assert(live.includes("'docs/analysis/**'"),'Path A changes must rerun genuine models');
+ for(const token of ['node tests/ocr-browser.test.js','node tests/pdf-browser.test.js',
+  'node tests/word-docx.test.js','node tests/analysis/accessibility-browser.test.cjs',
+  'node tests/analysis/public-postdeploy-contract.test.cjs']){
+  assert(quality.includes(token),'Missing mandatory release regression: '+token);
+ }
+})();
 (function docxPdfOcrAndSecurityFailuresBlockMerge(){
  for(const field of ['quality','chromium','primaryModel','secondaryModel','docx','pdf','ocr','rtl','security']){
   const outcome=assessEngineeringGate(checks({[field]:'FAIL',ownerApproved:true}));
