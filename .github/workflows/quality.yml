@@ -91,6 +91,12 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: Comparable pinned post-edit signals and user-authorized browser rescan
+        run: |
+          node --check tests/analysis/scan-comparison.test.js
+          node tests/analysis/scan-comparison.test.js
+          node --check tests/analysis/humanize-e2e-browser.test.cjs
+          node tests/analysis/humanize-e2e-browser.test.cjs
       - name: Compact Humanize suggestions, reviewed editing and RTL browser contract
         run: |
           node --check tests/analysis/humanize-browser.test.cjs
