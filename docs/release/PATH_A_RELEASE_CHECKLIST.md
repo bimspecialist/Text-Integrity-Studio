@@ -1,6 +1,6 @@
 # Text Integrity Studio V8 — Path A Engineering Release Checklist
 
-**Candidate marker:** `TIS_V8_PATH_A_20261014_S5_RC2`  
+**Candidate marker:** `TIS_V8_PATH_A_20261014_S5_RC3`  
 **PR:** [#16](https://github.com/bimspecialist/Text-Integrity-Studio/pull/16) — development branch `feature/path-a-m0-core-reliability`  
 **Observed pre-merge main at checklist creation:** `8d08635bd2adf3e32e22ba3735a0049ea6b22b4c` (recheck immediately before merging)  
 **Decision:** **NO-GO for merge/publish until the owner independently authorizes release and all release blockers are resolved.**  
@@ -17,7 +17,7 @@ detector accuracy or enable unverified generative Humanize.
 - [ ] Run `tests/analysis/workspace-v8-interactions.test.cjs`: sample/source revision correctness, drag-and-drop through the existing DOCX/PDF/TXT loader, rejecting unsupported files without overwriting text, local writing-only/stale statuses, Unicode-safe diff and explicit UTF-8 draft export without altering source or DOCX.
 - [ ] Run `tests/analysis/draft-diff-preview.test.cjs`: bounded first differing range, emoji/Arabic and no source mutation. The preview is **not** an exact, complete multi-hunk diff.
 - [ ] Run `tests/analysis/long-editor-responsiveness.test.cjs`: synthetic 20,000-word rapid input is coalesced, stale finding UI is cleared immediately and only the latest audit wins. Do not generalize these input timings to model loading, WebGPU or live-device speed.
-- [ ] Confirm all V8 changed CSS and JavaScript assets have query version `20261014-v8-4-rc2`. A successful previous V7/V6 Pages check is not V8 proof.
+- [ ] Confirm all V8 changed CSS and JavaScript assets have query version `20261014-v8-8-rc3`. A successful previous V7/V6 Pages check is not V8 proof.
 - [ ] Manual keyboard-only, contrast, real mobile touch, actual DOCX rendering and assistive-technology review remain necessary; automated Chromium checks are valuable but not an accessibility certificate.
 
 **Expected PR-only status:** automated quality and local model checks can pass, but
