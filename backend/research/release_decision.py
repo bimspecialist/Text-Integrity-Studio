@@ -57,6 +57,11 @@ def _validate_criteria(criteria: dict) -> tuple[list[tuple[str, str]], dict]:
         if not _valid_fraction(value):
             raise ValueError("INVALID_RESEARCH_CRITERIA")
         checked[name] = float(value)
+    # Published protocol minimums may be tightened by preregistration,
+    # never relaxed to make an unqualified study pass.
+    if (checked["max_fpr_upper"] > .01 or checked["max_brier"] > .20
+            or checked["max_ece"] > .10):
+        raise ValueError("INVALID_RESEARCH_CRITERIA_RELAXED_RELEASE_THRESHOLD")
     n = criteria.get("min_per_class")
     if not isinstance(n, int) or isinstance(n, bool) or n < 400:
         raise ValueError("INVALID_RESEARCH_CRITERIA_CLASS_MINIMUM")
