@@ -127,7 +127,11 @@
    // Navigation follows the computed document direction rather than a
    // translation callback that can lag a language-toggle event.
    const rtl=document.documentElement.dir==='rtl';
-   const current=modes.indexOf(mode),forward=(event.key==='ArrowRight')!==rtl;
+   // Arrow navigation starts from the focused tab, not a previously
+   // selected tab when focus is moved by screen readers or scripts.
+   const focused=modes.findIndex(name=>ids[name]===event.currentTarget.id);
+   const current=focused<0?modes.indexOf(mode):focused;
+   const forward=(event.key==='ArrowRight')!==rtl;
    const next=event.key==='Home'?modes[0]:
     event.key==='End'?modes[modes.length-1]:
     modes[(current+(forward?1:modes.length-1))%modes.length];
