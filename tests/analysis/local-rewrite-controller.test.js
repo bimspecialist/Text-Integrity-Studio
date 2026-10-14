@@ -45,7 +45,7 @@ async function main(){
   assert.equal(r.controller.getState().text,undefined,'private source not exposed by status');
   const draft=r.controller.getDraftChunks();
   assert.equal(draft.length,1);
-  assert.match(draft[0].proposed,'clear');
+  assert.match(draft[0].proposed,/clear/);
   assert.equal(r.controller.acceptReviewed().accepted,false,'draft cannot self-approve');
   assert.equal(r.controller.approveChunk(draft[0].id).approved,true);
   assert.equal(r.controller.acceptReviewed().accepted,true);
