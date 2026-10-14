@@ -106,12 +106,19 @@ async function run(){
   const shortLaptop=await page.evaluate(()=>{
    const pane=document.getElementById('tisRevisedPane').getBoundingClientRect();
    const original=document.getElementById('inputPanel').getBoundingClientRect();
+   const results=document.querySelector('.workspace-results').getBoundingClientRect();
+   const workspace=document.querySelector('.workspace');
+   const grid=workspace.getBoundingClientRect();
    const source=document.getElementById('source').getBoundingClientRect();
    const apply=document.getElementById('tisDraftApply').getBoundingClientRect();
    const undo=document.getElementById('tisDraftUndo').getBoundingClientRect();
    return {height:innerHeight,scrollY,top:pane.top,originalTop:original.top,
+    originalX:original.x,originalWidth:original.width,
+    resultsTop:results.top,resultsX:results.x,resultsWidth:results.width,
+    gridTop:grid.top,gridHeight:grid.height,gridColumns:getComputedStyle(workspace).gridTemplateColumns,
+    paneMarginTop:getComputedStyle(document.getElementById('tisRevisedPane')).marginTop,
     sourceTop:source.top,sourceBottom:source.bottom,
-    layout:getComputedStyle(document.querySelector('.workspace')).display,
+    layout:getComputedStyle(workspace).display,
     applyBottom:apply.bottom,undoBottom:undo.bottom,applyWidth:apply.width};
   });
   assert(shortLaptop.applyBottom<=shortLaptop.height &&
