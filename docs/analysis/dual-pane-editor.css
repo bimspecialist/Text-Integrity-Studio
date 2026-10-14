@@ -112,3 +112,11 @@ body[data-tis-mode="editor"] #reportPanel #studioReview{margin:0}
 @media(prefers-reduced-motion:reduce){
  .tis-mode-tab,#tisRevisedPane button{transition:none!important}
 }
+
+/* Preserve the V6 at-a-glance Analyze action for long read-only Word imports.
+   New navigation consumes height, so limit only the default desktop DOCX preview. */
+@media(min-width:901px){
+ body.v6-docx-active[data-tis-mode="detection"] #inputPanel #source{
+  height:clamp(250px,28vh,340px)!important;min-height:250px!important
+ }
+}
