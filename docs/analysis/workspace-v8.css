@@ -60,6 +60,10 @@ aside.app-sidebar{display:flex;grid-column:1;grid-row:1 / span 2;position:sticky
 .side-navigation{gap:7px}
 .side-navigation .nav-item{min-height:48px;gap:10px;padding:11px 12px;
  font-size:12px;font-weight:680;border:1px solid transparent;border-radius:11px;color:var(--v8-muted)}
+/* V6 desktop rules fixed nav width at 47px for an icon-only rail.
+   The V8 rail is 170px and restores complete, readable labels. */
+aside.app-sidebar .side-navigation .nav-item{width:100%;min-width:0;
+ max-width:none;white-space:nowrap;justify-content:flex-start}
 .side-navigation .nav-item>span:first-child{font-size:18px;color:var(--v8-faint);min-width:22px}
 .side-navigation .nav-item.current,.side-navigation .nav-item:hover{
  background:var(--v8-tint);border-color:#433c65;color:var(--v8-text);box-shadow:none}
