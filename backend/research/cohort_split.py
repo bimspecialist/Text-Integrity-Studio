@@ -138,7 +138,8 @@ def split_cohorts(
     for _, part in heldout_groups:
         assigned["release_test"].extend(part)
         counts["release_test"].update(r["label"] for r in part)
-    for tag, part in sorted(other_groups, key=lambda z: (-len(z[1]), z[0])):
+    # Stable sort retains seeded shuffle order among equally sized groups.
+    for tag, part in sorted(other_groups, key=lambda z: -len(z[1])):
         labels = Counter(r["label"] for r in part)
         choices = []
         for name in PARTITIONS:
