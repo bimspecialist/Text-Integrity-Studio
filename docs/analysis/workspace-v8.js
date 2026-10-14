@@ -12,7 +12,10 @@
   if(!source||!paste||!sample||!status||!headline)return;
   const inputPanel=get('inputPanel'),overlay=get('tisV8DropOverlay'),
    fileState=get('tisV8FileState'),dropLabel=get('tisV8DropLabel'),
-   statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText');
+   statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText'),
+   revised=get('tisRevisedText'),diffReview=get('tisV8DiffReview'),
+   diffNote=get('tisV8DiffNote'),diffBefore=get('tisV8DiffOriginal'),
+   diffAfter=get('tisV8DiffRevised');
   const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
@@ -31,6 +34,12 @@
     locked:'Word source is read-only. Use the existing document tools to revise your file.',
     exampleDone:'Example loaded. Choose Analyze Text when ready.',
     upload:'Upload file',source:'Before',
+    diffTitle:'Review changed passage',diffBefore:'Original excerpt',
+    diffAfter:'Revised excerpt',
+    diffIdle:'No draft changes. Make a revision to see the first changed passage.',
+    diffChanged:'Compact first differing range; review both complete editors before Apply.',
+    diffLong:'Long differences have been shortened here. Review both full texts before Apply.',
+    diffUnavailable:'The preview is unavailable; review both editors instead.',
     dropLabel:'Drop Word, PDF or text here',
     selected:name=>'Selected file: '+name,
     invalidFile:'Unsupported file. Choose DOCX, PDF or a text format.',
@@ -66,6 +75,12 @@
     locked:'نص Word للقراءة فقط. استخدم أدوات المستند لتحرير الملف.',
     exampleDone:'تم تحميل المثال. اختر تحليل النص عندما تكون جاهزًا.',
     upload:'رفع ملف',source:'قبل',
+    diffTitle:'مراجعة المقطع المتغيّر',diffBefore:'مقتطف النص الأصلي',
+    diffAfter:'مقتطف المسودة',
+    diffIdle:'لا توجد تعديلات في المسودة. غيّر النص لعرض أول مقطع مختلف.',
+    diffChanged:'عرض مختصر لأول نطاق مختلف. راجع النصّين كاملين قبل التطبيق.',
+    diffLong:'اختُصرت الفروقات الطويلة هنا. راجع النصّين كاملين قبل التطبيق.',
+    diffUnavailable:'المعاينة غير متاحة؛ راجع المحررين مباشرة.',
     dropLabel:'أفلت ملف Word أو PDF أو نص هنا',
     selected:name=>'الملف المحدد: '+name,
     invalidFile:'صيغة غير مدعومة. اختر DOCX أو PDF أو ملفًا نصيًا.',
@@ -90,6 +105,7 @@
    document.body.dataset.tisMode:'detection';
   const language=()=>document.documentElement.lang==='ar'?'ar':'en';
   let disposed=false,lastStatus='',lastFileStatus=null,lastFileName='',everScanned=false;
+  let diffTimer=null;
   function setAnalysisState(state){
    if(disposed||!statePanel||!stateText)return;
    const raw=state?.status||'EMPTY';
@@ -107,6 +123,38 @@
   }
   const put=(id,value)=>{const node=get(id);if(node&&node.textContent!==value)node.textContent=value;};
   const t=()=>labels[language()];
+  function renderDiff(){
+   if(disposed||!diffReview?.open||!diffBefore||!diffAfter||!diffNote||!revised)return;
+   const algorithm=root.TISDraftDiffPreview?.firstDifference;
+   if(typeof algorithm!=='function'){
+    diffNote.textContent=t().diffUnavailable;
+    diffBefore.textContent='';diffAfter.textContent='';return;
+   }
+   let preview;
+   try{preview=algorithm(source.value,revised.value,{
+    maxChangeChars:160,contextChars:34
+   });}
+   catch{
+    diffNote.textContent=t().diffUnavailable;
+    diffBefore.textContent='';diffAfter.textContent='';return;
+   }
+   diffReview.dataset.diffStatus=preview.status;
+   if(preview.status==='UNCHANGED'){
+    diffNote.textContent=t().diffIdle;
+    diffBefore.textContent='';diffAfter.textContent='';
+   }else{
+    diffNote.textContent=preview.beforeTruncated||preview.afterTruncated?
+     t().diffLong:t().diffChanged;
+    // textContent only: never interpret document excerpts as HTML.
+    diffBefore.textContent=preview.beforeExcerpt;
+    diffAfter.textContent=preview.afterExcerpt;
+   }
+  }
+  function scheduleDiff(){
+   if(disposed||!diffReview?.open)return;
+   if(diffTimer!==null)clearTimeout(diffTimer);
+   diffTimer=setTimeout(()=>{diffTimer=null;renderDiff();},110);
+  }
   function render(){
    if(disposed)return;
    const dict=t(),selected=mode();
@@ -121,6 +169,10 @@
    sample.lastChild.textContent=' '+dict.example;
    put('tisSourceLabel',dict.source);
    put('tisV8DropLabel',dict.dropLabel);
+   put('tisV8DiffTitle',dict.diffTitle);
+   put('tisV8DiffOriginalLabel',dict.diffBefore);
+   put('tisV8DiffRevisedLabel',dict.diffAfter);
+   scheduleDiff();
    if(fileState&&lastFileStatus)
     fileState.textContent=typeof dict[lastFileStatus]==='function'?
      dict[lastFileStatus](lastFileName):dict[lastFileStatus]||'';
@@ -226,6 +278,9 @@
   inputPanel?.addEventListener('dragleave',fileLeave,true);
   inputPanel?.addEventListener('drop',dropFile,true);
   file?.addEventListener('change',onFileChange);
+  diffReview?.addEventListener('toggle',scheduleDiff);
+  source.addEventListener('input',scheduleDiff);
+  revised?.addEventListener('input',scheduleDiff);
   get('language')?.addEventListener('click',()=>queueMicrotask(render));
   for(const tab of document.querySelectorAll('#tisModes [role=tab]')){
    tab.addEventListener('click',()=>queueMicrotask(render));
@@ -237,6 +292,10 @@
    refresh:render,setAnalysisState,
    dispose:()=>{
     if(disposed)return;disposed=true;observe.disconnect();
+    if(diffTimer!==null)clearTimeout(diffTimer);
+    diffReview?.removeEventListener('toggle',scheduleDiff);
+    source.removeEventListener('input',scheduleDiff);
+    revised?.removeEventListener('input',scheduleDiff);
     paste.removeEventListener('click',pasteFromClipboard);
     sample.removeEventListener('click',useExample);
     document.removeEventListener('keydown',shortcut);
