@@ -27,6 +27,21 @@ async function run(){
   await page.click('#tisV8FindPanel > summary');
   await page.type('#tisV8FindText','a+b');
   await page.waitForFunction(()=>document.getElementById('tisV8FindCount').dataset.count==='2',{timeout:3000});
+  // An untouched draft automatically follows a new original revision. Its
+  // open search count must not continue describing the previous document.
+  await page.$eval('#source',el=>{
+   el.value='Temporary separate original without search terms.';
+   el.dispatchEvent(new Event('input',{bubbles:true}));
+  });
+  await page.waitForFunction(()=>document.getElementById('tisRevisedText').value===
+   'Temporary separate original without search terms.',{timeout:4000});
+  await page.waitForFunction(()=>document.getElementById('tisV8FindCount').dataset.count==='0',
+   {timeout:4000});
+  await page.$eval('#source',(el,value)=>{
+   el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+  },original);
+  await page.waitForFunction(()=>document.getElementById('tisV8FindCount').dataset.count==='2',
+   {timeout:4000});
   const sourceRevision=await page.evaluate(()=>window.TISAnalysisApp.session.read().revision);
   await page.click('#tisV8FindNext');
   let preview=await page.$eval('#tisRevisedText',el=>({
