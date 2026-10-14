@@ -10,7 +10,7 @@
  if(root)root.TISPublicPostdeployContract=api;
 })(typeof globalThis!=='undefined'?globalThis:this,function(){
  'use strict';
- const RELEASE_MARKER='TIS_V8_PATH_A_20261014_S5_RC2';
+ const RELEASE_MARKER='TIS_V8_PATH_A_20261014_S5_RC3';
  const PAGES='https://bimspecialist.github.io/Text-Integrity-Studio/';
  const PRIMARY_ID='onnx-community/tmr-ai-text-detector-ONNX';
  const PRIMARY_REV='b9aa251e5bcda7e429fcc936767d921435945b60';
