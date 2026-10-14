@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.2 Unicode-safe bounded local change preview unit tests
+        run: |
+          node --check docs/analysis/draft-diff-preview.js
+          node tests/analysis/draft-diff-preview.test.cjs
       - name: V8.1 drag drop and authoritative revision lifecycle in Chromium
         run: |
           node --check tests/analysis/workspace-v8-interactions.test.cjs
