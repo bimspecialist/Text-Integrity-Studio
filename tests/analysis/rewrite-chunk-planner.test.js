@@ -28,7 +28,7 @@ const tokens=s=>Array.from(s).length;
 (function partialWhenTokensCannotFit(){
  const source='Alpha 🧪 Beta';
  const snapshot=createDocumentSession(source).read();
- const p=planRewriteChunks(snapshot,{countTokens:s=>Array.from(s).length,
+ const p=planRewriteChunks(snapshot,{countTokens:s=>Array.from(s).reduce((n,c)=>n+(c==='🧪'?4:1),0),
   maxInputTokens:8,reservedPromptTokens:4,reservedOutputTokens:3,overlapTokens:0});
  assert.equal(p.status,'PARTIAL');
  assert(p.uncoveredSpans.length>0);
