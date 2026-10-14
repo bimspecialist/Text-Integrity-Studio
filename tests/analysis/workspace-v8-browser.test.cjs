@@ -110,6 +110,26 @@ async function run(){
    const detector=await page.screenshot({type:'jpeg',quality:43});
    console.log('TIS_V8_DETECTION_JPEG_B64='+detector.toString('base64'));
   }
+  // The entire published site includes Help and Privacy, not only the editor.
+  // Their content must be readable, dark and responsive without a legacy grid.
+  await page.setViewport({width:390,height:844});
+  for(const url of ['/help.html','/privacy.html']){
+   await page.goto('http://127.0.0.1:'+server.address().port+url,{waitUntil:'load'});
+   const info=await page.evaluate(()=>({
+    themed:!!document.querySelector('link[href*="workspace-v8-content.css"]'),
+    scrollOverflow:document.documentElement.scrollWidth-innerWidth,
+    width:document.querySelector('main.shell')?.getBoundingClientRect().width,
+    title:document.querySelector('h1')?.textContent?.trim(),
+    bg:getComputedStyle(document.body).backgroundColor
+   }));
+   assert(info.themed,'secondary page uses shared V8 content design: '+url);
+   assert(info.scrollOverflow<=8,'secondary page phone width must not overflow: '+url);
+   assert(info.width<=390&&info.width>=355,'secondary page uses phone reading width: '+url);
+   assert(info.title?.length>10,'secondary page has real heading: '+url);
+   assert.notEqual(info.bg,'rgb(255, 255, 255)');
+  }
+  assert.deepEqual(errors,[],'all V8 pages avoid runtime errors');
+  console.log('PASS V8 secondary pages: Help and Privacy dark phone reading layouts');
  }finally{await browser.close();await new Promise(ok=>server.close(ok));}
 }
 run().catch(e=>{console.error(e);process.exitCode=1;});
