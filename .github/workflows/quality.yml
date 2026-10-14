@@ -91,6 +91,13 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8 dark dual-editor redesign actual Chromium visual and interaction smoke
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+          TIS_V8_EMBED_VISUAL: '1'
+        run: |
+          node --check tests/analysis/workspace-v8-browser.test.cjs
+          node tests/analysis/workspace-v8-browser.test.cjs
       - name: S5 deployed-candidate marker and independent merge authorization gate
         run: |
           node --check tests/analysis/public-postdeploy-contract.test.cjs
