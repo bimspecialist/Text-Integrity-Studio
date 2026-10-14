@@ -5,7 +5,7 @@
 'use strict';
 const MAX_FILE=24*1024*1024, MAX_PAGES=80, MAX_OCR_PAGES=12, MAX_TEXT=350000;
 const $=id=>document.getElementById(id);
-let session=null,busy=false,task=null,language='en';
+let session=null,busy=false,task=null,language='en',queuedPdf=null;
 const strings={
 en:{
   title:'PDF document lab',pick:'Choose PDF',description:'Text PDFs are extracted locally. For scanned pages, run English/Arabic OCR on selected pages (slower). This never uploads your PDF.',
@@ -16,6 +16,7 @@ en:{
   scanWarning:'Some pages have no extractable text. Select a page range, then use OCR.',
   noImage:'OCR is limited to 12 pages per run; select a smaller range.',
   finished:'PDF text imported. Review it before editing.',done:'OCR finished. Review recognition accuracy.',loading:'Extracting PDF locally',progress:'OCR processing',
+  queued:'Queued latest PDF; it will open after the current local operation stops.',
   stale:'The document changed during OCR. The outdated result was discarded; your latest text was kept.',
   missing:'Local PDF/OCR assets are not yet available. Check the GitHub Pages deployment and reload.',nothing:'No text available yet.'
 },
@@ -28,6 +29,7 @@ ar:{
   scanWarning:'بعض الصفحات لا تحتوي على نص قابل للاستخراج. حدد الصفحات واستخدم OCR.',
   noImage:'يسمح OCR بحد أقصى 12 صفحة في كل عملية. حدد نطاقًا أصغر.',
   finished:'تم استخراج النص. راجعه قبل تعديله.',done:'اكتمل OCR. راجع دقة التعرف الضوئي.',loading:'جارٍ استخراج PDF محليًا',progress:'جارٍ التعرف الضوئي',
+  queued:'أُدرج أحدث ملف PDF في الانتظار، وسيفتح بعد انتهاء العملية المحلية الجارية.',
   stale:'تغيّر المستند أثناء OCR؛ تجاهلنا النتيجة القديمة وحافظنا على أحدث تعديل للنص.',
   missing:'مكتبات PDF/OCR المحلية غير متاحة بعد. تحقق من نشر GitHub Pages وحدّث الصفحة.',nothing:'لا يوجد نص مستخرج حتى الآن.'
 }};
@@ -54,8 +56,18 @@ async function getLibrary(){
    return pdfjs;
  }catch(error){throw new Error(t('missing')+' '+error.message);}
 }
+function drainQueuedPdf(){
+ const request=queuedPdf;queuedPdf=null;
+ if(request&&globalThis.TISFileImportGuard.isCurrent(request.ticket))
+  void loadPdf(request.file,request.ticket);
+}
 async function loadPdf(file,ticket){
- if(busy)return;
+ if(busy){
+  // One-slot latest-wins queue; the old request is already superseded
+  // by the shared guard, but its parser must unwind before starting this.
+  queuedPdf={file,ticket};status('queued',file?.name||'');return;
+ }
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
  if(!file||!file.name.toLowerCase().endsWith('.pdf')||file.size>MAX_FILE){status('size','',true);return;}
  const bytes=new Uint8Array(await file.arrayBuffer());
  // A delayed PDF read is never allowed to replace a newer user edit/file.
@@ -109,6 +121,7 @@ async function loadPdf(file,ticket){
    busy=false;
    // A stale job must never clear the picker for a newer file.
    if($('file').files?.[0]===file)$('file').value='';
+   drainQueuedPdf();
  }
 }
 function getFullText(){
@@ -136,9 +149,12 @@ async function doOCR(){
  if(busy||!session)return;
  const startedSession=session,startedText=$('source').value;
  const startedRevision=globalThis.TISAnalysisApp?.session?.read().revision;
+ const startedImportGeneration=globalThis.TISFileImportGuard?.generation?.();
  const current=()=>session===startedSession&&$('source').value===startedText&&
   (startedRevision===undefined||
-   globalThis.TISAnalysisApp?.session?.read().revision===startedRevision);
+   globalThis.TISAnalysisApp?.session?.read().revision===startedRevision)&&
+  (startedImportGeneration===undefined||
+   globalThis.TISFileImportGuard?.generation?.()===startedImportGeneration);
  const stale=()=>{status('stale');};
  const recognized=new Map();
  let from=Number($('pdfFrom').value),to=Number($('pdfTo').value);
@@ -188,6 +204,7 @@ async function doOCR(){
  finally{
    if(worker)try{await worker.terminate();}catch{}
    busy=false;$('pdfOcr').disabled=false;
+   drainQueuedPdf();
  }
 }
 function setup(){
