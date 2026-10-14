@@ -15,7 +15,9 @@
    statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText'),
    revised=get('tisRevisedText'),diffReview=get('tisV8DiffReview'),
    diffNote=get('tisV8DiffNote'),diffBefore=get('tisV8DiffOriginal'),
-   diffAfter=get('tisV8DiffRevised'),draftDownload=get('tisV8SaveDraft');
+   diffAfter=get('tisV8DiffRevised'),draftDownload=get('tisV8SaveDraft'),
+   writingStatus=get('tisV8WritingFeedback'),
+   suggestButton=get('tisV8ReviewSuggestions');
   const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
@@ -45,6 +47,14 @@
     saveDone:'UTF-8 TXT saved locally. Your original text and Word file were not changed.',
     saveEmpty:'Write in the draft editor before saving.',
     saveError:'Local download failed. Use Copy draft instead.',
+    writingIdle:'Analyze Text reviews your writing here without a detector download.',
+    writingStale:'The text changed. Run Analyze Text to refresh your writing suggestions.',
+    writingFound:n=>n+' local writing suggestion'+(n===1?'':'s')+
+     ' ready. Nothing has been applied.',
+    writingNone:'Local writing review complete. No specific changes found; this does not establish authorship.',
+    reviewSuggestions:'View suggestions',
+    detectorHint:'Eligible English AI detection downloads external model assets only when you select Analyze Text. Signals are uncalibrated.',
+    writingHint:'Analyze Text reviews writing locally in this mode. No detector download or automatic generative rewriting.',
     dropLabel:'Drop Word, PDF or text here',
     selected:name=>'Selected file: '+name,
     invalidFile:'Unsupported file. Choose DOCX, PDF or a text format.',
@@ -91,6 +101,13 @@
     saveDone:'حُفظت نسخة TXT محليًا. لم يتغيّر النص الأصلي أو ملف Word.',
     saveEmpty:'أضف نصًا إلى المسودة أولًا.',
     saveError:'تعذّر تنزيل الملف محليًا. استخدم زر نسخ المسودة.',
+    writingIdle:'يراجع زر تحليل النص الصياغة محليًا دون تنزيل نموذج الكشف.',
+    writingStale:'تغيّر النص. اضغط تحليل النص لتحديث المقترحات التحريرية.',
+    writingFound:n=>n+' مقترحات تحرير محلية جاهزة للمراجعة. لم يُطبّق أي تعديل.',
+    writingNone:'اكتملت مراجعة الكتابة محليًا دون العثور على تعديل محدد. هذا لا يثبت مصدر النص.',
+    reviewSuggestions:'عرض المقترحات',
+    detectorHint:'يُنزل كشف AI الإنجليزي المؤهل ملفات نماذج خارجية فقط بعد الضغط على تحليل النص. الإشارات غير معايرة.',
+    writingHint:'يراجع زر تحليل النص الكتابة محليًا هنا، دون تنزيل نموذج الكشف أو إعادة صياغة توليدية تلقائية.',
     dropLabel:'أفلت ملف Word أو PDF أو نص هنا',
     selected:name=>'الملف المحدد: '+name,
     invalidFile:'صيغة غير مدعومة. اختر DOCX أو PDF أو ملفًا نصيًا.',
@@ -115,7 +132,34 @@
    document.body.dataset.tisMode:'detection';
   const language=()=>document.documentElement.lang==='ar'?'ar':'en';
   let disposed=false,lastStatus='',lastFileStatus=null,lastFileName='',everScanned=false;
-  let diffTimer=null;
+  let diffTimer=null,writingResult=null;
+  function renderWritingReview(){
+   if(!writingStatus||!suggestButton)return;
+   const current=root.TISAnalysisApp?.session?.read();
+   const active=writingResult&&current&&writingResult.revision===current.revision;
+   const count=active?writingResult.suggestions:0;
+   writingStatus.textContent=active?
+    count?t().writingFound(count):t().writingNone:
+    writingResult?t().writingStale:t().writingIdle;
+   suggestButton.textContent=t().reviewSuggestions;
+   suggestButton.hidden=!active||count===0;
+  }
+  function setWritingReviewResult(metadata){
+   if(disposed||!metadata||!Number.isSafeInteger(metadata.revision)||
+    !Number.isSafeInteger(metadata.suggestions)||metadata.suggestions<0||
+    metadata.suggestions>100)return false;
+   const current=root.TISAnalysisApp?.session?.read();
+   if(!current||metadata.revision!==current.revision)return false;
+   writingResult=Object.freeze({revision:metadata.revision,suggestions:metadata.suggestions});
+   renderWritingReview();
+   return true;
+  }
+  function jumpToSuggestions(){
+   const suggestions=get('humanizeSuggestions');
+   if(!suggestions||suggestions.hidden)return;
+   suggestions.open=true;
+   suggestions.scrollIntoView({block:'start',behavior:'auto'});
+  }
   function setAnalysisState(state){
    if(disposed||!statePanel||!stateText)return;
    const raw=state?.status||'EMPTY';
@@ -192,7 +236,9 @@
    const dict=t(),selected=mode();
    put('tisV8ContextTitle',dict.title[selected]);
    put('tisV8Eyebrow',dict.eyebrow);
-   put('tisV8Privacy',dict.privacy);
+   put('tisV8PrivacyText',dict.privacy);
+   put('v5ClickNote',selected==='detection'?dict.detectorHint:dict.writingHint);
+   renderWritingReview();
    put('v5Headline',dict.headline[selected]);
    put('v5Subtitle',dict.sub[selected]);
    // UI keeps one primary Analyze button. Existing localization code owns it.
@@ -317,6 +363,8 @@
   source.addEventListener('input',scheduleDiff);
   revised?.addEventListener('input',scheduleDiff);
   source.addEventListener('input',syncDraftDownload);
+  source.addEventListener('input',renderWritingReview);
+  suggestButton?.addEventListener('click',jumpToSuggestions);
   revised?.addEventListener('input',syncDraftDownload);
   draftDownload?.addEventListener('click',downloadDraft);
   get('language')?.addEventListener('click',()=>queueMicrotask(render));
@@ -327,7 +375,7 @@
   // modules; this layer does not replace or re-bind those handlers.
   render();
   root.TISWorkspaceV8=Object.freeze({
-   refresh:render,setAnalysisState,
+   refresh:render,setAnalysisState,setWritingReviewResult,
    dispose:()=>{
     if(disposed)return;disposed=true;observe.disconnect();
     if(diffTimer!==null)clearTimeout(diffTimer);
@@ -335,6 +383,8 @@
     source.removeEventListener('input',scheduleDiff);
     revised?.removeEventListener('input',scheduleDiff);
     source.removeEventListener('input',syncDraftDownload);
+    source.removeEventListener('input',renderWritingReview);
+    suggestButton?.removeEventListener('click',jumpToSuggestions);
     revised?.removeEventListener('input',syncDraftDownload);
     draftDownload?.removeEventListener('click',downloadDraft);
     paste.removeEventListener('click',pasteFromClipboard);
