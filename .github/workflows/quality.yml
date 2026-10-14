@@ -91,6 +91,11 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.8 literal Unicode find replace safety unit tests
+        run: |
+          node --check docs/analysis/draft-find-replace-core.js
+          node --check docs/analysis/workspace-v8.js
+          node tests/analysis/draft-find-replace-core.test.cjs
       - name: V8.8 draft-only literal find replace in Chromium
         run: |
           node --check tests/analysis/draft-find-replace-browser.test.cjs
