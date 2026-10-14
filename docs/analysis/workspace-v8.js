@@ -10,6 +10,10 @@
    status=get('tisV8ActionStatus'),upload=get('v5UploadTab'),
    file=get('file'),headline=get('v5Headline');
   if(!source||!paste||!sample||!status||!headline)return;
+  const inputPanel=get('inputPanel'),overlay=get('tisV8DropOverlay'),
+   fileState=get('tisV8FileState'),dropLabel=get('tisV8DropLabel'),
+   statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText');
+  const allowedFile=/\\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
     title:{detection:'Review a document',humanize:'Make writing more natural',
@@ -26,7 +30,25 @@
     blocked:'Clipboard access is unavailable. Click the editor and press Ctrl + V.',
     locked:'Word source is read-only. Use the existing document tools to revise your file.',
     exampleDone:'Example loaded. Choose Analyze Text when ready.',
-    upload:'Upload file',source:'Before'
+    upload:'Upload file',source:'Before',
+    dropLabel:'Drop Word, PDF or text here',
+    selected:name=>'Selected file: '+name,
+    invalidFile:'Unsupported file. Choose DOCX, PDF or a text format.',
+    multipleFiles:'Choose one document at a time; your previous text is preserved.',
+    fileError:'This file could not be opened. Use the Upload file control.',
+    states:{
+     EMPTY:'Add text or a document. No file is uploaded automatically.',
+     READY:'Ready. Analyze Text reviews your writing; eligible English text may download a local research model.',
+     STALE:'Text changed. Previous model evidence is invalid. Select Analyze Text again.',
+     WRITING_ONLY:'Writing review complete. No supported AI model score is available for this text.',
+     UNSUPPORTED:'AI detection is not supported for this language or document. Writing tools remain available.',
+     LOADING:'Preparing the optional local research model. Select Analyze Text to cancel.',
+     ANALYZING:'Analyzing sampled passages on this device. Select Analyze Text to cancel.',
+     INCONCLUSIVE:'INCONCLUSIVE. The evidence does not support a document-wide AI signal.',
+     RESEARCH_SIGNAL:'Research model signal ready. This is not a calibrated authorship probability.',
+     ERROR:'The research model could not finish. Your original text is preserved.',
+     CANCELLED:'Analysis cancelled. Your text is unchanged.'
+    }
    },
    ar:{
     title:{detection:'مراجعة المستند',humanize:'تحسين الكتابة الطبيعية',
@@ -43,13 +65,46 @@
     blocked:'تعذّر الوصول للحافظة. اضغط على المحرر واستخدم Ctrl + V.',
     locked:'نص Word للقراءة فقط. استخدم أدوات المستند لتحرير الملف.',
     exampleDone:'تم تحميل المثال. اختر تحليل النص عندما تكون جاهزًا.',
-    upload:'رفع ملف',source:'قبل'
+    upload:'رفع ملف',source:'قبل',
+    dropLabel:'أفلت ملف Word أو PDF أو نص هنا',
+    selected:name=>'الملف المحدد: '+name,
+    invalidFile:'صيغة غير مدعومة. اختر DOCX أو PDF أو ملفًا نصيًا.',
+    multipleFiles:'اختر مستندًا واحدًا في كل مرة. النص السابق محفوظ.',
+    fileError:'تعذّر فتح الملف. استخدم زر رفع ملف.',
+    states:{
+     EMPTY:'أضف نصًا أو مستندًا. لا يُرفع أي ملف تلقائيًا.',
+     READY:'جاهز. يراجع تحليل النص الكتابة، وقد ينزّل نموذجًا بحثيًا محليًا للنص الإنجليزي المؤهل.',
+     STALE:'تغيّر النص وأصبحت نتيجة الفحص السابقة غير صالحة. اضغط تحليل النص مجددًا.',
+     WRITING_ONLY:'اكتملت مراجعة الكتابة. لا تتوفر إشارة كشف AI مدعومة لهذا النص.',
+     UNSUPPORTED:'لغة النص أو نوع الملف غير مدعوم لكشف AI. لا تزال أدوات الكتابة متاحة.',
+     LOADING:'يجري تجهيز النموذج البحثي الاختياري محليًا. اضغط تحليل النص للإلغاء.',
+     ANALYZING:'يجري فحص المقاطع على جهازك. اضغط تحليل النص للإلغاء.',
+     INCONCLUSIVE:'النتيجة غير حاسمة. لا تكفي الأدلة لعرض إشارة موحدة للمستند.',
+     RESEARCH_SIGNAL:'ظهرت إشارة النموذج البحثي. ليست احتمالًا معايرًا لمصدر النص.',
+     ERROR:'تعذر إكمال الفحص البحثي. النص الأصلي محفوظ.',
+     CANCELLED:'أُلغي التحليل. لم يتغير النص.'
+    }
    }
   };
   const mode=()=>['humanize','editor'].includes(document.body.dataset.tisMode)?
    document.body.dataset.tisMode:'detection';
   const language=()=>document.documentElement.lang==='ar'?'ar':'en';
-  let disposed=false,lastStatus='';
+  let disposed=false,lastStatus='',lastFileStatus=null,lastFileName='',everScanned=false;
+  function setAnalysisState(state){
+   if(disposed||!statePanel||!stateText)return;
+   const raw=state?.status||'EMPTY';
+   if(['LOADING','ANALYZING','WRITING_ONLY','UNSUPPORTED','RESEARCH_SIGNAL',
+     'INCONCLUSIVE','ERROR','CANCELLED'].includes(raw))everScanned=true;
+   const selected=!source.value.trim()?'EMPTY':raw==='STALE'&&!everScanned?'READY':raw;
+   statePanel.dataset.state=Object.hasOwn(t().states,selected)?selected:'READY';
+   const value=t().states[statePanel.dataset.state];
+   if(stateText.textContent!==value)stateText.textContent=value;
+  }
+  function fileMessage(code,name=''){
+   lastFileStatus=code;lastFileName=name;
+   if(fileState)fileState.textContent=typeof t()[code]==='function'?
+    t()[code](name):t()[code]||'';
+  }
   const put=(id,value)=>{const node=get(id);if(node&&node.textContent!==value)node.textContent=value;};
   const t=()=>labels[language()];
   function render(){
@@ -65,6 +120,11 @@
    paste.lastChild.textContent=' '+dict.paste;
    sample.lastChild.textContent=' '+dict.example;
    put('tisSourceLabel',dict.source);
+   put('tisV8DropLabel',dict.dropLabel);
+   if(fileState&&lastFileStatus)
+    fileState.textContent=typeof dict[lastFileStatus]==='function'?
+     dict[lastFileStatus](lastFileName):dict[lastFileStatus]||'';
+   setAnalysisState(root.TISAnalysisApp?.controller?.getState());
    put('tisV8ActionStatus',lastStatus?dict[lastStatus]||'':'');
    const nav=document.querySelectorAll('.side-navigation .nav-item');
    for(const item of nav){
@@ -112,6 +172,41 @@
    if(target!==source&&target!==get('tisRevisedText'))return;
    if(!get('scanAI')?.disabled){event.preventDefault();get('scanAI').click();}
   }
+  function fileDrag(event){
+   if(!inputPanel||!overlay||!event.dataTransfer?.types?.includes('Files'))return;
+   event.preventDefault();
+   inputPanel.dataset.tisFileDrag='true';
+   overlay.hidden=false;
+  }
+  function fileLeave(event){
+   if(!inputPanel||!overlay)return;
+   if(event.relatedTarget&&inputPanel.contains(event.relatedTarget))return;
+   delete inputPanel.dataset.tisFileDrag;
+   overlay.hidden=true;
+  }
+  function dropFile(event){
+   const files=event.dataTransfer?.files;
+   if(!files?.length)return;
+   event.preventDefault();
+   // Capture before the legacy textarea-only .txt drop handler.
+   event.stopPropagation();
+   fileLeave({relatedTarget:null});
+   if(files.length!==1){fileMessage('multipleFiles');return;}
+   const chosen=files[0];
+   if(!allowedFile.test(chosen.name)){fileMessage('invalidFile');return;}
+   if(!file){fileMessage('fileError');return;}
+   try{
+    const transfer=new DataTransfer();
+    transfer.items.add(chosen);
+    file.files=transfer.files;
+    file.dispatchEvent(new Event('change',{bubbles:true}));
+    fileMessage('selected',chosen.name);
+   }catch{fileMessage('fileError');}
+  }
+  function onFileChange(){
+   const chosen=file?.files?.[0];
+   if(chosen)fileMessage('selected',chosen.name);
+  }
   function keyboardUpload(event){
    if(event.key!=='Enter'&&event.key!==' ')return;
    if(!file)return;event.preventDefault();file.click();
@@ -126,6 +221,11 @@
   sample.addEventListener('click',useExample);
   document.addEventListener('keydown',shortcut);
   upload?.addEventListener('keydown',keyboardUpload);
+  inputPanel?.addEventListener('dragenter',fileDrag,true);
+  inputPanel?.addEventListener('dragover',fileDrag,true);
+  inputPanel?.addEventListener('dragleave',fileLeave,true);
+  inputPanel?.addEventListener('drop',dropFile,true);
+  file?.addEventListener('change',onFileChange);
   get('language')?.addEventListener('click',()=>queueMicrotask(render));
   for(const tab of document.querySelectorAll('#tisModes [role=tab]')){
    tab.addEventListener('click',()=>queueMicrotask(render));
@@ -134,13 +234,18 @@
   // modules; this layer does not replace or re-bind those handlers.
   render();
   root.TISWorkspaceV8=Object.freeze({
-   refresh:render,
+   refresh:render,setAnalysisState,
    dispose:()=>{
     if(disposed)return;disposed=true;observe.disconnect();
     paste.removeEventListener('click',pasteFromClipboard);
     sample.removeEventListener('click',useExample);
     document.removeEventListener('keydown',shortcut);
     upload?.removeEventListener('keydown',keyboardUpload);
+    inputPanel?.removeEventListener('dragenter',fileDrag,true);
+    inputPanel?.removeEventListener('dragover',fileDrag,true);
+    inputPanel?.removeEventListener('dragleave',fileLeave,true);
+    inputPanel?.removeEventListener('drop',dropFile,true);
+    file?.removeEventListener('change',onFileChange);
    }
   });
  }
