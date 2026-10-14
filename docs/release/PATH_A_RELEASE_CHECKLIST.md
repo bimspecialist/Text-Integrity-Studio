@@ -19,7 +19,7 @@
 - [ ] Keep author probabilities disabled; the published experimental **model signal** may only be presented as uncalibrated evidence with explicit `INCONCLUSIVE` handling.
 - [ ] Obtain an explicit **owner go/no-go approval** for any main-branch merge; tests alone never perform an automatic merge.
 
-`assessEngineeringGate` in `docs/analysis/public-postdeploy-contract.js` evaluates these statuses in code. It returns `BLOCKED` or `APPROVAL_REQUIRED` when checks/approvals are missing. It does not call GitHub APIs or modify branches.
+`assessEngineeringGate` in `docs/analysis/public-postdeploy-contract.js` evaluates these statuses in code. It returns `BLOCKED` or `APPROVAL_REQUIRED` when mandatory evidence or approval is missing. If a caller supplies `ownerApproved=true`, the result is only `REVIEW_REQUIRED`: an unverified boolean cannot authenticate the owner. `mergeAuthorized` remains `false` in every case. This module never calls GitHub APIs or modifies branches.
 
 ## Separate scientific certification gate — presently HOLD
 
