@@ -50,7 +50,7 @@
   if(value!==undefined)text(node,value);
   return node;
  };
- function mount({root,session,review,controller,locale,onApplied,onUndoApplied}={}){
+ function mount({root,session,review,controller,locale,onApplied,onUndoApplied,onPreviewSuggestion}={}){
   if(!root||!session||typeof session.read!=='function'||
    !review||typeof review.getSuggestions!=='function'||
    !controller||typeof controller.getState!=='function')
@@ -97,6 +97,7 @@
     if(!current){note(d.stale);return;}
     previewBlock.hidden=!previewBlock.hidden;
     preview.setAttribute('aria-expanded',String(!previewBlock.hidden));
+    if(!previewBlock.hidden&&typeof onPreviewSuggestion==='function')onPreviewSuggestion(item);
    });
    const apply=element('button','humanize-apply',d.apply);
    apply.type='button';
