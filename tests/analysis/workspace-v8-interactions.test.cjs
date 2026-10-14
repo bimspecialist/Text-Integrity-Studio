@@ -109,6 +109,37 @@ async function run(){
   assert.equal(comparison.source,canonical,'opening difference preview preserves source');
   assert(comparison.after.includes('<img src=x'),'user text is shown literally');
   assert.equal(comparison.injected,false,'source snippets may not create DOM markup');
+  // The revised TXT is a real local export. Saving must never overwrite the
+  // original or disguise the output as a format-preserving DOCX.
+  await page.evaluate(()=>{
+   window.__tisSavedName=null;window.__tisSavedBlob=null;
+   const origCreate=URL.createObjectURL.bind(URL);
+   URL.createObjectURL=blob=>{window.__tisSavedBlob=blob;return origCreate(blob);};
+   const oldClick=HTMLAnchorElement.prototype.click;
+   HTMLAnchorElement.prototype.click=function(){
+    if(this.download==='Text-Integrity-Studio-Draft.txt'){
+     window.__tisSavedName=this.download;return;
+    }
+    return oldClick.call(this);
+   };
+  });
+  assert(await page.$('#tisV8SaveDraft'),'user can export editable draft without altering original');
+  await page.click('#tisV8SaveDraft');
+  const exportResult=await page.evaluate(async()=>({
+   name:window.__tisSavedName,
+   contents:await window.__tisSavedBlob?.text(),
+   mime:window.__tisSavedBlob?.type,
+   source:document.getElementById('source').value,
+   draft:document.getElementById('tisRevisedText').value,
+   snapshot:window.TISAnalysisApp.session.read().text
+  }));
+  assert.equal(exportResult.name,'Text-Integrity-Studio-Draft.txt');
+  assert.equal(exportResult.contents,proposed,'the exported UTF-8 draft matches reviewed text');
+  assert.equal(exportResult.mime,'text/plain;charset=utf-8');
+  assert.equal(exportResult.source,canonical,'export does not overwrite original text');
+  assert.equal(exportResult.snapshot,canonical,'export cannot change DocumentSession');
+  assert.equal(exportResult.draft,proposed,'download cannot clear unsaved edits');
+
   assert(comparison.note.length>10,'preview scope should be explicit');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
