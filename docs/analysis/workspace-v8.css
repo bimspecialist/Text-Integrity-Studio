@@ -67,12 +67,12 @@ aside.app-sidebar{display:flex;grid-column:1;grid-row:1 / span 2;position:sticky
 aside.app-sidebar .top{border-top:1px solid var(--v8-stroke);padding:17px 3px 0}
 aside.app-sidebar .tag{font-size:10px;color:var(--v8-safe);background:#13231e;
  border:1px solid #355848;border-radius:11px;padding:11px 8px}
-main{grid-column:2;min-width:0;padding:25px clamp(16px,2.35vw,38px) 54px}
+main{grid-column:2;min-width:0;padding:18px clamp(16px,2.35vw,38px) 54px}
 #studioWorkspaceTop,.hero,.steps{display:none!important}
 
 /* Compact workspace heading and strongly differentiated mode tabs. */
 .tis-v8-context{display:flex;align-items:center;justify-content:space-between;gap:20px;
- min-width:0;margin:1px 0 18px;min-height:49px}
+ min-width:0;margin:1px 0 10px;min-height:45px}
 .tis-v8-context-name{display:flex;flex-direction:column;gap:5px;min-width:0}
 #tisV8Eyebrow{font-size:10px;letter-spacing:1.45px;font-weight:800;color:var(--v8-accent-bright)}
 #tisV8ContextTitle{font-size:20px;line-height:1.35;letter-spacing:-.55px;color:var(--v8-text);font-weight:780}
@@ -80,7 +80,7 @@ main{grid-column:2;min-width:0;padding:25px clamp(16px,2.35vw,38px) 54px}
  align-items:center;gap:9px;line-height:1.5;text-align:end}
 .tis-v8-privacy-indicator{width:7px;height:7px;flex:0 0 7px;border-radius:50%;
  background:var(--v8-safe);box-shadow:0 0 0 4px rgba(117,217,178,.10)}
-.tis-modes{width:min(100%,585px);margin:0 0 20px;padding:5px;gap:5px;
+.tis-modes{width:min(100%,585px);margin:0 0 12px;padding:5px;gap:5px;
  flex-wrap:nowrap;display:flex;background:#161922;border:1px solid var(--v8-stroke);
  border-radius:14px;box-shadow:none}
 .tis-mode-tab{font-size:12px;flex:1 1 0;min-width:0;min-height:43px;padding:10px 12px;
@@ -106,12 +106,12 @@ body[data-tis-mode=editor] .workspace{grid-template-columns:minmax(0,1fr) minmax
 #reportPanel{padding:22px 22px 18px;margin:0 0 15px;max-height:calc(100vh - 182px);
  overflow-y:auto;overscroll-behavior:contain;scrollbar-color:#46435f transparent;
  scrollbar-width:thin}
-.v5-editor-lead{margin:0 0 15px}
+.v5-editor-lead{margin:0 0 12px}
 #v5Headline{font-size:clamp(18px,1.45vw,24px);line-height:1.28;letter-spacing:-.45px;
  font-weight:780;color:var(--v8-text);margin:0 0 7px}
 #v5Subtitle{font-size:12px;line-height:1.6;color:var(--v8-muted);max-width:700px}
 .v5-editor-tabs{border:0;display:flex;flex-wrap:wrap;align-items:center;
- gap:7px;margin:0 0 7px;padding:0}
+ gap:7px;margin:0 0 5px;padding:0}
 .v5-input-tab,.v5-upload-tab{min-height:37px;padding:8px 11px;border-radius:9px;
  font-size:11px;color:var(--v8-muted)}
 .v5-input-tab{background:#302e45;border:1px solid #534b7a;color:var(--v8-text)}
@@ -120,7 +120,7 @@ body[data-tis-mode=editor] .workspace{grid-template-columns:minmax(0,1fr) minmax
 .v5-upload-tab:hover{background:var(--v8-hover);border-color:var(--v8-accent)}
 .v5-counts{margin-inline-start:auto;color:var(--v8-muted);font-size:11px;line-height:1.7}
 .tis-v8-quick-tools{display:flex;flex-wrap:wrap;gap:7px;align-items:center;
- margin:5px 0 11px;min-height:27px}
+ margin:4px 0 8px;min-height:27px}
 .tis-v8-quick-tools button{border:0;background:transparent;padding:5px 9px;
  min-height:28px;border-radius:8px;color:var(--v8-muted);font-size:11px;font-weight:720}
 .tis-v8-quick-tools button:hover{background:var(--v8-tint);color:#fff}
