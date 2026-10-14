@@ -14,7 +14,7 @@
   const presenter=root.TISAiPresenter;
   const session=root.TISDocumentSession.createDocumentSession(source.value);
   let pendingSourceKind=null,rawResult=null,lastProgress=null,presentedId=null,disposed=false;
-  let humanizeView=null,pendingBeforeEdit=null;
+  let humanizeView=null,dualEditor=null,pendingBeforeEdit=null;
   const dict=()=>{
    const ar=document.documentElement.lang==='ar';
    return {expired:ar?'تغيّر النص. أعد الفحص للنسخة الحالية.':'The text changed. Analyze this version again.'};
@@ -124,12 +124,22 @@
    humanizeView=root.TISHumanizeUI.mount({
     root:humanizeRoot,session,review,controller,
     locale:()=>document.documentElement.lang,
+    onPreviewSuggestion:item=>dualEditor?.previewSuggestion(item),
     onApplied:validated=>{
      // Only source-independent evidence from a genuinely completed scan
      // may be compared after a later, separately initiated Analyze Text.
      pendingBeforeEdit=validated?.kind==='RESEARCH_SIGNAL'?validated:null;
     },
     onUndoApplied:()=>{pendingBeforeEdit=null;}
+   });
+  }
+  // L7: a separate locally edited draft. Never sends text to any Worker and
+  // never silently falls back to an external service.
+  if(root.TISDualPaneEditor?.mount){
+   dualEditor=root.TISDualPaneEditor.mount({
+    root:el('tisModePanel'),source,session,controller,
+    integrity:root.TISRewriteIntegrityCheck,
+    locale:()=>document.documentElement.lang
    });
   }
   function analyze(){
@@ -166,9 +176,10 @@
    fileInput?.removeEventListener('change',onFile);
    root.removeEventListener('pagehide',onUnload);
    humanizeView?.dispose();
+   dualEditor?.dispose();
    controller.dispose();
   }
-  return Object.freeze({controller,session,review,analyze,toggle,cancel:()=>controller.cancel(),dispose});
+  return Object.freeze({controller,session,review,dualEditor,analyze,toggle,cancel:()=>controller.cancel(),dispose});
  }
  function setup(){
   if(!document.getElementById('source'))return;
