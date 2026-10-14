@@ -97,6 +97,8 @@ jobs:
           node --check docs/analysis/workspace-v8.js
           node tests/analysis/draft-find-replace-core.test.cjs
       - name: V8.8 draft-only literal find replace in Chromium
+        env:
+          TIS_V8_EMBED_VISUAL: '1'
         run: |
           node --check tests/analysis/draft-find-replace-browser.test.cjs
           node tests/analysis/draft-find-replace-browser.test.cjs
