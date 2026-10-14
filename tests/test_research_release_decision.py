@@ -31,7 +31,7 @@ def evidence():
         "frozen_test_sha256": FINGERPRINT,
         "model_revision": REV,
         "protocol_id": PROTOCOL,
-        "data_status": "SYNTHETIC_TEST_NOT_RELEASE_EVIDENCE",
+        "data_status": "STRUCTURAL_REFERENCE_ONLY",
     }
     metrics = {
         "split": "release_test", "evidence_revision": REV,
@@ -70,6 +70,13 @@ class ResearchReleaseTests(unittest.TestCase):
         self.assertEqual(decision["evidence_revision"], REV)
         self.assertEqual(decision["cohorts"][0]["status"], "NUMERIC_THRESHOLDS_MET_NOT_APPROVED")
 
+    def test_explicit_synthetic_or_weak_source_evidence_cannot_count_as_release(self):
+        audit, metrics, cal, criteria = evidence()
+        audit["data_status"] = "SYNTHETIC_TEST_NOT_RELEASE_EVIDENCE"
+        result = decide_release(audit, metrics, cal, criteria)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertIn("NOT_INDEPENDENT_RELEASE_DATA", result["reasons"])
+
     def test_missing_subgroup_blocks_release(self):
         audit, metrics, cal, criteria = evidence()
         criteria["expected_cohorts"].append({"language": "ar", "domain": "academic"})
@@ -98,7 +105,7 @@ class ResearchReleaseTests(unittest.TestCase):
 
     def test_excessive_false_positive_upper_bound_is_not_hidden(self):
         audit, metrics, cal, criteria = evidence()
-        metrics["cohorts"][0]["human_false_alerts"] = 1
+        metrics["cohorts"][0]["human_false_alerts"] = 2
         result = decide_release(audit, metrics, cal, criteria)
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertIn("HUMAN_FALSE_POSITIVE_BOUND_FAILED", result["reasons"])
