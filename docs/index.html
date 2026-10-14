@@ -168,6 +168,20 @@
           <button type="button" id="tisDraftUndo" disabled>Undo apply</button>
         </div>
         <p id="tisDraftStatus" role="status" aria-live="polite">No draft changes to apply.</p>
+        <details id="tisV8DiffReview" class="tis-v8-diff-review">
+          <summary id="tisV8DiffTitle">Review the changed passage</summary>
+          <p id="tisV8DiffNote" class="tis-v8-diff-note" role="status" aria-live="polite">Expand to compare a compact excerpt. The full text remains in both editors.</p>
+          <div class="tis-v8-diff-pair">
+            <div>
+              <strong id="tisV8DiffOriginalLabel">Original excerpt</strong>
+              <pre id="tisV8DiffOriginal" dir="auto"></pre>
+            </div>
+            <div>
+              <strong id="tisV8DiffRevisedLabel">Revised excerpt</strong>
+              <pre id="tisV8DiffRevised" dir="auto"></pre>
+            </div>
+          </div>
+        </details>
         <div class="tis-generator-gate">
           <button type="button" id="tisLocalRewrite" disabled>Rewrite locally</button>
           <p id="tisGeneratorNotice">Local generative rewriting is not yet available. A verified on-device model is required; there is no cloud fallback.</p>
@@ -366,6 +380,7 @@
 <script src="analysis/rewrite-integrity-check.js?v=20261014-l7"></script>
 <script src="analysis/dual-pane-editor.js?v=20261014-l7"></script>
 <script src="analysis/app-adapter.js?v=20261014-l7"></script>
-<script src="analysis/workspace-v8.js?v=20261014-v8"></script>
+<script src="analysis/draft-diff-preview.js?v=20261014-v8-2"></script>
+<script src="analysis/workspace-v8.js?v=20261014-v8-2"></script>
 </body>
 </html>
