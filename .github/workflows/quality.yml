@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.11 concurrent DOCX PDF import latest selection wins
+        run: |
+          node --check tests/analysis/import-overlap-browser.test.cjs
+          node tests/analysis/import-overlap-browser.test.cjs
       - name: V8.10 OCR completion never overwrites edits made during recognition
         run: |
           node --check tests/analysis/ocr-edit-race-browser.test.cjs
