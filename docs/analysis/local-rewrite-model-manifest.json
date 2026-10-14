@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "TIS_LOCAL_REWRITER_TRIAL_V1",
+  "manifestRevision": "research-2026-10-14",
+  "productionDefault": null,
+  "userTextRemoteInferenceAllowed": false,
+  "modelFetchRequiresSeparateExplicitConsent": true,
+  "notes": "Research-only trial metadata. Model-file bytes are reported by public artifact hosting; total transfer and WebGPU performance have NOT been measured on a real device.",
+  "candidates": [
+    {
+      "modelId": "onnx-community/Qwen3-0.6B-ONNX",
+      "immutableRevision": "558750086ed49d78cb701ed6fa85af33fd16453f",
+      "modelFile": "onnx/model_q4f16.onnx",
+      "dtype": "q4f16",
+      "upstreamLicense": "apache-2.0",
+      "upstreamLicenseEvidence": "https://huggingface.co/Qwen/Qwen3-0.6B",
+      "convertedLicenseEvidence": null,
+      "artifactEvidenceUrl": "https://huggingface.co/onnx-community/Qwen3-0.6B-ONNX/blob/558750086ed49d78cb701ed6fa85af33fd16453f/onnx/model_q4f16.onnx",
+      "modelFileSha256": "9e33a5911974174761d0dfdcc0bec975d9c45af0eae5e9eb647b8ba9442a8f91",
+      "claimedFileBytes": 569789750,
+      "measuredTotalBytes": null,
+      "webgpuStatus": "UNTESTED",
+      "realInferenceObserved": false,
+      "languageSamples": [],
+      "startupMs": null,
+      "warmGenerationMs": null,
+      "memoryObservedOrUnknown": null,
+      "status": "RESEARCH_ONLY"
+    }
+  ]
+}
