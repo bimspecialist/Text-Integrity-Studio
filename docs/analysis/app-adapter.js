@@ -14,7 +14,7 @@
   const presenter=root.TISAiPresenter;
   const session=root.TISDocumentSession.createDocumentSession(source.value);
   let pendingSourceKind=null,rawResult=null,lastProgress=null,presentedId=null,disposed=false;
-  let humanizeView=null;
+  let humanizeView=null,pendingBeforeEdit=null;
   const dict=()=>{
    const ar=document.documentElement.lang==='ar';
    return {expired:ar?'تغيّر النص. أعد الفحص للنسخة الحالية.':'The text changed. Analyze this version again.'};
@@ -61,7 +61,12 @@
    }
    if(state.status==='WRITING_ONLY'||state.status==='UNSUPPORTED'){
     presentedId=null;rawResult=null;
-    presenter.presentUnsupported(state.eligibleReason);return;
+    presenter.presentUnsupported(state.eligibleReason);
+    if(pendingBeforeEdit){
+     humanizeView?.showComparison({comparable:false,reason:'NO_VALID_SCORE',differencePoints:null});
+     pendingBeforeEdit=null;
+    }
+    return;
    }
    if(state.status==='LOADING'||state.status==='ANALYZING'){
     if(presentedId!==state.requestId){
@@ -81,11 +86,22 @@
     if(match&&state.revision===session.read().revision){
      presenter.presentVerified(match,session.read().text);
     }else presenter.presentError('UNVERIFIED_MODEL_LABEL');
+    if(pendingBeforeEdit){
+     humanizeView?.showComparison(root.TISScanComparison?.compareSignals(
+      pendingBeforeEdit,state.evidence
+     )||{comparable:false,reason:'NO_VALID_SCORE',differencePoints:null});
+     pendingBeforeEdit=null;
+    }
     rawResult=null;lastProgress=null;presentedId=null;return;
    }
    if(state.status==='ERROR'){
     rawResult=null;lastProgress=null;presentedId=null;
-    presenter.presentError(state.errorCode||'MODEL_UNAVAILABLE');return;
+    presenter.presentError(state.errorCode||'MODEL_UNAVAILABLE');
+    if(pendingBeforeEdit){
+     humanizeView?.showComparison({comparable:false,reason:'NO_VALID_SCORE',differencePoints:null});
+     pendingBeforeEdit=null;
+    }
+    return;
    }
    if(state.status==='CANCELLED'){
     rawResult=null;lastProgress=null;presentedId=null;
@@ -107,7 +123,13 @@
   if(review&&humanizeRoot&&root.TISHumanizeUI?.mount){
    humanizeView=root.TISHumanizeUI.mount({
     root:humanizeRoot,session,review,controller,
-    locale:()=>document.documentElement.lang
+    locale:()=>document.documentElement.lang,
+    onApplied:validated=>{
+     // Only source-independent evidence from a genuinely completed scan
+     // may be compared after a later, separately initiated Analyze Text.
+     pendingBeforeEdit=validated?.kind==='RESEARCH_SIGNAL'?validated:null;
+    },
+    onUndoApplied:()=>{pendingBeforeEdit=null;}
    });
   }
   function analyze(){
