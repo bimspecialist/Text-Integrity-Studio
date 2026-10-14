@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.1 drag drop and authoritative revision lifecycle in Chromium
+        run: |
+          node --check tests/analysis/workspace-v8-interactions.test.cjs
+          node tests/analysis/workspace-v8-interactions.test.cjs
       - name: V8 dark dual-editor redesign actual Chromium visual and interaction smoke
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
