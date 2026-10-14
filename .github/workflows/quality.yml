@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: S1 actual Chromium postMessage trust boundary and privacy
+        run: |
+          node --check tests/analysis/privacy-network.test.cjs
+          node tests/analysis/privacy-network.test.cjs
       - name: L8 no-external-text-request and real Worker fail-closed browser check
         run: |
           node --check tests/analysis/local-rewriter-network-privacy.test.cjs
