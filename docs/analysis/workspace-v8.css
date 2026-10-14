@@ -333,6 +333,22 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
  .tis-mode-tab{font-size:10px}
  .v5-counts{flex-basis:100%;margin-inline-start:0}
 }
+/* V8.4 export the reviewed draft, never the original DOCX bytes. */
+.tis-v8-draft-export{display:flex;align-items:center;justify-content:space-between;
+ gap:10px;flex-wrap:wrap;margin:8px 0 2px}
+#tisRevisedPane #tisV8SaveDraft{min-height:39px;border:1px solid #514a72;
+ border-radius:9px;background:#28243a;color:#eee9ff;
+ font-size:11px;font-weight:730;padding:9px 13px}
+#tisRevisedPane #tisV8SaveDraft:hover:not(:disabled){background:#3b3156;
+ border-color:#887ab8}
+#tisRevisedPane #tisV8SaveDraft:disabled{opacity:.43;cursor:not-allowed}
+#tisV8SaveHelp{font-size:10.5px;line-height:1.55;color:var(--v8-faint)}
+@media(max-width:560px){
+ .tis-v8-draft-export{gap:8px}
+ #tisRevisedPane #tisV8SaveDraft{flex:1 1 auto}
+ #tisV8SaveHelp{flex:1 1 160px}
+}
+
 /* V8.2 compare changed passage on demand. No full draft text copied
    to new storage, no heavy diff on every keystroke. */
 .tis-v8-diff-review{border:1px solid var(--v8-stroke);background:#191c28;
