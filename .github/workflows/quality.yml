@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: L6 draft review and revision-safe accept/undo
+        run: |
+          node --check tests/analysis/local-rewrite-controller.test.js
+          node tests/analysis/local-rewrite-controller.test.js
       - name: L5 protected facts and inert local rewrite prompt contracts
         run: |
           node --check tests/analysis/rewrite-integrity-check.test.js
