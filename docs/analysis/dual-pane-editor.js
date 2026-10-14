@@ -124,7 +124,9 @@
   function onTabKey(event){
    if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
    event.preventDefault();
-   const rtl=locale()==='ar';
+   // Navigation follows the computed document direction rather than a
+   // translation callback that can lag a language-toggle event.
+   const rtl=document.documentElement.dir==='rtl';
    const current=modes.indexOf(mode),forward=(event.key==='ArrowRight')!==rtl;
    const next=event.key==='Home'?modes[0]:
     event.key==='End'?modes[modes.length-1]:
