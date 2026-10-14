@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: L3 same-origin local rewriting Worker lifecycle contracts
+        run: |
+          node --check docs/analysis/local-rewrite-bridge.js
+          node tests/analysis/local-rewrite-bridge.test.js
       - name: Local rewrite WebGPU capability and informed consent enforcement
         run: |
           node --check tests/analysis/rewrite-capability-policy.test.js
