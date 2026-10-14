@@ -263,6 +263,15 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
  main{grid-column:1;padding:20px clamp(14px,2.2vw,30px) 40px}
  .workspace{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
+/* Old footer/grid-column rules create an implicit second column in RTL
+   once the compact sidebar is hidden. Switch to normal block flow here. */
+@media(min-width:901px) and (max-width:1199px){
+ .shell{display:block!important;grid-template-columns:none!important}
+ .shell>main{display:block!important;grid-column:auto!important;
+  width:100%!important;max-width:none!important;margin:0!important;
+  padding-inline:clamp(16px,2.35vw,30px)}
+ .shell>footer{grid-column:auto!important;width:100%}
+}
 @media(max-width:900px){
  .v5-topbar{height:66px;min-height:66px}
  .shell{display:block;min-height:calc(100vh - 66px)}
