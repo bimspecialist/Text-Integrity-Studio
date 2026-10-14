@@ -19,7 +19,12 @@
    writingStatus=get('tisV8WritingFeedback'),
    suggestButton=get('tisV8ReviewSuggestions'),
    wordComparison=get('tisV8WordComparison'),scrollLink=get('tisV8ScrollLink'),
-   scrollLinkLabel=get('tisV8ScrollLinkLabel');
+   scrollLinkLabel=get('tisV8ScrollLinkLabel'),
+   findPanel=get('tisV8FindPanel'),findText=get('tisV8FindText'),
+   replaceText=get('tisV8ReplaceText'),findCase=get('tisV8CaseSensitive'),
+   findCount=get('tisV8FindCount'),findStatus=get('tisV8FindStatus'),
+   findNextButton=get('tisV8FindNext'),replaceNextButton=get('tisV8ReplaceNext'),
+   replaceAllButton=get('tisV8ReplaceAll');
   const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
@@ -44,6 +49,14 @@
     diffChanged:'Compact first differing range; review both complete editors before Apply.',
     diffLong:'Long differences have been shortened here. Review both full texts before Apply.',
     diffUnavailable:'The preview is unavailable; review both editors instead.',
+    findTitle:'Find & replace in draft',findLabel:'Find',replaceLabel:'Replace with',
+    matchCase:'Match case',findNext:'Find next',replaceNext:'Replace next',
+    replaceAll:'Replace all in draft',
+    matches:(n,truncated)=>truncated?'More than '+n+' matches — narrow your search':n+' match'+(n===1?'':'es'),
+    findHelp:'All changes remain in the draft. Review numbers, citations and measurements before Apply.',
+    findReplaced:n=>n+' draft replacement'+(n===1?'':'s')+' made. Original unchanged.',
+    findNone:'No matching text found in the draft.',
+    findLarge:'Too many results or too much output. Narrow the search and try again.',
     scrollLabel:'Link scrolling',
     words:(a,b,d)=>'Original '+a+' · Draft '+b+' · '+d+' words',
     saveDraft:'Download draft TXT',
@@ -100,6 +113,14 @@
     diffChanged:'عرض مختصر لأول نطاق مختلف. راجع النصّين كاملين قبل التطبيق.',
     diffLong:'اختُصرت الفروقات الطويلة هنا. راجع النصّين كاملين قبل التطبيق.',
     diffUnavailable:'المعاينة غير متاحة؛ راجع المحررين مباشرة.',
+    findTitle:'بحث واستبدال داخل المسودة',findLabel:'بحث',replaceLabel:'استبدال بـ',
+    matchCase:'مطابقة حالة الأحرف',findNext:'التالي',replaceNext:'استبدال التالي',
+    replaceAll:'استبدال الكل في المسودة',
+    matches:(n,truncated)=>truncated?'أكثر من '+n+' تطابق — قلّل نطاق البحث':n+' تطابق',
+    findHelp:'تبقى جميع التغييرات في المسودة. راجع الأرقام والمراجع والقياسات قبل التطبيق.',
+    findReplaced:n=>'تم استبدال '+n+' مقطع في المسودة. النص الأصلي محفوظ.',
+    findNone:'لم يُعثر على نص مطابق في المسودة.',
+    findLarge:'نتائج البحث كثيرة أو النص الناتج كبير. قلّل نطاق البحث وحاول مجددًا.',
     scrollLabel:'ربط التمرير',
     words:(a,b,d)=>'الأصل '+a+' · المسودة '+b+' · '+d+' كلمة',
     saveDraft:'تنزيل المسودة TXT',
@@ -138,7 +159,75 @@
    document.body.dataset.tisMode:'detection';
   const language=()=>document.documentElement.lang==='ar'?'ar':'en';
   let disposed=false,lastStatus='',lastFileStatus=null,lastFileName='',everScanned=false;
-  let diffTimer=null,writingResult=null,comparisonTimer=null;
+  let diffTimer=null,writingResult=null,comparisonTimer=null,findTimer=null;
+  function refreshFindState(){
+   if(disposed||!findText||!findCount||!revised)return;
+   const search=root.TISDraftFindReplace?.matches;
+   if(typeof search!=='function')return;
+   let output;
+   try{output=search(revised.value,findText.value,{
+    caseSensitive:findCase?.checked===true
+   });}catch{output={items:[],truncated:true};}
+   const count=output.items.length,valid=count>0&&!output.truncated;
+   findCount.dataset.count=String(count);
+   findCount.textContent=t().matches(count,output.truncated);
+   for(const button of [findNextButton,replaceNextButton,replaceAllButton]){
+    if(button)button.disabled=!valid;
+   }
+  }
+  function scheduleFindState(){
+   if(disposed||!findPanel?.open)return;
+   if(findTimer!==null){clearTimeout(findTimer);findTimer=null;}
+   const length=revised?.value.length||0;
+   if(length>30000)findTimer=setTimeout(()=>{
+    findTimer=null;refreshFindState();
+   },160);
+   else refreshFindState();
+  }
+  function notifyFind(text){
+   if(findStatus)findStatus.textContent=text;
+  }
+  function nextMatch(){
+   if(disposed||!revised||!findText)return;
+   const helper=root.TISDraftFindReplace?.next;
+   if(typeof helper!=='function')return;
+   const result=helper(revised.value,findText.value,revised.selectionEnd,{
+    caseSensitive:findCase?.checked===true
+   });
+   if(!result.item||result.truncated){notifyFind(t().findNone);return;}
+   revised.focus({preventScroll:true});
+   revised.setSelectionRange(result.item.start,result.item.end);
+   notifyFind(t().findHelp);
+  }
+  function replaceDraft(all){
+   if(disposed||!revised||!findText||!replaceText)return;
+   const api=root.TISDraftFindReplace;
+   if(!api)return;
+   const options={caseSensitive:findCase?.checked===true};
+   const result=all?
+    api.replaceAll(revised.value,findText.value,replaceText.value,options):
+    api.replaceOne(revised.value,findText.value,replaceText.value,
+     revised.selectionStart,options);
+   if(result.status!=='REPLACED'){
+    notifyFind(result.status==='NO_MATCH'?t().findNone:t().findLarge);return;
+   }
+   revised.value=result.text;
+   const caret=all?0:result.caret;
+   revised.focus({preventScroll:true});
+   revised.setSelectionRange(caret,caret);
+   // Reuse the established revision-safe dual editor, integrity validation,
+   // Before/After preview and Apply/Undo logic. Never touch #source.
+   revised.dispatchEvent(new Event('input',{bubbles:true}));
+   refreshFindState();
+   notifyFind(t().findReplaced(result.replacements));
+  }
+  function onFindQueryInput(){
+   scheduleFindState();
+   notifyFind(t().findHelp);
+  }
+  function onFindNextClick(){nextMatch();}
+  function onReplaceNextClick(){replaceDraft(false);}
+  function onReplaceAllClick(){replaceDraft(true);}
   let programmaticScroll=new WeakMap();
   function updateWordComparison(){
    if(disposed||!wordComparison||!revised)return;
@@ -300,6 +389,15 @@
    put('tisV8SaveDraft',dict.saveDraft);
    put('tisV8SaveHelp',dict.saveHelp);
    put('tisV8ScrollLinkLabel',dict.scrollLabel);
+   put('tisV8FindTitle',dict.findTitle);
+   put('tisV8FindLabel',dict.findLabel);
+   put('tisV8ReplaceLabel',dict.replaceLabel);
+   put('tisV8CaseLabel',dict.matchCase);
+   put('tisV8FindNext',dict.findNext);
+   put('tisV8ReplaceNext',dict.replaceNext);
+   put('tisV8ReplaceAll',dict.replaceAll);
+   if(findStatus&&!findStatus.dataset.tisAction)notifyFind(dict.findHelp);
+   scheduleFindState();
    scheduleWordComparison();
    syncDraftDownload();
    scheduleDiff();
@@ -416,6 +514,16 @@
   suggestButton?.addEventListener('click',jumpToSuggestions);
   revised?.addEventListener('input',syncDraftDownload);
   draftDownload?.addEventListener('click',downloadDraft);
+  findPanel?.addEventListener('toggle',scheduleFindState);
+  findText?.addEventListener('input',onFindQueryInput);
+  findCase?.addEventListener('change',onFindQueryInput);
+  revised?.addEventListener('input',scheduleFindState);
+  findNextButton?.addEventListener('click',onFindNextClick);
+  replaceNextButton?.addEventListener('click',onReplaceNextClick);
+  replaceAllButton?.addEventListener('click',onReplaceAllClick);
+  for(const id of ['tisDraftReset','tisDraftApply','tisDraftUndo']){
+   get(id)?.addEventListener('click',scheduleFindState);
+  }
   source.addEventListener('scroll',onPaneScroll,{passive:true});
   revised?.addEventListener('scroll',onPaneScroll,{passive:true});
   scrollLink?.addEventListener('change',onScrollLinkChange);
@@ -437,6 +545,7 @@
     if(disposed)return;disposed=true;observe.disconnect();
     if(diffTimer!==null)clearTimeout(diffTimer);
     if(comparisonTimer!==null)clearTimeout(comparisonTimer);
+    if(findTimer!==null)clearTimeout(findTimer);
     diffReview?.removeEventListener('toggle',scheduleDiff);
     source.removeEventListener('input',scheduleDiff);
     revised?.removeEventListener('input',scheduleDiff);
@@ -445,6 +554,16 @@
     suggestButton?.removeEventListener('click',jumpToSuggestions);
     revised?.removeEventListener('input',syncDraftDownload);
     draftDownload?.removeEventListener('click',downloadDraft);
+    findPanel?.removeEventListener('toggle',scheduleFindState);
+    findText?.removeEventListener('input',onFindQueryInput);
+    findCase?.removeEventListener('change',onFindQueryInput);
+    revised?.removeEventListener('input',scheduleFindState);
+    findNextButton?.removeEventListener('click',onFindNextClick);
+    replaceNextButton?.removeEventListener('click',onReplaceNextClick);
+    replaceAllButton?.removeEventListener('click',onReplaceAllClick);
+    for(const id of ['tisDraftReset','tisDraftApply','tisDraftUndo']){
+     get(id)?.removeEventListener('click',scheduleFindState);
+    }
     source.removeEventListener('scroll',onPaneScroll);
     revised?.removeEventListener('scroll',onPaneScroll);
     scrollLink?.removeEventListener('change',onScrollLinkChange);
