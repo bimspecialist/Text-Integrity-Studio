@@ -271,7 +271,11 @@ function setup(){
  $('source').parentElement.insertBefore(tool,$('source').nextSibling);
  const report=document.createElement('section');report.id='wordReport';report.hidden=true;report.className='panel wordReport';
  report.innerHTML='<h2 id="wordTitle"></h2><div id="wordStats" class="wordStats"></div><p id="wordNote" class="wordTip"></p><details><summary id="wordMore">Sections inspected</summary><ul id="wordDetails"></ul></details><p id="wordWarning" class="wordTip" class="wordTip wordWarning"></p>';
- const right=document.querySelector('.workspace > div:last-child');right.insertBefore(report,right.firstChild);
+ const right=document.querySelector('.workspace > div:last-child');
+ const draft=right?.querySelector('#tisRevisedPane');
+ // Preserve the revised editor's position in the dual-pane V8 layout.
+ // DOCX diagnostics are secondary and must not push review buttons below fold.
+ right.insertBefore(report,draft?draft.nextSibling:right.firstChild);
  $('wordPick').onclick=()=>$('file').click();$('wordPreview').onclick=previewWord;$('wordDownload').onclick=downloadWord;
  $('wordCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('source').value);toast(lang==='ar'?'تم نسخ النص':'Word text copied');}catch(e){toast(lang==='ar'?'انسخ من مربع النص مباشرة':'Select and copy the text manually');}};
  $('wordDrop').addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='#7ce3b6';});
