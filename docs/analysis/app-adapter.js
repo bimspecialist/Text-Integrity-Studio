@@ -15,6 +15,9 @@
   const session=root.TISDocumentSession.createDocumentSession(source.value);
   let pendingSourceKind=null,rawResult=null,lastProgress=null,presentedId=null,disposed=false;
   let humanizeView=null,dualEditor=null,pendingBeforeEdit=null;
+  // Initial typing creates a revision change, but not stale scan evidence.
+  // Once a scan has been attempted, changing the source must invalidate it.
+  let scanAttempted=false;
   const dict=()=>{
    const ar=document.documentElement.lang==='ar';
    return {expired:ar?'تغيّر النص. أعد الفحص للنسخة الحالية.':'The text changed. Analyze this version again.'};
@@ -51,13 +54,16 @@
 
   function showState(state){
    if(disposed)return;
+   if(['WRITING_ONLY','UNSUPPORTED','LOADING','ANALYZING',
+       'RESEARCH_SIGNAL','INCONCLUSIVE','ERROR','CANCELLED'].includes(state.status))
+    scanAttempted=true;
    if(state.status==='EMPTY'||state.status==='READY'){
     presentedId=null;rawResult=null;lastProgress=null;
     presenter.clear();return;
    }
    if(state.status==='STALE'){
     presentedId=null;rawResult=null;lastProgress=null;
-    presenter.clear(dict().expired);return;
+    presenter.clear(scanAttempted?dict().expired:undefined);return;
    }
    if(state.status==='WRITING_ONLY'||state.status==='UNSUPPORTED'){
     presentedId=null;rawResult=null;
@@ -144,6 +150,7 @@
   }
   function analyze(){
    syncSource();
+   if(session.read().text.trim())scanAttempted=true;
    return controller.analyze({
     deep:el('aiDeep')?.checked===true,
     full:el('aiFullScan')?.checked===true,
