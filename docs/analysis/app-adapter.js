@@ -149,6 +149,24 @@
     locale:()=>document.documentElement.lang
    });
   }
+  function reviewWritingOnly(){
+   if(disposed)return false;
+   // Never change the active model lifecycle from a different editor mode.
+   // During an active model run, the primary button remains Cancel.
+   if(['LOADING','ANALYZING'].includes(controller.getState().status))return false;
+   syncSource();
+   const snapshot=session.read();
+   if(!snapshot.text.trim())return false;
+   // Both consumers are established local heuristics. No Worker, iframe,
+   // fetch, or remote inference request is constructed in this path.
+   el('scan')?.click();
+   humanizeView?.refresh();
+   const suggestions=review?.getSuggestions()?.length??0;
+   root.TISWorkspaceV8?.setWritingReviewResult?.({
+    revision:snapshot.revision,suggestions
+   });
+   return true;
+  }
   function analyze(){
    syncSource();
    if(session.read().text.trim())scanAttempted=true;
@@ -187,7 +205,7 @@
    dualEditor?.dispose();
    controller.dispose();
   }
-  return Object.freeze({controller,session,review,dualEditor,analyze,toggle,cancel:()=>controller.cancel(),dispose});
+  return Object.freeze({controller,session,review,dualEditor,analyze,reviewWritingOnly,toggle,cancel:()=>controller.cancel(),dispose});
  }
  function setup(){
   if(!document.getElementById('source'))return;
