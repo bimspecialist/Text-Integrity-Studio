@@ -1,6 +1,10 @@
 """E5 CI artifact publication guard tests: synthetic weak-label aggregates only."""
 import copy
 import json
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 import unittest
 
 from backend.research.evaluate_model_outputs import evaluate
@@ -52,6 +56,26 @@ class ArtifactPublicationTests(unittest.TestCase):
         payload = json.dumps(result)
         self.assertNotIn("private-fixture", payload)
         self.assertNotIn("private-author", payload)
+
+    def test_module_cli_imports_with_real_runner_path(self):
+        manifest, metrics = pair()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            source = root / "source-manifest.json"
+            report = root / "research-metrics.json"
+            decision = root / "release-status.json"
+            source.write_text(json.dumps(manifest), encoding="utf-8")
+            report.write_text(json.dumps(metrics), encoding="utf-8")
+            repository = Path(__file__).resolve().parents[1]
+            process = subprocess.run([
+                sys.executable, "-m", "backend.research.audit_artifact_guard",
+                "--manifest", str(source), "--metrics", str(report),
+                "--output", str(decision)
+            ], cwd=repository, capture_output=True, text=True, check=True)
+            self.assertTrue(decision.is_file())
+            self.assertEqual(json.loads(decision.read_text())["decision"], "BLOCKED")
+            self.assertNotIn("private-fixture", process.stdout)
+            self.assertNotIn("private-author", process.stderr)
 
     def test_raw_text_case_ids_and_unsalted_group_hashes_are_rejected(self):
         manifest, metrics = pair()
