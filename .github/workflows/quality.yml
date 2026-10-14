@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.3 latest-revision responsive 20k-word Chromium editor
+        run: |
+          node --check tests/analysis/long-editor-responsiveness.test.cjs
+          node tests/analysis/long-editor-responsiveness.test.cjs
       - name: V8.2 Unicode-safe bounded local change preview unit tests
         run: |
           node --check docs/analysis/draft-diff-preview.js
