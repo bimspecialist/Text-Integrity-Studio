@@ -122,6 +122,14 @@ async function run(){
     resultsHeight:results.height,resultsDisplay:resultsStyle.display,
     resultsAlign:resultsStyle.alignItems,resultsJustify:resultsStyle.justifyContent,
     resultsPaddingTop:resultsStyle.paddingTop,resultsFlexDirection:resultsStyle.flexDirection,
+    resultsChildren:[...resultsElement.children].slice(0,5).map(el=>({
+     id:el.id,tag:el.tagName,top:el.getBoundingClientRect().top,
+     height:el.getBoundingClientRect().height,
+     display:getComputedStyle(el).display
+    })),
+    resultsBefore:{content:getComputedStyle(resultsElement,'::before').content,
+      display:getComputedStyle(resultsElement,'::before').display,
+      height:getComputedStyle(resultsElement,'::before').height},
     panePosition:paneStyle.position,paneTopStyle:paneStyle.top,
     paneTransform:paneStyle.transform,paneHeight:pane.height,
     gridTop:grid.top,gridHeight:grid.height,gridColumns:getComputedStyle(workspace).gridTemplateColumns,
