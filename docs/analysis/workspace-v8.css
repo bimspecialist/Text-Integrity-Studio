@@ -333,6 +333,50 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
  .tis-mode-tab{font-size:10px}
  .v5-counts{flex-basis:100%;margin-inline-start:0}
 }
+/* V8.1 workflow feedback and secure local file drop — non-modal. */
+#inputPanel{position:relative}
+#tisV8FileState{font-size:11px;color:var(--v8-safe);line-height:1.55;
+ flex-basis:100%;overflow-wrap:anywhere}
+#tisV8FileState:empty{display:none}
+.tis-v8-drop-overlay{position:absolute;inset:7px;z-index:8;
+ pointer-events:none;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;gap:12px;
+ border:2px dashed var(--v8-accent-bright);
+ border-radius:14px;background:rgba(15,14,27,.95);
+ color:var(--v8-text);font-size:16px;text-align:center;padding:20px}
+.tis-v8-drop-overlay>span{font-size:34px;color:var(--v8-accent-bright)}
+.tis-v8-drop-overlay[hidden]{display:none!important}
+#inputPanel[data-tis-file-drag=true]{outline:2px solid var(--v8-accent);
+ outline-offset:3px}
+.tis-v8-analysis-status{min-height:38px;display:flex;align-items:center;
+ gap:9px;margin:-3px 0 12px;padding:9px 12px;
+ border-radius:10px;background:#1d2030;border:1px solid #38394e;
+ color:var(--v8-body);font-size:11px;line-height:1.5;overflow-wrap:anywhere}
+.tis-v8-state-icon{font-size:9px;line-height:1;flex:0 0 auto;color:var(--v8-muted)}
+.tis-v8-analysis-status[data-state=READY]{background:#1b2530;border-color:#345062}
+.tis-v8-analysis-status[data-state=READY] .tis-v8-state-icon,
+.tis-v8-analysis-status[data-state=RESEARCH_SIGNAL] .tis-v8-state-icon{
+ color:var(--v8-safe)}
+.tis-v8-analysis-status[data-state=STALE],
+.tis-v8-analysis-status[data-state=INCONCLUSIVE],
+.tis-v8-analysis-status[data-state=WRITING_ONLY],
+.tis-v8-analysis-status[data-state=UNSUPPORTED]{border-color:#635439;background:#2b251e}
+.tis-v8-analysis-status[data-state=STALE] .tis-v8-state-icon,
+.tis-v8-analysis-status[data-state=INCONCLUSIVE] .tis-v8-state-icon,
+.tis-v8-analysis-status[data-state=WRITING_ONLY] .tis-v8-state-icon{color:var(--v8-warn)}
+.tis-v8-analysis-status[data-state=LOADING],
+.tis-v8-analysis-status[data-state=ANALYZING]{border-color:#6252a2;background:#29233e}
+.tis-v8-analysis-status[data-state=LOADING] .tis-v8-state-icon,
+.tis-v8-analysis-status[data-state=ANALYZING] .tis-v8-state-icon{color:var(--v8-accent-bright)}
+.tis-v8-analysis-status[data-state=ERROR]{border-color:#76505c;background:#32212b}
+.tis-v8-analysis-status[data-state=ERROR] .tis-v8-state-icon{color:var(--v8-danger)}
+body[data-tis-mode=humanize] #tisV8AnalysisStatus,
+body[data-tis-mode=editor] #tisV8AnalysisStatus{display:none}
+@media(max-width:560px){
+ .tis-v8-analysis-status{margin-top:0;padding:10px 11px;font-size:11px}
+ .tis-v8-drop-overlay{inset:5px}
+}
+
 html[dir=rtl] .tis-v8-context,#tisModes{direction:inherit}
 html[dir=rtl] #inputPanel .main-actions #scanAI .v5-action-arrow{transform:scaleX(-1)}
 html[dir=rtl] .side-navigation .nav-item{text-align:start}
