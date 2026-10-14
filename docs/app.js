@@ -19,7 +19,7 @@ const TISFileImportGuard=(function(){
  function isCurrent(token){
   return !!token&&token===active&&source.value===token.initialText;
  }
- return Object.freeze({begin,isCurrent});
+ return Object.freeze({begin,isCurrent,generation:()=>serial});
 })();
 globalThis.TISFileImportGuard=TISFileImportGuard;
 const I={
