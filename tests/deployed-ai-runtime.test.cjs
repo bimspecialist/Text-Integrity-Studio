@@ -5,11 +5,13 @@ const puppeteer=require('puppeteer-core');
 const fs=require('node:fs');
 const path=require('node:path');
 const {chrome}=require('./pdf-browser.test.js');
+const {verifyPublishedApp,RELEASE_MARKER,PAGES}=require('../docs/analysis/public-postdeploy-contract.js');
 const URL_TO_TEST=process.env.TIS_TARGET_URL||'https://bimspecialist.github.io/Text-Integrity-Studio/';
 const MAX_TIME=Number(process.env.TIS_SCAN_TIMEOUT_MS||270000);
 const REQUIRE_V4=process.env.TIS_REQUIRE_V4==='true';
 const REQUIRE_V5=process.env.TIS_REQUIRE_V5==='true';
 const REQUIRE_V6=process.env.TIS_REQUIRE_V6==='true';
+const REQUIRE_S5=process.env.TIS_REQUIRE_S5==='true';
 async function run(){
  const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage']});
  const page=await browser.newPage();
@@ -30,7 +32,7 @@ async function run(){
  try{
   await page.setCacheEnabled(false);
   let response,publishedV5=false;
-  for(let attempt=0;attempt<(REQUIRE_V5?25:1);attempt++){
+  for(let attempt=0;attempt<((REQUIRE_V5||REQUIRE_S5)?28:1);attempt++){
    response=await page.goto(URL_TO_TEST,{waitUntil:'domcontentloaded',timeout:60000});
    if(!response?.ok())throw Error('Cannot open public origin: '+response?.status());
    if(!REQUIRE_V5)break;
@@ -44,10 +46,15 @@ async function run(){
     publishedV5=await page.evaluate(()=>['v6DocumentNote','v6ConclusionReason','v6CoverageNote','v6WordTools']
       .every(id=>!!document.getElementById(id)));
    }
+   if(publishedV5&&REQUIRE_S5){
+    const observed=await page.$eval('meta[name="tis-release-marker"]',e=>e.content).catch(()=>null);
+    publishedV5=observed===RELEASE_MARKER;
+   }
    if(publishedV5)break;
    await new Promise(ok=>setTimeout(ok,8000));
   }
-  if(REQUIRE_V5&&!publishedV5)throw Error('GitHub Pages did not serve approved V5 within 200 seconds');
+  if((REQUIRE_V5||REQUIRE_S5)&&!publishedV5)
+   throw Error('GitHub Pages did not serve the required V7 release marker and approved layout');
   await page.waitForSelector('#source',{timeout:30000});
   if(REQUIRE_V4){
    await page.waitForSelector('#scanAI',{visible:true,timeout:15000});
@@ -105,13 +112,61 @@ async function run(){
     frameState:frameState.slice(0,200)
    };
   });
-  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,requireV5:REQUIRE_V5,requireV6:REQUIRE_V6,detectorResponded:state.evidenced,requestErrors,consoleErrors};
+  // The published baseline on PR is deliberately NOT evidence for the PR.
+  // On main after a Pages deployment, require two genuine pinned ONNX runs.
+  let deploymentEvidence=null;
+  if(REQUIRE_S5){
+   const initial=await page.evaluate(()=>window.TISAnalysisApp?.controller?.getState());
+   if(!initial?.evidence?.primary)
+    throw Error('REAL_PRIMARY_MODEL_NOT_OBSERVED');
+   const firstId=initial.requestId;
+   await page.click('#aiDetectorTechnical > summary');
+   await page.click('#aiAdvanced > summary');
+   await page.click('#aiDeep');
+   if(!await page.$eval('#aiDeep',e=>e.checked))throw Error('SECOND_MODEL_OPT_IN_NOT_ENABLED');
+   await page.click('#scanAI');
+   await page.waitForFunction(first=>{
+    const state=window.TISAnalysisApp?.controller?.getState();
+    return !!state&&state.requestId!==first &&
+      ['RESEARCH_SIGNAL','INCONCLUSIVE','ERROR','UNSUPPORTED'].includes(state.status);
+   },{timeout:320000},firstId);
+   // Only metadata from validated controller evidence. No source text or
+   // raw model output may be written to release artifacts.
+   deploymentEvidence=await page.evaluate(()=>{
+    const state=window.TISAnalysisApp?.controller?.getState();
+    const e=state?.evidence;
+    if(!e)return null;
+    const model=m=>m?{model_id:m.model_id,revision:m.revision,score:m.score,
+     coverage:m.coverage}:null;
+    return {kind:e.kind,calibration:e.calibration,requestId:e.requestId,
+     revision:e.revision,scanOptions:e.scanOptions,
+     primary:model(e.primary),secondary:model(e.secondary)};
+   });
+  }
+  const observedMarker=await page.$eval('meta[name="tis-release-marker"]',e=>e.content).catch(()=>null);
+  const productionAudit=verifyPublishedApp({
+   url:URL_TO_TEST,mode:REQUIRE_S5?'production':'pr-baseline',loaded:!!response?.ok(),
+   expectedMarker:RELEASE_MARKER,observedMarker,
+   modelInferenceObserved:REQUIRE_S5&&!!deploymentEvidence?.primary&&!!deploymentEvidence?.secondary,
+   inferenceSource:REQUIRE_S5?'CHROMIUM_REAL_ONNX_DEPLOYED_ORIGIN':'PR_BASELINE_ONLY',
+   evidence:deploymentEvidence,consoleErrors,
+   failedNetworkHosts:requestErrors.map(x=>x.host)
+  });
+  diagnostics={...diagnostics,...state,requireV4:REQUIRE_V4,requireV5:REQUIRE_V5,
+   requireV6:REQUIRE_V6,requireS5:REQUIRE_S5,
+   releaseMarkerMatched:observedMarker===RELEASE_MARKER,
+   releaseAudit:productionAudit,detectorResponded:state.evidenced,
+   dualModelResponded:!!deploymentEvidence?.secondary,
+   requestErrors,consoleErrors};
   const output=process.env.TIS_SCREENSHOT_DIR||'/tmp/tis-ai-production';
   fs.mkdirSync(output,{recursive:true});
   await page.screenshot({path:path.join(output,'deployed-ai-runtime.png'),fullPage:true});
   fs.writeFileSync(path.join(output,'deployed-ai-runtime.json'),JSON.stringify(diagnostics,null,2));
   console.log(JSON.stringify(diagnostics,null,2));
   if(!state.evidenced)throw Error('Deployed browser never completed an actual model inference');
+  if(REQUIRE_S5&&productionAudit.status!=='VERIFIED_DEPLOYED_CANDIDATE')
+   throw Error('POST_PAGES_S5_CANDIDATE_VERIFICATION_FAILED: '+productionAudit.reasons.join(','));
+
  }finally{
   await browser.close();
  }
