@@ -80,8 +80,13 @@
           <button id="tisV8Example" type="button"><span aria-hidden="true">✳</span> Try example</button>
           <span id="tisV8Shortcut">Ctrl + Enter to analyze</span>
           <span id="tisV8ActionStatus" role="status" aria-live="polite"></span>
+          <span id="tisV8FileState" role="status" aria-live="polite"></span>
         </div>
         <p id="v6DocumentNote" class="v6-document-note" role="status" aria-live="polite" hidden></p>
+        <div id="tisV8DropOverlay" class="tis-v8-drop-overlay" aria-hidden="true" hidden>
+          <span aria-hidden="true">↥</span>
+          <strong id="tisV8DropLabel">Drop Word, PDF, or text here</strong>
+        </div>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
           <div id="studioDocumentStats" class="studio-doc-stats" aria-live="polite">0 words · 0 sections</div>
@@ -174,6 +179,10 @@
           <span id="checkedLabel" class="small">Waiting for analysis</span>
         </div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <div id="tisV8AnalysisStatus" class="tis-v8-analysis-status" role="status" aria-live="polite" data-state="EMPTY">
+          <span id="tisV8StateIcon" class="tis-v8-state-icon" aria-hidden="true">●</span>
+          <span id="tisV8StateText">Add text to begin. Nothing is uploaded automatically.</span>
+        </div>
         <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
           <div class="v5-signal-heading">
             <strong id="studioAiQuickLabel">AI model signal</strong><span id="studioAiQuickBadge">EXPERIMENTAL</span>
