@@ -68,7 +68,8 @@ async function run(){
    await page.$eval('#source',(input,value)=>{
     input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));
    },sample.text);
-   // Use the canonical visible public Analyze action; legacy #aiRun is hidden.\n   await page.click('#scanAI');
+   // Use the canonical visible public Analyze action; legacy #aiRun is hidden.
+   await page.click('#scanAI');
    await page.waitForFunction(previous=>window.__benchmarkResults.length>previous,
      {timeout:180000},before);
    const response=await page.evaluate(()=>window.__benchmarkResults.at(-1));
