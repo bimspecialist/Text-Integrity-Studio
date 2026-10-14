@@ -237,6 +237,30 @@ details>summary{cursor:pointer}
  border-radius:9px;padding:9px 11px;border:1px solid var(--v8-stroke-strong);
  color:var(--v8-body);background:#222536}
 #tisRevisedPane .tis-draft-actions button:hover:not(:disabled){background:#34344d}
+/* V8.7 — one compact, optional before/after navigation strip.
+   Unlinked by default to avoid surprising scroll jumps; no draft mutation. */
+.tis-v8-compare-tools{display:flex;align-items:center;justify-content:space-between;
+ gap:8px;flex-wrap:wrap;min-width:0;margin:10px 0 0;padding:8px 10px;
+ border:1px solid var(--v8-stroke);border-radius:9px;
+ background:var(--v8-editor)}
+#tisV8WordComparison{min-width:0;flex:1 1 180px;
+ font-size:10.5px;line-height:1.65;color:var(--v8-muted);
+ overflow-wrap:anywhere}
+.tis-v8-scroll-label{display:inline-flex;align-items:center;gap:7px;
+ padding:5px 7px;min-height:35px;border-radius:7px;
+ color:var(--v8-body);font-size:11px;font-weight:650;
+ cursor:pointer;white-space:nowrap}
+.tis-v8-scroll-label:hover{background:var(--v8-hover)}
+#tisV8ScrollLink{width:17px;height:17px;margin:0;
+ flex:0 0 17px;accent-color:var(--v8-accent)}
+#tisV8ScrollLink:focus-visible{outline:3px solid var(--v8-focus);
+ outline-offset:3px}
+@media(max-width:560px){
+ .tis-v8-compare-tools{align-items:stretch;flex-direction:column;gap:3px}
+ #tisV8WordComparison{flex:none}
+ .tis-v8-scroll-label{align-self:flex-start}
+}
+
 #tisRevisedPane #tisDraftApply{background:var(--v8-tint);
  border-color:#6c5ca8;color:#ece8ff}
 #tisRevisedPane #tisDraftApply:not(:disabled):hover{background:#4a3e80}
