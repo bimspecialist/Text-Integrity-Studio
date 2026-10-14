@@ -237,6 +237,46 @@ details>summary{cursor:pointer}
  border-radius:9px;padding:9px 11px;border:1px solid var(--v8-stroke-strong);
  color:var(--v8-body);background:#222536}
 #tisRevisedPane .tis-draft-actions button:hover:not(:disabled){background:#34344d}
+/* V8.8 — advanced literal find/replace remains collapsed by default. */
+.tis-v8-find-panel{margin:10px 0 0;border:1px solid var(--v8-stroke);
+ border-radius:10px;background:#171a25;min-width:0}
+.tis-v8-find-panel[open]{border-color:#5a5378}
+.tis-v8-find-panel>summary{padding:12px 14px;min-height:44px;
+ color:var(--v8-body);font-size:11.5px;font-weight:720;cursor:pointer}
+.tis-v8-find-panel>summary:focus-visible{outline:3px solid var(--v8-focus);
+ outline-offset:2px}
+.tis-v8-find-body{padding:0 14px 13px;min-width:0}
+.tis-v8-find-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:10px;margin:0 0 9px}
+.tis-v8-find-fields>label{display:flex;flex-direction:column;gap:6px;
+ min-width:0;color:var(--v8-muted);font-size:11px;line-height:1.4}
+.tis-v8-find-fields input[type=text]{display:block;width:100%;height:40px;
+ min-width:0;border:1px solid var(--v8-stroke-strong);
+ border-radius:9px;background:var(--v8-editor);color:var(--v8-text);
+ font-size:12.5px;padding:9px 11px;direction:auto}
+.tis-v8-find-options{display:flex;align-items:center;
+ justify-content:space-between;gap:12px;flex-wrap:wrap;padding:3px 0 10px}
+.tis-v8-find-options label{display:inline-flex;align-items:center;gap:7px;
+ color:var(--v8-body);font-size:10.5px;cursor:pointer;min-height:35px}
+#tisV8CaseSensitive{width:16px;height:16px;accent-color:var(--v8-accent)}
+#tisV8FindCount{color:var(--v8-muted);font-size:10.5px}
+.tis-v8-find-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:6px}
+#tisRevisedPane .tis-v8-find-actions button{min-height:39px;
+ font-size:10px;line-height:1.45;font-weight:700;padding:8px 7px;
+ border:1px solid var(--v8-stroke-strong);border-radius:8px;
+ color:var(--v8-body);background:#222536}
+#tisRevisedPane .tis-v8-find-actions button:disabled{opacity:.45}
+#tisRevisedPane #tisV8ReplaceAll:not(:disabled){background:var(--v8-tint);
+ border-color:#6c5ca8;color:#ece8ff}
+#tisV8FindStatus{color:var(--v8-muted);font-size:10.5px;
+ line-height:1.65;margin:10px 0 0}
+@media(max-width:560px){
+ .tis-v8-find-fields{grid-template-columns:1fr}
+ .tis-v8-find-actions{grid-template-columns:1fr 1fr}
+ #tisRevisedPane #tisV8ReplaceAll{grid-column:1/-1}
+}
+
 /* V8.7 — one compact, optional before/after navigation strip.
    Unlinked by default to avoid surprising scroll jumps; no draft mutation. */
 .tis-v8-compare-tools{display:flex;align-items:center;justify-content:space-between;
