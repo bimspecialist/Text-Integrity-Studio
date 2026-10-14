@@ -106,7 +106,11 @@ async function run(){
   const shortLaptop=await page.evaluate(()=>{
    const pane=document.getElementById('tisRevisedPane').getBoundingClientRect();
    const original=document.getElementById('inputPanel').getBoundingClientRect();
-   const results=document.querySelector('.workspace-results').getBoundingClientRect();
+   const resultsElement=document.querySelector('.workspace-results');
+   const results=resultsElement.getBoundingClientRect();
+   const paneElement=document.getElementById('tisRevisedPane');
+   const resultsStyle=getComputedStyle(resultsElement);
+   const paneStyle=getComputedStyle(paneElement);
    const workspace=document.querySelector('.workspace');
    const grid=workspace.getBoundingClientRect();
    const source=document.getElementById('source').getBoundingClientRect();
@@ -115,8 +119,13 @@ async function run(){
    return {height:innerHeight,scrollY,top:pane.top,originalTop:original.top,
     originalX:original.x,originalWidth:original.width,
     resultsTop:results.top,resultsX:results.x,resultsWidth:results.width,
+    resultsHeight:results.height,resultsDisplay:resultsStyle.display,
+    resultsAlign:resultsStyle.alignItems,resultsJustify:resultsStyle.justifyContent,
+    resultsPaddingTop:resultsStyle.paddingTop,resultsFlexDirection:resultsStyle.flexDirection,
+    panePosition:paneStyle.position,paneTopStyle:paneStyle.top,
+    paneTransform:paneStyle.transform,paneHeight:pane.height,
     gridTop:grid.top,gridHeight:grid.height,gridColumns:getComputedStyle(workspace).gridTemplateColumns,
-    paneMarginTop:getComputedStyle(document.getElementById('tisRevisedPane')).marginTop,
+    paneMarginTop:paneStyle.marginTop,
     sourceTop:source.top,sourceBottom:source.bottom,
     layout:getComputedStyle(workspace).display,
     applyBottom:apply.bottom,undoBottom:undo.bottom,applyWidth:apply.width};
