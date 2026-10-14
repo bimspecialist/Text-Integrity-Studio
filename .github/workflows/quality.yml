@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.8 draft-only literal find replace in Chromium
+        run: |
+          node --check tests/analysis/draft-find-replace-browser.test.cjs
+          node tests/analysis/draft-find-replace-browser.test.cjs
       - name: V8.7 pure comparison-word and proportional scroll unit tests
         run: |
           node --check docs/analysis/editor-comparison-core.js
