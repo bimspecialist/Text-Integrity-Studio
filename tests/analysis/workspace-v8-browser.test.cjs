@@ -104,6 +104,11 @@ async function run(){
    await page.click('#tisTabHumanize');
    const jpeg=await page.screenshot({type:'jpeg',quality:43});
    console.log('TIS_V8_VISUAL_JPEG_B64='+jpeg.toString('base64'));
+   await page.setViewport({width:1440,height:900});
+   await page.click('#language'); // English mode for detector review.
+   await page.click('#tisTabDetection');
+   const detector=await page.screenshot({type:'jpeg',quality:43});
+   console.log('TIS_V8_DETECTION_JPEG_B64='+detector.toString('base64'));
   }
  }finally{await browser.close();await new Promise(ok=>server.close(ok));}
 }
