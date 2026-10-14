@@ -16,8 +16,8 @@ async function main(){
   page.on('request',r=>{if(new URL(r.url()).hostname!=='127.0.0.1')remote.push(r.url());});
   await page.setViewport({width:1440,height:900});
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
-  const documentA=Array(20000).fill('engineering').join(' ');
-  const documentB=Array(19980).fill('design').join(' ');
+  const documentA=Array(20000).fill('check').join(' ');
+  const documentB=Array(19980).fill('label').join(' ');
   const events=[];
   for(const value of [documentA,documentB]){
    events.push(await page.evaluate(text=>{
