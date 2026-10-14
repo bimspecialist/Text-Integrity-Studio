@@ -91,6 +91,10 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: L4 exact tokenizer budget and full-source rewrite coverage
+        run: |
+          node --check tests/analysis/rewrite-chunk-planner.test.js
+          node tests/analysis/rewrite-chunk-planner.test.js
       - name: L3 same-origin local rewriting Worker lifecycle contracts
         run: |
           node --check docs/analysis/local-rewrite-bridge.js
