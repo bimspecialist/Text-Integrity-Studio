@@ -91,6 +91,12 @@ jobs:
         run: |
           node --check tests/analysis/eligibility-policy-browser.test.cjs
           node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.7 pure comparison-word and proportional scroll unit tests
+        run: |
+          node --check docs/analysis/editor-comparison-core.js
+          node --check docs/analysis/workspace-v8.js
+          node --check docs/studio-insights-ui.js
+          node tests/analysis/editor-comparison-core.test.cjs
       - name: V8.7 linked before-after scrolling and honest bilingual mode action in real Chromium
         run: |
           node --check tests/analysis/linked-dual-editor-browser.test.cjs
