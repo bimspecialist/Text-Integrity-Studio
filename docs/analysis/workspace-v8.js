@@ -13,7 +13,7 @@
   const inputPanel=get('inputPanel'),overlay=get('tisV8DropOverlay'),
    fileState=get('tisV8FileState'),dropLabel=get('tisV8DropLabel'),
    statePanel=get('tisV8AnalysisStatus'),stateText=get('tisV8StateText');
-  const allowedFile=/\\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
+  const allowedFile=/\.(?:docx|pdf|txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/iu;
   const labels={
    en:{
     title:{detection:'Review a document',humanize:'Make writing more natural',
