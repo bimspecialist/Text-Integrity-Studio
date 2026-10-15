@@ -59,7 +59,7 @@ async function getClassifier(which,requestId){
   const {pipeline,env}=await libraryPromise;
   // All executable runtime and ONNX WASM assets are pinned first-party files.
   // Only model weights are downloaded, after the user's explicit action.
-  env.backends.onnx.wasm.wasmPaths=new URL('./vendor/transformers/',import.meta.url).href;
+  env.backends.onnx.wasm.wasmPaths=new URL('./vendor/transformers/',location.href).href;
   send('PROGRESS',requestId,{stage:'LOADING',model:which});
   const pipe=await pipeline('text-classification',metadata.id,{
     dtype:'q8',
