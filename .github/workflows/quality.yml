@@ -161,6 +161,11 @@ jobs:
           node tests/analysis/workspace-v9-mode-state.test.cjs
           node --check tests/analysis/workspace-v9-privacy-browser.test.cjs
           node tests/analysis/workspace-v9-privacy-browser.test.cjs
+      - name: V9 advanced grouped document tools and import regression
+        run: |
+          node tests/analysis/workspace-v9-document-tools.test.cjs
+          node --check tests/analysis/workspace-v9-document-tools-browser.test.cjs
+          node tests/analysis/workspace-v9-document-tools-browser.test.cjs
       - name: V9 local writing insights visible in both writing modes
         run: node tests/analysis/workspace-v9-review-visibility.test.cjs
       - name: V9 responsive real Chromium geometry and screenshots
