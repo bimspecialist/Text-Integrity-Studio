@@ -94,7 +94,8 @@ body.tis-v9 #v5Toolbox>summary{min-height:48px;padding:13px 16px;font-size:13px}
 body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
 @media(max-width:900px){
  body.tis-v9 .workspace{display:flex!important;flex-direction:column!important;gap:12px}
- body.tis-v9 .workspace-main,body.tis-v9 .workspace-results{display:contents!important}
+ body.tis-v9 .workspace-main,body.tis-v9 .workspace-results{display:flex!important;flex-direction:column;min-width:0;width:100%;gap:12px}
+ body.tis-v9 .workspace-results{flex-direction:column}
  body.tis-v9 #inputPanel{order:0;width:100%}
  body.tis-v9 #tisRevisedPane{order:1;width:100%}
  body.tis-v9 #reportPanel{order:2;width:100%;margin:0}

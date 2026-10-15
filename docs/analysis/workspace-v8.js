@@ -37,7 +37,7 @@
      editor:'Edit beside your original text. Preserve facts and references, then apply or undo your reviewed changes.'},
     eyebrow:'YOUR WORKSPACE',
     privacy:'Private draft · Optional local AI model download',
-    paste:'Paste text',example:'Try example',shortcut:'Ctrl + Enter to analyze',
+    paste:'Paste text',example:'Try example',shortcut:'Ctrl + Enter to analyze',shortcutReview:'Ctrl + Enter to review writing',
     pasted:'Text pasted into the original editor.',empty:'The clipboard has no text.',
     blocked:'Clipboard access is unavailable. Click the editor and press Ctrl + V.',
     locked:'Word source is read-only. Use the existing document tools to revise your file.',
@@ -101,7 +101,7 @@
      editor:'عدّل مسودة بجانب الأصل مع الحفاظ على الأرقام والمراجع وإمكانية التراجع.'},
     eyebrow:'مساحة العمل',
     privacy:'مسودة خاصة · تنزيل النموذج المحلي اختياري',
-    paste:'لصق النص',example:'تجربة مثال',shortcut:'Ctrl + Enter للتحليل',
+    paste:'لصق النص',example:'تجربة مثال',shortcut:'Ctrl + Enter للتحليل',shortcutReview:'Ctrl + Enter لمراجعة الكتابة',
     pasted:'تم لصق النص في المحرر الأصلي.',empty:'الحافظة لا تحتوي على نص.',
     blocked:'تعذّر الوصول للحافظة. اضغط على المحرر واستخدم Ctrl + V.',
     locked:'نص Word للقراءة فقط. استخدم أدوات المستند لتحرير الملف.',
@@ -378,7 +378,7 @@
    put('v5Headline',dict.headline[selected]);
    put('v5Subtitle',dict.sub[selected]);
    // UI keeps one primary Analyze button. Existing localization code owns it.
-   put('tisV8Shortcut',dict.shortcut);
+   put('tisV8Shortcut',selected==='detection'?dict.shortcut:dict.shortcutReview);
    paste.lastChild.textContent=' '+dict.paste;
    sample.lastChild.textContent=' '+dict.example;
    put('tisSourceLabel',dict.source);

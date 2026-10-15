@@ -180,6 +180,11 @@ jobs:
           node tests/analysis/workspace-v9-document-tools-browser.test.cjs
       - name: V9 local writing insights visible in both writing modes
         run: node tests/analysis/workspace-v9-review-visibility.test.cjs
+      - name: V9 mobile tabpanel accessibility structure
+        run: |
+          node tests/analysis/workspace-v9-accessibility-contract.test.cjs
+          node --check tests/analysis/workspace-v9-accessibility-browser.test.cjs
+          node tests/analysis/workspace-v9-accessibility-browser.test.cjs
       - name: V9 responsive real Chromium geometry and screenshots
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
