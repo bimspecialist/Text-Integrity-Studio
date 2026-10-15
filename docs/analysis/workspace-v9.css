@@ -108,7 +108,7 @@ body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
  body.tis-v9 .v5-brand-icon{width:33px;height:33px;flex-basis:33px;font-size:19px}
  body.tis-v9 .v5-brand-text strong{font-size:12px;white-space:normal}
  body.tis-v9 .tis-modes{width:100%;padding:4px;margin:4px 0 12px;gap:3px}
- body.tis-v9 .tis-mode-tab{font-size:11px;line-height:1.45;padding:9px 5px;min-height:43px}
+ body.tis-v9 .tis-mode-tab{font-size:12px;line-height:1.4;padding:9px 4px;min-height:44px}
  body.tis-v9 #inputPanel,body.tis-v9 #reportPanel,body.tis-v9 #tisRevisedPane{
   padding:16px;border-radius:13px}
  body.tis-v9 #v5Headline{font-size:19px}
@@ -126,7 +126,7 @@ body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
 }
 @media(max-width:360px){
  body.tis-v9 .v5-brand-text strong{font-size:11px}
- body.tis-v9 .tis-mode-tab{font-size:10px;padding-inline:3px}
+ body.tis-v9 .tis-mode-tab{font-size:12px;padding-inline:2px}
  body.tis-v9 #v5Headline{font-size:18px}
  body.tis-v9 #v5Subtitle{font-size:11px}
 }

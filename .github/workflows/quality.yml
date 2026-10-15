@@ -180,6 +180,8 @@ jobs:
           node tests/analysis/workspace-v9-document-tools-browser.test.cjs
       - name: V9 local writing insights visible in both writing modes
         run: node tests/analysis/workspace-v9-review-visibility.test.cjs
+      - name: V9 minimum-width bilingual tab legibility
+        run: node tests/analysis/workspace-v9-mobile-readability.test.cjs
       - name: V9 mobile tabpanel accessibility structure
         run: |
           node tests/analysis/workspace-v9-accessibility-contract.test.cjs
