@@ -24,7 +24,7 @@ async function run(){
   const ax=await cdp.send('Accessibility.getFullAXTree');
   const node=ax.nodes.find(n=>n.backendDOMNodeId===desc.node.backendNodeId);
   assert(node&&!node.ignored,'tabpanel must be represented and exposed in Chromium AX tree');
-  assert.equal(node.role?.value,'tabPanel');
+  assert.equal(node.role?.value,'tabpanel');
   await page.setViewport({width:1150,height:900});
   assert.match(await page.$eval('#tisV8Shortcut',el=>el.textContent),/review writing/i);
   await page.click('#language');
