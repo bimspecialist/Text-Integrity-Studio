@@ -27,6 +27,7 @@
    uncovered:'Unscanned',modelSignal:'Model signal',more:'More analyzed sections are available in Advanced Details.',
    noText:'Paste or upload text to begin.',export:'Export report',advanced:'Advanced details',
    action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل',moreTools:'More document tools',
+   groupWriting:'Writing & cleanup',groupDocuments:'Documents & OCR',groupResearch:'Privacy & research',
    wordTools:'Word document tools',wordNotice:'DOCX · Read-only text extraction. Your original document is unchanged. Use More document tools for Word-specific editing and export.',
    pdfNotice:'PDF · Extracted text. Verify reading order and formulas; OCR and export are in More document tools.',
    reasonHetero:'Model signals vary considerably between passages; one overall percentage would hide that disagreement.',
@@ -57,6 +58,7 @@
    uncovered:'لم يُفحص',modelSignal:'إشارة النموذج',more:'تظهر التفاصيل الإضافية في قسم التفاصيل المتقدمة.',
    noText:'الصق نصًا أو ارفع ملفًا أولًا.',export:'تصدير التقرير',advanced:'التفاصيل المتقدمة',
    action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis',moreTools:'المزيد من أدوات المستندات',
+   groupWriting:'الكتابة والتنظيف',groupDocuments:'المستندات و OCR',groupResearch:'الخصوصية والفحص البحثي',
    wordTools:'أدوات مستند Word',wordNotice:'DOCX · النص المستخرج للقراءة فقط. المستند الأصلي محفوظ دون تغيير. أدوات Word والتصدير موجودة تحت المزيد من أدوات المستندات.',
    pdfNotice:'PDF · النص مستخرج. راجع ترتيب الأسطر والمعادلات؛ أدوات OCR والتصدير تحت المزيد من أدوات المستندات.',
    reasonHetero:'إشارات النموذج تختلف بين المقاطع، لذلك النسبة الموحدة قد تخفي هذا الاختلاف.',
@@ -89,7 +91,8 @@
    v5ClickNote:t.click,titleAudit:t.result,v5ResultsSubtitle:t.resultSub,
    v5RingCaption:t.ring,studioAiQuickLabel:t.signal,studioAiConfidence:t.confidence,
    v5InsightsSubtitle:t.insightsSub,v5BreakdownTitle:t.breakdown,
-   v5BreakdownCaption:t.breakdownSub,v5ToolboxLabel:t.moreTools
+   v5BreakdownCaption:t.breakdownSub,v5ToolboxLabel:t.moreTools,
+   v9ToolsWritingLabel:t.groupWriting,v9ToolsDocumentsLabel:t.groupDocuments,v9ToolsResearchLabel:t.groupResearch
   }))set(id,value);
   // The editor owns the actual ONNX start/cancel state and the action label.
   if(!state.model&&!state.active&&!source.value.trim())set('v5ResultHeadline',t.ready);
@@ -145,64 +148,43 @@
   const p=document.createElement('p');p.className='studio-muted';
   p.textContent=current().empty;node.append(p);
  }
- function textGroupScores(span,signals){
-  const start=span.start,end=span.end;
-  if(!Number.isFinite(start)||!Number.isFinite(end)||end<=start)return null;
-  const overlapping=signals.filter(s=>s.start<end&&s.end>start);
-  if(!overlapping.length)return null;
-  const boundaries=[start,end];
-  for(const s of overlapping){
-   boundaries.push(Math.max(start,s.start),Math.min(end,s.end));
-  }
-  boundaries.sort((a,b)=>a-b);
-  const distinct=boundaries.filter((b,i)=>i===0||b!==boundaries[i-1]);
-  let measured=0,weighted=0;
-  for(let i=1;i<distinct.length;i++){
-   const lo=distinct[i-1],hi=distinct[i],width=hi-lo;
-   if(width<=0)continue;
-   const hits=overlapping.filter(s=>s.start<hi&&s.end>lo);
-   if(!hits.length)continue;
-   measured+=width;
-   weighted+=width*hits.reduce((acc,s)=>acc+s.signal,0)/hits.length;
-  }
-  const coverage=measured/(end-start)*100;
-  return measured?{coverage,signal:weighted/measured}:null;
- }
  function renderBreakdown(detail){
   const target=$('v5BreakdownRows');target.replaceChildren();
   if(!detail||!Array.isArray(detail.segments))return renderEmpty();
-  const core=globalThis.TextIntegrityStudioInsights;
-  if(!core||typeof core.analyzeDocument!=='function')return renderEmpty();
-  let sections=[];
-  try{sections=core.analyzeDocument(source.value,{maxSections:500}).sections;}catch{return renderEmpty();}
-  const valid=detail.segments.filter(s=>s&&Number.isInteger(s.start)&&Number.isInteger(s.end)&&
-   s.start>=0&&s.end<=source.value.length&&s.end>s.start&&
-   typeof s.signal==='number'&&Number.isFinite(s.signal)&&s.signal>=0&&s.signal<=100);
-  if(!valid.length||!sections.length)return renderEmpty();
-  // Sample the document rather than reporting only the opening heading blocks.
-  const sampled=sections.length<=8?sections:Array.from({length:8},(_,i)=>
-   sections[Math.round(i*(sections.length-1)/7)]);
-  let count=0;
-  for(const section of sampled){
-   const score=textGroupScores(section,valid);
-   const assessed=score&&score.coverage>=60;
+  const snapshots=globalThis.TISDocumentSession;
+  const projector=globalThis.TISEvidenceProjection;
+  if(!snapshots?.createDocumentSession||!projector?.projectEvidence)return renderEmpty();
+  let overview;
+  try{
+   const snapshot=snapshots.createDocumentSession(source.value).read();
+   const score=Number.isFinite(detail.displayedSignalPercent)?detail.displayedSignalPercent:null;
+   overview=projector.projectEvidence(snapshot,{
+    revision:snapshot.revision,
+    kind:score===null?'INCONCLUSIVE':'RESEARCH_SIGNAL',signal:score,
+    documentCoverageWordsPercent:detail.documentCoverage,segments:detail.segments
+   },{maxOverviewSections:8});
+  }catch{return renderEmpty();}
+  if(!overview.sections.length)return renderEmpty();
+  for(const section of overview.sections){
+   const assessed=section.windowSignal!==null;
    const row=document.createElement('div');row.className='v5-breakdown-row';
    if(!assessed)row.classList.add('is-unscored');
    const title=document.createElement('span');
    title.textContent=current().section(section.id);
    const value=document.createElement('strong');
-   value.textContent=assessed?score.signal.toFixed(1)+'%':current().uncovered;
-   value.title=assessed?current().modelSignal+' · '+score.coverage.toFixed(0)+'% coverage':current().insufficient;
+   value.textContent=assessed?section.windowSignal.toFixed(1)+'%':current().uncovered;
+   value.title=assessed?current().modelSignal+' · '+section.paragraphCoverageCharactersPercent.toFixed(0)+'% coverage':current().insufficient;
    const coverage=document.createElement('small');coverage.className='v6-window-coverage';
-   coverage.textContent=score?current().windowCoverage.replace('{coverage}',score.coverage.toFixed(0)+'%'):current().insufficient;
+   coverage.textContent=section.coveredCharacters?
+    current().windowCoverage.replace('{coverage}',section.paragraphCoverageCharactersPercent.toFixed(0)+'%'):
+    current().insufficient;
    const bar=document.createElement('div');bar.className='v5-breakdown-bar';
    bar.setAttribute('aria-label',value.title);
    const fill=document.createElement('i');
-   fill.style.width=assessed?score.signal.toFixed(1)+'%':'0%';
-   bar.append(fill);row.append(title,value,bar,coverage);target.append(row);count++;
+   fill.style.width=assessed?section.windowSignal.toFixed(1)+'%':'0%';
+   bar.append(fill);row.append(title,value,bar,coverage);target.append(row);
   }
-  if(!count)renderEmpty();
-  if(sections.length>8){
+  if(overview.totalParagraphs>overview.sections.length){
    const p=document.createElement('p');p.className='studio-muted';
    p.textContent=current().more;target.append(p);
   }
@@ -261,9 +243,21 @@
   for(const id of ['wordDrop','wordToolbar','wordReport']){
    const control=$(id);if(control)contents.append(control);
   }
-  wordDetails.append(contents);items.append(wordDetails);
-  for(const id of ['writingTools','cleanupTools','pdfTools','wordReportTools','wordPickerOptions','aboutResults','researchTools']){
-   const el=$(id);if(el)items.append(el);
+  wordDetails.append(contents);
+  // Move the original tool nodes to grouped sections. Never clone controls.
+  const groups=[
+   ['v9ToolsWriting','v9ToolsWritingLabel',current().groupWriting,['writingTools','cleanupTools']],
+   ['v9ToolsDocuments','v9ToolsDocumentsLabel',current().groupDocuments,['v6WordTools','wordReportTools','wordPickerOptions','pdfTools']],
+   ['v9ToolsResearch','v9ToolsResearchLabel',current().groupResearch,['aboutResults','researchTools']]
+  ];
+  for(const [id,label,title,ids] of groups){
+   const group=document.createElement('section');group.id=id;group.className='v9-tools-group';
+   const heading=document.createElement('h3');heading.id=label;heading.textContent=title;group.append(heading);
+   for(const child of ids){
+    const control=child==='v6WordTools'?wordDetails:$(child);
+    if(control)group.append(control);
+   }
+   items.append(group);
   }
   // Hide scientific and extended editorial controls inside one advanced area.
   for(const id of ['studioStyleGuide','studioSectionDetails','studioEditHistory','reportMore']){
@@ -271,16 +265,6 @@
   }
   const history=$('studioEditHistory'),exportRow=document.querySelector('.studio-export-row');
   if(history&&exportRow)history.append(exportRow);
-  for(const link of document.querySelectorAll('.side-navigation a[href^="#"]')){
-   link.addEventListener('click',event=>{
-    const id=link.getAttribute('href')?.slice(1);
-    if(!id||!items.contains($(id)))return;
-    event.preventDefault();
-    toolbox.open=true;
-    const details=$(id);if(details?.tagName==='DETAILS')details.open=true;
-    details?.scrollIntoView({block:'start',behavior:'auto'});
-   });
-  }
   // Opening a file must not open a long advanced panel over the main CTA.
   const refresh=()=>updateDocumentNotice();
   for(const id of ['wordToolbar','pdfDetails']){

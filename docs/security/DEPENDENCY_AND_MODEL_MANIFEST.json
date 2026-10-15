@@ -1,0 +1,76 @@
+{
+  "schemaVersion": "TIS_DEPENDENCY_MODEL_MANIFEST_V1",
+  "verificationLevel": "VENDORED_RUNTIME_SHA256_VERIFIED_MODEL_BINARY_LICENSE_REVIEW_HOLD",
+  "reviewDate": "2026-10-15",
+  "detector": {
+    "runtime": {
+      "uri": "./vendor/transformers/transformers.min.js",
+      "packageVersion": "3.8.1",
+      "archiveSha256": "207714c36765b87accfd9b7b0672c3505805af97140990e0d9f8ac6e3cd5471e",
+      "registryIntegrity": "sha512-tsTk4zVjImqdqjS8/AOZg2yNLd1z9S5v+7oUPpXaasDRwEDhB+xnglK1k5cad26lL5/ZIaeREgWWy0bs9y9pPA==",
+      "integrityStatus": "VENDORED_HASHES_VERIFIED",
+      "licenseStatus": "NPM_PUBLISHED_APACHE_2_0_LICENSE",
+      "licenseEvidence": "docs/vendor/transformers/LICENSE",
+      "purpose": "Optional client-side English ONNX inference",
+      "trustBoundary": "VENDORED_FIRST_PARTY_CODE_IN_SAME_ORIGIN_IFRAME",
+      "assets": {
+        "docs/vendor/transformers/transformers.min.js": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
+        "docs/vendor/transformers/ort-wasm-simd-threaded.jsep.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+        "docs/vendor/transformers/ort-wasm-simd-threaded.jsep.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
+        "docs/vendor/transformers/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+      }
+    },
+    "models": {
+      "primary": {
+        "id": "onnx-community/tmr-ai-text-detector-ONNX",
+        "revision": "b9aa251e5bcda7e429fcc936767d921435945b60",
+        "licenseStatus": "UNVERIFIED_RESEARCH_ONLY",
+        "binaryIntegrityStatus": "MODEL_REVISION_PIN_ONLY_NO_LOCAL_HASH_CHECK"
+      },
+      "secondary": {
+        "id": "onnx-community/roberta-base-openai-detector-ONNX",
+        "revision": "54895bd11f34b47a01369d25b2255224717409b8",
+        "licenseStatus": "UNVERIFIED_RESEARCH_ONLY",
+        "binaryIntegrityStatus": "MODEL_REVISION_PIN_ONLY_NO_LOCAL_HASH_CHECK"
+      }
+    }
+  },
+  "bundledLicenses": [
+    {
+      "path": "docs/vendor/JSZIP_LICENSE.txt",
+      "declared": "MIT",
+      "expectedEvidence": "MIT License"
+    },
+    {
+      "path": "docs/vendor/pdfjs/LICENSE",
+      "declared": "Apache-2.0",
+      "expectedEvidence": "Apache License"
+    },
+    {
+      "path": "docs/fonts/MANROPE-OFL.txt",
+      "declared": "OFL-1.1",
+      "expectedEvidence": "SIL OPEN FONT LICENSE"
+    },
+    {
+      "path": "docs/fonts/IBM-PLEX-ARABIC-OFL.txt",
+      "declared": "OFL-1.1",
+      "expectedEvidence": "SIL OPEN FONT LICENSE"
+    }
+  ],
+  "localGenerator": {
+    "productionDefault": null,
+    "candidateId": "onnx-community/Qwen3-0.6B-ONNX",
+    "candidateRevision": "558750086ed49d78cb701ed6fa85af33fd16453f",
+    "convertedLicenseStatus": "UNVERIFIED",
+    "realModelVerified": false,
+    "candidateModelFileSha256": "9e33a5911974174761d0dfdcc0bec975d9c45af0eae5e9eb647b8ba9442a8f91",
+    "binaryHashStatus": "DECLARED_RESEARCH_METADATA_NOT_DOWNLOADED",
+    "webgpuTrialStatus": "NOT_RUN"
+  },
+  "scientificDeploymentAllowed": false,
+  "notes": [
+    "Static executable runtime and ONNX WASM are vendored with verified npm package digest; same-origin iframe remains an isolation limitation, and model weights remain remote revision-pinned.",
+    "Pinned model repository revisions and published model-card license claims do not independently verify every remote model binary file; scientific calibration remains HOLD.",
+    "Generative rewrite must stay disabled until real multilingual model and device acceptance."
+  ]
+}

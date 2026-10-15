@@ -160,7 +160,13 @@ function setup(){
  researchTools=disclosure(research,'researchTools',copy.en.aiSummary,copy.en.aiHint);
  // Preserve module event handlers, but put results first and the least-used tools last.
  const results=document.querySelector('.workspace > div:last-child');
- if(results && $('reportPanel'))results.prepend($('reportPanel'));
+ // Preserve the V8 dual-editor source/revised alignment. A legacy
+ // report-first reorder put 205px of diagnostics above Apply/Undo.
+ if(results && $('reportPanel')){
+  results.prepend($('reportPanel'));
+  const draft=$('tisRevisedPane');
+  if(draft&&draft.parentElement===results)results.prepend(draft);
+ }
  if(writingTools && $('cleanupTools'))main.insertBefore(writingTools,$('cleanupTools'));
  if(wordPickTools)main.append(wordPickTools);
  setupWordOptions();

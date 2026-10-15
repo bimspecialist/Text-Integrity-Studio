@@ -9,7 +9,7 @@ const A='http://schemas.openxmlformats.org/drawingml/2006/main';
 const MAX_FILE=18*1024*1024,MAX_UNPACKED=115*1024*1024,MAX_XML=16*1024*1024,MAX_ENTRIES=1200;
 // Check inflated sizes BEFORE decompressing ZIP content (CRC checking would decompress too early).
 const TEXT_PART=/^word\/(?:document|header\d+|footer\d+|footnotes|endnotes|comments)\.xml$/i;
-let session=null,busy=false;
+let session=null,busy=false,queuedWord=null;
 let editorialSelection=new Set(),editorialMode='academic';
 const ui={
 en:{
@@ -95,24 +95,32 @@ function checkZipLimits(zip,file){
  if(!zip.file('[Content_Types].xml')||!zip.file('word/document.xml'))throw Error('Not a supported DOCX package.');
  if(Object.keys(zip.files).some(n=>/vbaProject\.bin$/i.test(n)))throw Error('Macro-enabled Word documents are not supported. Save a macro-free DOCX.');
 }
-async function loadWord(file){
- if(busy)return; if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
+async function loadWord(file,ticket){
+ // A second selection while the prior archive is expanding must not be lost.
+ // Keep only the latest queued intent; no source text is stored here.
+ if(busy){queuedWord={file,ticket};setNotice(tr('busy')+' · '+file.name);return;}
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
+ if(!file||!file.name.toLowerCase().endsWith('.docx')||file.size>MAX_FILE){setNotice(tr('invalid'),true);return;}
  if(typeof JSZip==='undefined'){setNotice('JSZip library did not load. Please refresh the page.',true);return;}
  busy=true;setNotice(tr('busy'));document.getElementById('wordDrop').classList.add('is-loading');
  try{
    await new Promise(r=>setTimeout(r,16));
    const bytes=await file.arrayBuffer();
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    const zip=await JSZip.loadAsync(bytes,{checkCRC32:false});
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    checkZipLimits(zip,file);
    const names=Object.keys(zip.files).filter(k=>TEXT_PART.test(k)).sort((x,y)=>x==='word/document.xml'?-1:y==='word/document.xml'?1:x.localeCompare(y));
    const parts=[];let hidden=0,revisions=0,watermarks=0;
    for(const name of names){
       const xml=await zip.file(name).async('string');
+      if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
       if(xml.length>MAX_XML)throw Error('Word XML part exceeds safety limit.');
       const doc=parseXML(xml,name),check=inspectDoc(doc,name);
       hidden+=check.hiddenRuns;revisions+=check.revisions;watermarks+=check.possibleWatermarkShapes;
       parts.push({name,xml,text:extract(doc),check});
    }
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    session={name:file.name,bytes,parts,hidden,revisions,watermarks,zip,
      signed:Object.keys(zip.files).some(n=>n.startsWith('_xmlsignatures/'))};
    editorialSelection=new Set();editorialMode='academic';
@@ -130,8 +138,13 @@ async function loadWord(file){
    const labels=[tr('loaded'),file.name,parts.length+' '+tr('parts')];if(session.signed)labels.push(lang==='ar'?'قد يبطل التوقيع الرقمي':'digitally signed: edits may invalidate signature');if(hidden)labels.push(hidden+' '+tr('hidden'));
    document.getElementById('wordMeta').textContent=labels.join(' · ');
    if(!$('source').value)toast(tr('empty'));
- }catch(error){resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
- finally{busy=false;document.getElementById('wordDrop').classList.remove('is-loading');}
+ }catch(error){if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;resetWord();setNotice(tr('blocked')+' '+(error.message||''),true);console.error('DOCX inspection:',error);}
+ finally{
+   busy=false;document.getElementById('wordDrop').classList.remove('is-loading');
+   const latest=queuedWord;queuedWord=null;
+   if(latest&&globalThis.TISFileImportGuard.isCurrent(latest.ticket))
+    void loadWord(latest.file,latest.ticket);
+ }
 }
 function mode(){return $('mode').value;}
 function editorialPlan(requestedMode){
@@ -271,7 +284,11 @@ function setup(){
  $('source').parentElement.insertBefore(tool,$('source').nextSibling);
  const report=document.createElement('section');report.id='wordReport';report.hidden=true;report.className='panel wordReport';
  report.innerHTML='<h2 id="wordTitle"></h2><div id="wordStats" class="wordStats"></div><p id="wordNote" class="wordTip"></p><details><summary id="wordMore">Sections inspected</summary><ul id="wordDetails"></ul></details><p id="wordWarning" class="wordTip" class="wordTip wordWarning"></p>';
- const right=document.querySelector('.workspace > div:last-child');right.insertBefore(report,right.firstChild);
+ const right=document.querySelector('.workspace > div:last-child');
+ const draft=right?.querySelector('#tisRevisedPane');
+ // Preserve the revised editor's position in the dual-pane V8 layout.
+ // DOCX diagnostics are secondary and must not push review buttons below fold.
+ right.insertBefore(report,draft?draft.nextSibling:right.firstChild);
  $('wordPick').onclick=()=>$('file').click();$('wordPreview').onclick=previewWord;$('wordDownload').onclick=downloadWord;
  $('wordCopy').onclick=async()=>{try{await navigator.clipboard.writeText($('source').value);toast(lang==='ar'?'تم نسخ النص':'Word text copied');}catch(e){toast(lang==='ar'?'انسخ من مربع النص مباشرة':'Select and copy the text manually');}};
  $('wordDrop').addEventListener('dragover',e=>{e.preventDefault();drop.style.borderColor='#7ce3b6';});
@@ -279,7 +296,7 @@ function setup(){
  $('wordDrop').addEventListener('drop',e=>{e.preventDefault();drop.style.borderColor='';if(e.dataTransfer.files[0])readFile(e.dataTransfer.files[0]);});
  $('file').accept='.docx,.txt,.md,.csv,.json';
  const oldRead=readFile;
- readFile=async function(file){if(!file)return;if(/\.docx$/i.test(file.name))return loadWord(file);resetWord();return oldRead(file);};
+ readFile=async function(file,ticket){if(!file)return;const request=ticket||globalThis.TISFileImportGuard.begin(file);if(/\.docx$/i.test(file.name))return loadWord(file,request);if(!globalThis.TISFileImportGuard.isCurrent(request))return;resetWord();return oldRead(file,request);};
  const oldPreview=$('preview').onclick;
  $('preview').onclick=function(){return session?previewWord():oldPreview();};
  const oldApply=$('apply').onclick;

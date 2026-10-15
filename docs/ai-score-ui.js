@@ -7,11 +7,9 @@
 const $=id=>document.getElementById(id);
 const VERSION='TIS_CONSENSUS_V2_2026_10';
 const PRIMARY='onnx-community/tmr-ai-text-detector-ONNX';
-let child=null,ready=false,currentRequest='',lastResult=null,counter=0;
-let inputSnapshot='',running=false;
-let readinessTimer=null,inactivityTimer=null,absoluteTimer=null;
-function stopTimers(){for(const timer of [readinessTimer,inactivityTimer,absoluteTimer])clearTimeout(timer);readinessTimer=null;inactivityTimer=null;absoluteTimer=null;}
-function waitForProgress(id){clearTimeout(inactivityTimer);inactivityTimer=setTimeout(()=>{if(running&&currentRequest===id)error('MODEL_TIMEOUT');},180000);}
+// All request ordering, model timeouts and message authentication now live
+// in AnalysisController and InferenceBridge; this module only presents results.
+let lastResult=null,inputSnapshot='',running=false;
 const languages={
  en:{
   title:'AI text evidence',badge:'EXPERIMENTAL',unit:'Model signal',
@@ -163,12 +161,8 @@ function status(value){
  set('aiStatus',value);
  window.dispatchEvent(new CustomEvent('tis:ai-status',{detail:{text:String(value||''),running}}));
 }
-function cancel(){
- if(currentRequest&&child?.contentWindow)
-  child.contentWindow.postMessage({channel:'TIS_BROWSER_AI_V1',op:'CANCEL',requestId:currentRequest},location.origin);
-}
 function reset(reason=''){
- cancel();stopTimers();lastResult=null;currentRequest='';inputSnapshot='';running=false;
+ lastResult=null;inputSnapshot='';running=false;
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').value=0;$('aiBar').hidden=true;
  $('aiExport').hidden=true;$('aiEvidence').hidden=true;$('aiEvidenceBody').replaceChildren();
@@ -203,56 +197,6 @@ function translate(){
  set('navWriting',lang()==='ar'?'تحسين الكتابة':'Writing tools');
  set('navCleanup',lang()==='ar'?'التنظيف':'Cleanup');
  set('heroEyebrow',lang()==='ar'?'مساحة العمل / مراجعة المستند':'WORKSPACE / DOCUMENT REVIEW');
-}
-function eligible(text){
- const words=(text.match(/\S+/gu)||[]).length;
- if(!text.trim())return 'NO_TEXT';
- if(text.length>120000)return 'TEXT_TOO_LONG';
- const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length,lat=(text.match(/[A-Za-z]/g)||[]).length;
- const letters=(text.match(/\p{L}/gu)||[]).length;
- if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return 'UNSUPPORTED_LANGUAGE';
- if(words<120)return 'MIN_WORDS';
- if(lat<80)return 'UNSUPPORTED_LANGUAGE';
- return null;
-}
-function start(){
- const text=$('source').value;
- const problem=eligible(text);
- if(problem){
-  reset(problem==='NO_TEXT'?t().noText:problem==='MIN_WORDS'?t().short:
-   problem==='UNSUPPORTED_LANGUAGE'?t().language:t().failed);
-  if(window.matchMedia('(max-width:900px)').matches)$('studioAiQuick')?.scrollIntoView({block:'nearest'});
-  return;
- }
- reset();running=true;inputSnapshot=text;
- currentRequest=String(Date.now())+'-'+String(++counter);
- const request=currentRequest;
- readinessTimer=setTimeout(()=>{if(running&&currentRequest===request&&!ready)error('RUNTIME_INIT_TIMEOUT');},30000);
- absoluteTimer=setTimeout(()=>{if(running&&currentRequest===request)error('MODEL_TIMEOUT');},540000);
- $('aiRun').disabled=false;set('aiRun',t().cancel);status(t().loading);
- window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
- if(window.matchMedia('(max-width:900px)').matches)$('studioAiQuick')?.scrollIntoView({block:'nearest'});
- if(!child){
-  child=document.createElement('iframe');
-  child.id='tisOnDeviceModel';
-  child.title='Optional, user-triggered AI model runtime';
-  child.setAttribute('sandbox','allow-scripts allow-same-origin');
-  child.setAttribute('referrerpolicy','no-referrer');
-  child.setAttribute('aria-hidden','true');child.hidden=true;
-  child.addEventListener('error',()=>{if(running)error('RUNTIME_SCRIPT_FAILED');});
-  child.src='ai-runtime.html';$('aiMeter').append(child);
- }else if(ready)postRun();
-}
-function postRun(){
- if(!ready||!child||!currentRequest)return;
- clearTimeout(readinessTimer);readinessTimer=null;
- waitForProgress(currentRequest);
- child.contentWindow.postMessage({
-  channel:'TIS_BROWSER_AI_V1',op:'RUN',requestId:currentRequest,
-  text:inputSnapshot,deep:$('aiDeep').checked===true,
-  full:$('aiFullScan').checked===true,
-  context:$('aiContext').value
- },location.origin);
 }
 function element(name,className,textContent){
  const e=document.createElement(name);
@@ -352,13 +296,12 @@ function render(result){
  }}));
 }
 function error(code){
- const unrecoverable=['RUNTIME_INIT_TIMEOUT','RUNTIME_SCRIPT_FAILED','MODEL_TIMEOUT'].includes(code);
- cancel();stopTimers();currentRequest='';running=false;lastResult=null;
+ running=false;lastResult=null;
  $('aiRun').disabled=false;set('aiRun',t().run);
  $('aiBar').hidden=true;$('aiExport').hidden=true;$('aiEvidence').hidden=true;
  window.dispatchEvent(new CustomEvent('tis:ai-evidence',{detail:null}));
  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'ERROR'}}));
- if(unrecoverable){child?.remove();child=null;ready=false;}
+
  const message=code==='UNVERIFIED_MODEL_LABEL'?t().unsupported:
   code==='MIN_WORDS'?t().short:
   code==='UNSUPPORTED_LANGUAGE'?t().language:
@@ -368,27 +311,6 @@ function error(code){
   code==='MODEL_UNAVAILABLE'||code==='MODEL_LOAD_FAILED'?t().downloadFailed:
   code==='INSUFFICIENT_COVERAGE'?t().noCoverage:t().failed;
  status(message);
-}
-function handleMessage(event){
- if(!child||event.source!==child.contentWindow||event.origin!==location.origin)return;
- const data=event.data;
- if(data?.channel!=='TIS_BROWSER_AI_V1')return;
- if(data.op==='READY'){ready=true;clearTimeout(readinessTimer);readinessTimer=null;postRun();return;}
- if(!currentRequest||data.requestId!==currentRequest)return;
- if(data.op==='PROGRESS'){
-  waitForProgress(currentRequest);
-  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:data.stage,percent:data.percent}}));
-  if(data.stage==='DOWNLOADING'&&Number.isFinite(data.percent)){
-   status(t().download(data.percent,data.model==='secondary'?t().labelSecondary:t().labelPrimary));
-  }else status(data.stage==='ANALYZING'?t().analyzing:t().loading);
- }else if(data.op==='RESULT'){
-  stopTimers();currentRequest='';running=false;set('aiRun',t().run);
-  if($('source').value!==inputSnapshot){reset(t().expired);return;}
-  lastResult=data.result;render(lastResult);
-  window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
- }else if(data.op==='ERROR'){
-  error(data.code);
- }
 }
 function exportResult(){
  if(!lastResult)return;
@@ -403,18 +325,50 @@ function exportResult(){
  document.body.append(a);a.click();a.remove();
  setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
+// The actual lifecycle belongs to TISAnalysisApp / AnalysisController.
+// Browser inference messages are consumed exclusively by InferenceBridge.
+function presentLoading(){
+ reset();
+ running=true;inputSnapshot=$('source').value;
+ $('aiRun').disabled=false;set('aiRun',t().cancel);
+ status(t().loading);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'LOADING'}}));
+}
+function presentProgress({stage='LOADING',percent=null,model=null}={}){
+ running=true;
+ $('aiRun').disabled=false;set('aiRun',t().cancel);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage,percent}}));
+ if(stage==='DOWNLOADING'&&Number.isFinite(percent)){
+  status(t().download(percent,model==='secondary'?t().labelSecondary:t().labelPrimary));
+ }else status(stage==='ANALYZING'?t().analyzing:t().loading);
+}
+function presentVerified(result,sourceText){
+ if($('source').value!==sourceText){reset(t().expired);return;}
+ inputSnapshot=sourceText;lastResult=result;running=false;
+ render(result);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'DONE'}}));
+}
+function presentUnsupported(reason){
+ reset(reason==='NO_TEXT'?t().noText:reason==='MIN_WORDS'?t().short:
+  reason==='UNSUPPORTED_LANGUAGE'?t().language:reason==='TEXT_TOO_LONG'?t().failed:t().failed);
+}
+function presentCancelled(){
+ reset(t().cancelled);
+ window.dispatchEvent(new CustomEvent('tis:ai-progress',{detail:{stage:'CANCELLED'}}));
+}
 function setup(){
  if(!$('aiMeter'))return;
+ // The compact Analyze control and the Advanced action share one controller.
  $('aiRun').addEventListener('click',()=>{
-  if(running){reset(t().cancelled);return;}
-  start();
+  if(window.TISAnalysisApp?.toggle)window.TISAnalysisApp.toggle();
+  else status(t().failed);
  });
  $('aiExport').addEventListener('click',exportResult);
- $('source')?.addEventListener('input',()=>{if(lastResult||running)reset(t().expired);else if($('aiStatus').textContent)status('');});
- for(const id of ['clear','sample'])$(id)?.addEventListener('click',()=>reset());
- $('file')?.addEventListener('change',()=>reset());
  $('language')?.addEventListener('click',translate);
- window.addEventListener('message',handleMessage);
+ window.TISAiPresenter=Object.freeze({
+  presentLoading,presentProgress,presentVerified,presentUnsupported,
+  presentCancelled,clear:reset,presentError:error
+ });
  translate();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});

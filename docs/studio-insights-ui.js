@@ -85,16 +85,14 @@
  const t=()=>labels[document.documentElement.lang==='ar'?'ar':'en'];
  const round=n=>Math.round(n*10)/10;
  function readinessNote(){
-  const text=source.value;if(!text.trim())return t().aiIntro;
-  const words=(text.match(/\S+/gu)||[]).length;
-  if(text.length>120000)return t().tooLong;
-  const ar=(text.match(/\p{Script=Arabic}/gu)||[]).length;
-  const lat=(text.match(/[A-Za-z]/g)||[]).length;
-  const letters=(text.match(/\p{L}/gu)||[]).length;
-  if(ar>Math.max(3,lat*.02)||letters-ar-lat>Math.max(10,lat*.1))return t().languageUnsupported;
-  if(words<120)return t().needWords(120-words);
-  if(lat<80)return t().languageUnsupported;
-  return t().readyEnglish;
+  const policy=window.TISEligibilityPolicy;
+  if(!policy||typeof policy.assess!=='function')return t().languageUnsupported;
+  const result=policy.assess(source.value);
+  if(result.eligible)return t().readyEnglish;
+  if(result.reason==='NO_TEXT')return t().aiIntro;
+  if(result.reason==='TEXT_TOO_LONG')return t().tooLong;
+  if(result.reason==='MIN_WORDS')return t().needWords(Math.max(0,120-result.words));
+  return t().languageUnsupported;
  }
  function set(id,value){if($(id))$(id).textContent=value;}
  function addHistory(label){
@@ -161,37 +159,41 @@
   if(selected.length>first.length)root.append(E('p','studio-muted',
    (selected.length-first.length)+' '+(document.documentElement.lang==='ar'?'ملاحظات إضافية في التقرير':'additional notes available in export')));
  }
- function modelPerSection(span){
+ function modelProjection(){
   if(!state.model)return null;
-  const valid=state.model.segments.filter(x=>Number.isInteger(x.start)&&Number.isInteger(x.end)
-     &&Number.isFinite(x.signal)&&x.start<span.end&&x.end>span.start);
-  if(!valid.length)return {coverage:0,signal:null};
-  const points=[span.start,span.end];
-  for(const s of valid){points.push(Math.max(span.start,s.start),Math.min(span.end,s.end));}
-  points.sort((a,b)=>a-b);
-  const unique=points.filter((x,i)=>i===0||x!==points[i-1]);
-  let covered=0,weighted=0;
-  for(let i=1;i<unique.length;i++){
-   const begin=unique[i-1],end=unique[i];
-   if(end<=begin)continue;
-   const hit=valid.filter(x=>x.start<end&&x.end>begin);
-   if(!hit.length)continue;
-   const width=end-begin;
-   covered+=width;weighted+=width*hit.reduce((n,x)=>n+x.signal,0)/hit.length;
-  }
-  const coverage=span.end>span.start?round(covered/(span.end-span.start)*100):0;
-  return {coverage,signal:coverage>=60&&covered?round(weighted/covered):null};
+  const documents=globalThis.TISDocumentSession;
+  const mapping=globalThis.TISEvidenceProjection;
+  if(!documents?.createDocumentSession||!mapping?.projectEvidence)return null;
+  try{
+   const snapshot=documents.createDocumentSession(source.value).read();
+   const signal=Number.isFinite(state.model.displayedSignalPercent)?
+    state.model.displayedSignalPercent:null;
+   return mapping.projectEvidence(snapshot,{
+    revision:snapshot.revision,
+    kind:signal===null?'INCONCLUSIVE':'RESEARCH_SIGNAL',
+    signal,documentCoverageWordsPercent:state.model.documentCoverage,
+    segments:state.model.segments
+   },{maxOverviewSections:Math.min(1000,Math.max(1,snapshot.paragraphs.length))});
+  }catch{return null;}
+ }
+ function modelPerSection(span,projected){
+  if(!state.model)return null;
+  const found=projected?.sections?.find(x=>x.start===span.start&&x.end===span.end);
+  return found?{
+   coverage:found.paragraphCoverageCharactersPercent,signal:found.windowSignal
+  }:{coverage:0,signal:null};
  }
  function renderSections(){
   const root=$('studioSectionList');root.replaceChildren();
   const profile=state.profile;
   if(!source.value.trim()||!profile?.sections.length){root.append(E('p','studio-muted',t().add));return;}
   const shown=profile.sections.slice(0,24);
+  const projection=modelProjection();
   for(const sec of shown){
    const card=E('div','studio-section-item'),m=sec.statistics;
    card.append(E('strong','',t().section+' '+sec.id+' · '+m.words+' '+t().words));
    card.append(E('small','',t().avg+': '+m.averageSentenceWords+' · '+t().diversity+': '+m.lexicalDiversity));
-   const signal=modelPerSection(sec);
+   const signal=modelPerSection(sec,projection);
    if(signal){
     card.append(E('small','',t().coverage+': '+signal.coverage+'% · '+(signal.signal===null?t().limited:t().modelSignal+': '+signal.signal+'%')));
    }else card.append(E('small','',t().unseen));
@@ -242,6 +244,7 @@
  }
  function exportReview(){
   if(!source.value.trim()||!state.profile){set('studioExportStatus',t().noExport);return;}
+  const modelParagraphProjection=modelProjection();
   const report={
    application:'Text Integrity Studio',version:'TIS_STYLE_V1',createdAt:new Date().toISOString(),
    sourceMetadata:core.safeFileMetadata($('file')?.files?.[0]),
@@ -250,7 +253,7 @@
     model_id:state.model.model_id,
     revision:'Browser-provided model revision; see original AI evidence export',
     status:state.model.status,
-    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s)}))
+    measuredParagraphs:state.profile.sections.map(s=>({id:s.id,...modelPerSection(s,modelParagraphProjection)}))
    }:null,
    disclaimer:'No source text, original file name, copied passages or individual authorship inference is included. Local editable text stays in the current tab.'
   };
@@ -264,9 +267,14 @@
   const button=$('scanAI'),first=button?.querySelector('.v5-action-title'),second=button?.querySelector('.v5-action-sub');
   if(!first||!second){set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);return;}
   const arabic=document.documentElement.lang==='ar';
-  first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):(arabic?'تحليل النص باستخدام AI':'Analyze Text');
-  second.textContent=state.aiRunning?(arabic?'Cancel analysis':'إلغاء التحليل'):(arabic?'Analyze Text':'حلّل النص');
-  button.setAttribute('aria-label',first.textContent);
+  const writing=document.body.dataset.tisMode==='humanize'||document.body.dataset.tisMode==='editor';
+  first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):
+   writing?(arabic?'مراجعة الكتابة':'Review writing'):
+   (arabic?'تحليل النص':'Analyze Text');
+  second.textContent=state.aiRunning?(arabic?'إيقاف فحص النموذج':'Stop model analysis'):
+   writing?(arabic?'مراجعة الكتابة محليًا':'Local writing review'):
+   (arabic?'كشف AI البحثي':'Research AI detection');
+  button.setAttribute('aria-label',first.textContent+' — '+second.textContent);
  }
  function translate(){
   setAnalyzeLabel();
@@ -324,11 +332,26 @@
    setTimeout(refresh,400);
   });
   $('language').addEventListener('click',()=>{translate();});
+  // Native mode tabs change body state. Keep button copy honest even when
+  // no model-progress event fires (editing never starts inference).
+  new MutationObserver(setAnalyzeLabel).observe(document.body,{
+   attributes:true,attributeFilter:['data-tis-mode']
+  });
   $('studioAiQuickRun').addEventListener('click',()=>{$('aiRun')?.click();});
   // A single explicit user action runs safe writing review first, then the
   // optional English model only when eligibility checks in ai-score-ui pass.
+  // The one AnalysisController runs local writing review first, then the
+  // optional eligible English detector. Never start two competing scans.
   $('scanAI').addEventListener('click',()=>{
-   if(!state.aiRunning)$('scan')?.click();
+   const mode=document.body.dataset.tisMode||'detection';
+   // Selecting Humanize or Writing Editor explicitly requests the local
+   // advisor, not an unprompted ~126 MB research model download.
+   if(!state.aiRunning&&mode!=='detection'){
+    window.TISAnalysisApp?.reviewWritingOnly?.();
+    return;
+   }
+   // Detection mode and Cancel continue through the single authoritative
+   // AnalysisController; do not start a competing scan.
    $('aiRun')?.click();
   });
   $('studioExportTop').addEventListener('click',()=>{$('studioExportReview')?.click();});

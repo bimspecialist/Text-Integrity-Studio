@@ -1,0 +1,12 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const text=fs.readFileSync('docs/studio-insights-ui.js','utf8');
+const start=text.indexOf('function setAnalyzeLabel()');
+const end=text.indexOf('function translate()',start);
+assert(start>=0&&end>start,'preserve one canonical button presenter');
+const code=text.slice(start,end);
+assert.match(code,/writing\?\s*\(arabic\?/u,'button title responds to writing mode');
+assert(code.includes('Review writing'),'writing modes must not advertise AI detection');
+assert(code.includes('state.aiRunning'),'Cancel during model inference remains possible');
+console.log('PASS V9 primary button: truthful mode-specific wording, single owner');

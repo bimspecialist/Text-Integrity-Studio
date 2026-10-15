@@ -52,7 +52,7 @@ async function run(){
  try{
   const page=await browser.newPage();
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
-  await page.waitForSelector('#aiRun');
+  await page.waitForSelector('#scanAI',{visible:true});
   await page.evaluate(()=>{
    window.__benchmarkResults=[];
    window.addEventListener('message',event=>{
@@ -68,7 +68,8 @@ async function run(){
    await page.$eval('#source',(input,value)=>{
     input.value=value;input.dispatchEvent(new Event('input',{bubbles:true}));
    },sample.text);
-   await page.click('#aiRun');
+   // Use the canonical visible public Analyze action; legacy #aiRun is hidden.
+   await page.click('#scanAI');
    await page.waitForFunction(previous=>window.__benchmarkResults.length>previous,
      {timeout:180000},before);
    const response=await page.evaluate(()=>window.__benchmarkResults.at(-1));

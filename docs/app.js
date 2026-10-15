@@ -1,7 +1,27 @@
 /* Text Integrity Studio — local app controller */
 
 'use strict';
-const $=s=>document.getElementById(s);let lang='en', tab='unicode', history=[],future=[],cleaned='',lastReport=null;
+const $=s=>document.getElementById(s);let lang='en', tab='unicode', history=[],future=[],cleaned='',lastReport=null,longAuditTimer=null;
+/* File reads finish asynchronously; the latest user edit or file selection
+ * owns the editor. Import tokens contain NO document data or persistent state.
+ * Word/PDF wrappers pass the same token to their lower-level reader.
+ */
+const TISFileImportGuard=(function(){
+ let serial=0,active=null;
+ const source=$('source');
+ source.addEventListener('input',()=>{active=null;});
+ function begin(file){
+  if(!file)return null;
+  const token=Object.freeze({id:++serial,initialText:source.value});
+  active=token;
+  return token;
+ }
+ function isCurrent(token){
+  return !!token&&token===active&&source.value===token.initialText;
+ }
+ return Object.freeze({begin,isCurrent,generation:()=>serial});
+})();
+globalThis.TISFileImportGuard=TISFileImportGuard;
 const I={
 en:{heading:'Check and improve your text.',subtitle:'Paste text or upload Word, PDF, or TXT. Review your writing and optionally run an experimental English AI classifier.',chip1:'Free forever',chip2:'Works inside your browser',chip3:'Arabic + English',chip4:'No accounts or API keys',titleInput:'Document',loadText:'Choose a Word, PDF, or text file',m1:'Words',m2:'Characters',m3:'Sentences',m4:'Flags',scan:'Review writing',sample:'Try an example',clear:'Clear',undo:'Undo',redo:'Redo',titleClean:'Clean hidden characters',previewOnly:'Preview first · No original overwritten',modeLabel:'Cleaning mode',modeNotice:'Safe mode removes selected invisible characters while retaining bidirectional markers used in Arabic/English and emoji joiners. Thorough mode may change appearance.',preview:'Preview cleanup',copy:'Copy result',download:'Export clean TXT',beforeLabel:'Original fragment',afterLabel:'Cleaned fragment',apply:'Apply cleanup',titleAudit:'AI detector',tabUnicode:'Unicode',tabQuality:'Writing quality',tabSecurity:'Security',json:'Export JSON',markdown:'Export Markdown',limitationsTitle:'AI origin & watermarks',limitations:'Invisible Unicode is not an AI watermark. An optional English-language browser classifier may display an experimental model signal, not a verified authorship probability or a proportion of AI-written words. No statistical watermark removal is claimed.',privacyNote:'The regular editor stays local. The optional AI model downloads external software and weights only after you click; document text is not intentionally submitted to an AI API.',footerText:'Private by design · Verify changes before applying',localtag:'● Local & private'},
 ar:{heading:'افحص نصك وحسّنه بسهولة.',subtitle:'الصق النص أو ارفع Word أو PDF أو TXT، وراجع التحسينات، ويمكنك تشغيل نموذج AI إنجليزي تجريبي عند الرغبة.',chip1:'مجاني بالكامل',chip2:'يعمل داخل متصفحك',chip3:'العربية والإنجليزية',chip4:'بدون حساب أو مفاتيح API',titleInput:'المستند',loadText:'اختر ملف Word أو PDF أو نص',m1:'الكلمات',m2:'الأحرف',m3:'الجمل',m4:'الملاحظات',scan:'مراجعة الكتابة',sample:'جرّب مثالًا',clear:'مسح',undo:'تراجع',redo:'إعادة',titleClean:'تنظيف الأحرف المخفية',previewOnly:'المعاينة أولًا · لا تعديل على الملف الأصلي',modeLabel:'وضع التنظيف',modeNotice:'الوضع الآمن يزيل أحرفًا مخفية محددة مع المحافظة على علامات اتجاه العربية والإنجليزية وموصلات الإيموجي. قد يؤثر الوضع الشامل على العرض.',preview:'معاينة التنظيف',copy:'نسخ النتيجة',download:'تصدير TXT',beforeLabel:'مقتطف أصلي',afterLabel:'مقتطف بعد التنظيف',apply:'اعتماد التنظيف',titleAudit:'كاشف AI',tabUnicode:'Unicode',tabQuality:'جودة الكتابة',tabSecurity:'الأمان',json:'تصدير JSON',markdown:'تصدير Markdown',limitationsTitle:'حول نسبة AI والعلامات المائية',limitations:'الأحرف المخفية ليست دليلًا على وجود علامة مائية. يمكن تشغيل نموذج إنجليزي داخل المتصفح لإظهار إشارة AI تجريبية غير معتمدة؛ لا تمثل نسبة الكلمات المكتوبة بالذكاء الاصطناعي، ولا تُستخدم لإثبات الكاتب.',privacyNote:'تتم معالجة النص محليًا. نموذج AI الاختياري ينزّل كود التشغيل والأوزان من مصادر خارجية بعد طلبك فقط، ولا يرسل التطبيق النص عمدًا إلى API لتحليل AI.',footerText:'خصوصية افتراضية · راجع التغييرات قبل اعتمادها',localtag:'● خاص ومحلي'}
@@ -16,12 +36,27 @@ function audit(s){const found=new Map();let removable=0;for(const c of s){const 
 function cleanup(s,mode){let out='',removed=0,normalized=0;for(const c of s){const cp=c.codePointAt(0);if(safe.has(cp)||(cp<32&&![9,10,13].includes(cp))||cp===127||(mode==='thorough'&&(sensitive.has(cp)||/\p{Cf}/u.test(c)))){removed++;continue;}if(normalize.has(cp)){out+=' ';normalized++;}else out+=c;}return{text:out,removed,normalized};}
 function quality(s){const words=s.match(/[\p{L}\p{N}][\p{L}\p{M}\p{N}'’-]*/gu)||[],sentences=(s.match(/[^.!?؟\n]+[.!?؟]?/g)||[]).map(v=>v.trim()).filter(Boolean),issues=[];function add(name,count,detail){if(count)issues.push({name,count,detail});}add(t('Long sentences','الجمل الطويلة'),sentences.filter(v=>(v.match(/[\p{L}\p{N}]+/gu)||[]).length>35).length,t('Consider shortening sentences longer than 35 words.','يمكن تبسيط الجمل التي تتجاوز 35 كلمة.'));add(t('Repeated adjacent words','كلمات متكررة متجاورة'),(s.match(/\b([a-z][a-z'-]*)\s+\1\b/gi)||[]).length,t('Review accidental word repetitions.','راجع التكرار غير المقصود.'));add(t('Repeated spaces','مسافات متكررة'),(s.match(/ {2,}/g)||[]).length,t('Could be intentional in tables or aligned text.','قد تكون مقصودة للمحاذاة أو الجداول.'));add(t('Trailing whitespace','مسافات نهاية السطر'),(s.match(/[ \t]+$/gm)||[]).length,t('Review whitespace at the end of lines.','راجع المسافات بنهاية الأسطر.'));return{words:words.length,sentences:sentences.length,unique:new Set(words.map(x=>x.toLowerCase())).size,average:sentences.length?Math.round(words.length/sentences.length):0,issues};}
 function security(s){const issues=[];const bidi=(s.match(/[\u202a-\u202e\u2066-\u2069]/g)||[]).length;if(bidi)issues.push({name:t('Direction overrides / isolates','علامات تغيير اتجاه النص'),count:bidi,detail:t('These can be legitimate in mixed-script content; inspect manually.','قد تكون مشروعة في النصوص المختلطة، راجعها يدويًا.')});const rep=(s.match(/\ufffd/g)||[]).length;if(rep)issues.push({name:t('Replacement characters','أحرف الاستبدال'),count:rep,detail:t('Text encoding may have been damaged.','قد يوجد تلف في ترميز النص.')});const words=s.match(/[\p{Script=Latin}\p{Script=Cyrillic}\p{Script=Greek}]+/gu)||[];const mixed=[...new Set(words.filter(w=>[(/\p{Script=Latin}/u.test(w)),(/\p{Script=Cyrillic}/u.test(w)),(/\p{Script=Greek}/u.test(w))].filter(Boolean).length>1))];if(mixed.length)issues.push({name:t('Mixed-script look-alike words','كلمات بأحرف من أبجديات مختلفة'),count:mixed.length,detail:mixed.slice(0,6).join(' · ')});return issues;}
-function analyze(){const text=$('source').value,uni=audit(text),q=quality(text),sec=security(text);lastReport={generator:'Text Integrity Studio',version:'2.0',generated_at:new Date().toISOString(),caveat:'Not an AI authorship estimate or a watermark detection method.',statistics:{words:q.words,characters:Array.from(text).length,sentences:q.sentences,average_words_per_sentence:q.average,unique_words:q.unique},unicode:uni,writing_quality:q.issues,security:sec};$('words').textContent=q.words;$('chars').textContent=Array.from(text).length;$('sentences').textContent=q.sentences;$('flags').textContent=uni.count+q.issues.reduce((n,x)=>n+x.count,0)+sec.reduce((n,x)=>n+x.count,0);render();}
+function analyze(){if(longAuditTimer!==null){clearTimeout(longAuditTimer);longAuditTimer=null;}const text=$('source').value,uni=audit(text),q=quality(text),sec=security(text);lastReport={generator:'Text Integrity Studio',version:'2.0',generated_at:new Date().toISOString(),caveat:'Not an AI authorship estimate or a watermark detection method.',statistics:{words:q.words,characters:Array.from(text).length,sentences:q.sentences,average_words_per_sentence:q.average,unique_words:q.unique},unicode:uni,writing_quality:q.issues,security:sec};$('words').textContent=q.words;$('chars').textContent=Array.from(text).length;$('sentences').textContent=q.sentences;$('flags').textContent=uni.count+q.issues.reduce((n,x)=>n+x.count,0)+sec.reduce((n,x)=>n+x.count,0);render();}
 function render(){const panel=$('findingList');panel.replaceChildren();for(const btn of document.querySelectorAll('[data-tab]'))btn.classList.toggle('active',btn.dataset.tab===tab);const report=lastReport;const findings=report?(tab==='unicode'?report.unicode.items:tab==='quality'?report.writing_quality:report.security):[];$('checkedLabel').textContent=report?t('Analysis ready','التحليل جاهز'):t('No scan yet','لم يُفحص بعد');if(!findings.length){const p=document.createElement('p');p.className='empty';p.textContent=report?t('No findings in this category.','لا توجد ملاحظات في هذه الفئة.'):t('Paste text and press Analyze to see the report.','الصق النص واضغط تحليل لعرض النتائج.');panel.append(p);}for(const item of findings){const row=document.createElement('div');row.className='flag';const top=document.createElement('div');top.className='flag-head';const strong=document.createElement('strong');strong.textContent=item.name;const count=document.createElement('span');count.className='count';count.textContent=item.count;top.append(strong,count);const p=document.createElement('p');p.textContent=item.detail||((item.code||'')+' · '+(item.category==='safe'?t('Safe to clean in typical prose','قابل للتنظيف عادة'):item.category==='space'?t('Normalize to standard space','تطبيع المسافة'):t('Review context before changing','راجع السياق قبل التعديل')));row.append(top,p);panel.append(row);}}
 function snapshot(){history.push($('source').value);if(history.length>30)history.shift();future=[];histButtons();}
 function histButtons(){$('undo').disabled=!history.length;$('redo').disabled=!future.length;}
-function setText(text){$('source').value=text;analyze();$('resultbox').hidden=true;}
-$('source').addEventListener('input',()=>{lastReport=null;analyze();});$('language').onclick=()=>{lang=lang==='ar'?'en':'ar';translate();analyze();};
+function setText(text){const source=$('source');source.value=text;source.dispatchEvent(new Event('input',{bubbles:true}));$('resultbox').hidden=true;}
+function onSourceInput(){
+ const source=$('source'),value=source.value;
+ lastReport=null;
+ if(longAuditTimer!==null){clearTimeout(longAuditTimer);longAuditTimer=null;}
+ // Avoid scanning 20k-word drafts synchronously on every keystroke.
+ // Short documents retain immediate statistics; long audits are coalesced.
+ if(value.length>30000){
+  render(); // immediately remove stale audit findings without heavy regex passes
+  $('checkedLabel').textContent=t('Updating local writing review…','جارٍ تحديث المراجعة المحلية…');
+  longAuditTimer=setTimeout(()=>{longAuditTimer=null;analyze();},180);
+  return;
+ }
+ analyze();
+}
+$('source').addEventListener('input',onSourceInput);
+$('language').onclick=()=>{lang=lang==='ar'?'en':'ar';translate();analyze();};
 $('scan').onclick=()=>{analyze();toast(t('Analysis updated','تم تحديث التحليل'));};for(const btn of document.querySelectorAll('[data-tab]'))btn.onclick=()=>{tab=btn.dataset.tab;render();};
 $('sample').onclick=()=>{snapshot();setText('An exa\u200Bmple with a hidden character. This is is repeated.\n\u0645\u0631\u062d\u0628\u0627 \u0628\u0627\u0644\u0639\u0627\u0644\u0645 \u200fEnglish and Arabic. A spaced\u00a0phrase.');};
 $('clear').onclick=()=>{if(!$('source').value)return;snapshot();setText('');};
@@ -33,7 +68,7 @@ function download(filename,contents,type){const url=URL.createObjectURL(new Blob
 $('download').onclick=()=>{if($('resultbox').hidden){toast(t('Preview cleanup first','اعرض المعاينة أولًا'));return;}download('cleaned-text.txt',cleaned,'text/plain;charset=utf-8');};
 $('json').onclick=()=>{analyze();download('text-integrity-report.json',JSON.stringify(lastReport,null,2),'application/json');};
 $('markdown').onclick=()=>{analyze();const r=lastReport;let markdown='# Text Integrity Report\n\n> Not evidence of AI authorship.\n\n- Words: '+r.statistics.words+'\n- Sentences: '+r.statistics.sentences+'\n- Unusual Unicode: '+r.unicode.count+'\n\n';for(const x of [...r.writing_quality,...r.security])markdown+='- '+x.name+': '+x.count+'\n';download('text-integrity-report.md',markdown,'text/markdown;charset=utf-8');};
-async function readFile(f){if(!f)return;if(!/\.(txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/i.test(f.name)||f.size>3000000){toast(t('Supported plain-text files only (TXT, MD, CSV, TSV, JSON, LOG, YAML, TEX, SRT, VTT) under 3 MB','يدعم الملفات النصية فقط بحجم أقل من 3 ميجابايت؛ ملفات الصيغ الثنائية غير المدعومة لا تُقرأ'));return;}snapshot();setText(await f.text());}
+async function readFile(f,token){if(!f)return;if(!/\.(txt|md|csv|tsv|json|log|yaml|yml|tex|srt|vtt)$/i.test(f.name)||f.size>3000000){toast(t('Supported plain-text files only (TXT, MD, CSV, TSV, JSON, LOG, YAML, TEX, SRT, VTT) under 3 MB','يدعم الملفات النصية فقط بحجم أقل من 3 ميجابايت؛ ملفات الصيغ الثنائية غير المدعومة لا تُقرأ'));return;}const ticket=token||TISFileImportGuard.begin(f);const text=await f.text();if(!TISFileImportGuard.isCurrent(ticket))return;snapshot();setText(text);}
 $('file').onchange=e=>readFile(e.target.files[0]);$('source').ondragover=e=>{e.preventDefault();$('source').classList.add('drag');};$('source').ondragleave=()=>$('source').classList.remove('drag');$('source').ondrop=e=>{e.preventDefault();$('source').classList.remove('drag');readFile(e.dataTransfer.files[0]);};
 $('source').addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.altKey&&e.key.toLowerCase()==='z'){e.preventDefault();$('undo').click();}});
 translate();analyze();

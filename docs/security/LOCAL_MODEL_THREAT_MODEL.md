@@ -1,0 +1,43 @@
+# S1 — Local inference, document import and publication threat model
+
+**Reviewed:** 2026-10-15. **Security release decision: CONDITIONAL runtime-provenance improvement; still BLOCKED for an unconditional “external code cannot access text” guarantee without independent iframe/model and real-device review.** This is an evidence-backed risk register, not a declaration of an observed breach. The local **generative** Worker is still disabled; these risks mainly concern the pre-existing optional English detector and document processing.
+
+## Data assets and trust boundaries
+
+| Boundary | Data or capability | Existing observed controls | Remaining assumption |
+|---|---|---|---|
+| Main GitHub Pages window | Typed/imported raw text, local draft, editor state, export | Restrictive top-page CSP (`script-src 'self'; connect-src 'self'`), textContent/textarea presentation, revisioned DocumentSession and user-reviewed Apply | Extensions, compromised same-origin scripts and browser cache remain outside top-page checks |
+| Uploaded DOCX/PDF/OCR/TXT | Potentially hostile external content/ZIP/XML/PDF bytes | JSZip size/entry ceilings, local extraction, primary text read-only for DOCX, no automatic remote document submission | Malformed parser data, decompression costs and active document content require further negative tests |
+| Optional AI detector iframe | The original English text crosses via targeted same-origin `postMessage`; classifier returns research-only signals | Created after explicit Analyze; origin **and window source** filtering; requestId and evidence-contract verification; cancel/stale revision guard | **HIGH**: iframe uses `sandbox="allow-scripts allow-same-origin"`; with dynamically loaded third-party JS, the sandbox must not be treated as a strong isolation boundary |
+| Optional inference runtime | `@huggingface/transformers@3.8.1` JavaScript and ONNX WebAssembly vendored from npm SHA-pinned archive; pinned ONNX model revisions still fetched from Hugging Face endpoints | User-opt-in download, named model revision, model-label/evidence validation, runtime CSP with allowlisted fetch domains | Runtime JS/WASM digests are checked against npm intake; remote model-file integrity and same-origin iframe isolation are NOT fully proven. A compromised shipped runtime or model delivery still requires separate auditing |
+| Local generative Worker | Would receive draft chunks if and only if later approved | New Worker code currently fails with `MODEL_NOT_VERIFIED`; generator button disabled, no silent cloud fallback, consent registry checked in bridge | Real WebGPU runtime, license check, binary fingerprints, quality and privacy of actual generation all **UNTESTED** |
+| GitHub Actions research | Public-source weak-label data and per-record predictions generated in runner temp directories | E5 aggregate artifact whitelist, source-license pin, explicit `NOT_APPROVED`, upload only after successful guard | Real third-party source availability and runtime execution; private E2/E4 unsalted group hashes must never be uploaded |
+
+## Risk register (scope, confidence, remedy and release impact)
+
+| ID | Severity | Evidence and possible impact | Mitigation/verification | State |
+|---|---|---|---|---|
+| S1-01 | **High** | The former CDN import is replaced by first-party vendored and SHA-256 checked Transformers.js/WASM files. `docs/analysis/inference-bridge.js` gives the model iframe script and same-origin privileges. A malicious or compromised first-party-served runtime *could* still access document text through its same-origin iframe permissions and make network requests permitted by CSP. This is a **structural exposure**, **not evidence of actual exfiltration**. | Self-hosted runtime and WASM hashes recorded; independently inspect the exact released bytes and remote ONNX assets, revisit opaque-origin/capability isolation, then test real ONNX and network traffic with synthetic canary text. Validate module/worker loading after isolation, not only synthetic unit tests. | **BLOCKS unconditional end-to-end privacy claim** |
+| S1-02 | Medium | Malicious DOCX/PDF metadata, HTML-like text or links could be rendered as active DOM if a view uses `innerHTML` or untrusted href. Tested malicious user-provided HTML and blocked fake-frame messaging in S1 Chromium suite; complete parser matrix not yet exercised. | Continue parser fuzzing, Word/PDF/OCR malformed-input tests, file-size/ZIP-bomb limits and output DOM escaping; manual review of all imported metadata link builders. | PARTIAL verification |
+| S1-03 | Medium | Forged `TIS_BROWSER_AI_V1` messages might try to inject an apparent 99% score or cancel legitimate inference. Browser source/origin and version/label evidence validation must fail closed. | Chromium spoof test with same-origin foreign iframe, wrong-origin real-frame event, matching request ID and an intentionally stalled legitimate runtime; real ONNX smoke remains separate. | Regression-tested; no production spoof exploit demonstrated |
+| S1-04 | Medium | Remote model files and optional inference packages may change delivery infrastructure; revision string pinning alone is not a full content-integrity assertion on every downloaded binary. | Record exact SHA-256 of all served model and runtime assets, reproducible cache audit and offline tests; restrict approved model versions and require consent for new weights. | HOLD |
+| S1-05 | High if published | E2 group-hash arrays are unsalted hashes of author/source groups. Public upload could allow dictionary attacks or re-identification. | Keep E2/E4 manifest private, replace with keyed pseudonyms for auditable shared reports, publish only prevalidated E5 aggregates and block artifacts on failed validation. | CI publication guarded; private storage review pending |
+| S1-06 | High for local rewriting | No confirmed browser WebGPU generative model has passed license, actual output quality, Arabic/English preservation, data-loss/cancel/retry or memory benchmarks. | Keep `Rewrite locally` disabled and report `MODEL_NOT_VERIFIED`. Perform real-device cold/warm, adversarial and bilingual evaluation before opt-in production enablement. | HOLD |
+
+## Tests and limitations
+
+- `tests/analysis/inference-bridge.test.js`: same-origin + source + request ID checks, cancellation and stale frame identity.
+- `tests/analysis/privacy-network.test.cjs`: real Chromium, malicious HTML-like source, pre-consent egress, forged same-origin alternate frame and wrong-origin message. The runtime is deliberately held in a fixture state to isolate message authentication; **not** an executable third-party-runtime compromise simulation.
+- `tests/analysis/local-rewriter-network-privacy.test.cjs`: fail-closed disabled generator with zero HTTP egress; **not** real WebGPU model inference.
+- `tests/test_research_artifact_publication.py`: E5 allowlisted aggregate-only artifacts; test fixtures do not establish real corpus provenance.
+
+**Decision:** Engineering-only S1 checks may pass while release privacy remains **BLOCK**. Untrusted third-party runtime isolation/integrity requires an explicit security design/implementation and real-browser evidence. Do not describe the optional English detector as mathematically guaranteed to keep every document private merely because its own application code contains no intentional upload.
+
+
+## S1/S2 remediation evidence — candidate V9 runtime intake
+
+- npm registry package: `@huggingface/transformers@3.8.1` (Apache-2.0). Archive SHA-256 `207714c36765b87accfd9b7b0672c3505805af97140990e0d9f8ac6e3cd5471e`. Captured in [Actions run 38720156738](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/38720156738).
+- First-party files: `docs/vendor/transformers/transformers.min.js`, `ort-wasm-simd-threaded.jsep.{mjs,wasm}`, LICENSE and SHA256SUMS, all committed in [intake commit f9358f78](https://github.com/bimspecialist/Text-Integrity-Studio/commit/f9358f78d45c6fda315368bb838bd0d05dc043ca).
+- Runtime no longer dynamically imports executable CDN code; runtime CSP no longer permits jsDelivr. Genuine browser ONNX model smoke must pass at the exact candidate commit before merging. This reduces the runtime supply-chain attack surface; it does **not** establish secure isolation of remote model bytes or certify confidential document handling.
+- The separate opaque-iframe prototype PR #19 failed original browser/fixture acceptance and remains unmerged. Do not count its sandbox changes as production fixes.
+- Manual iOS Safari/VoiceOver, Android/TalkBack and Windows/NVDA; third-party security review; and independent model-weight binary/license provenance remain **UNTESTED / HOLD**.

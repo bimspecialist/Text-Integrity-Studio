@@ -4,13 +4,17 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'self'; worker-src 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="tis-release-marker" content="TIS_V9_SIMPLIFIED_20261015_RC1">
 <meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="app.css?v=20261013-v4">
 <link rel="stylesheet" href="v5-public.css?v=20261013-v6">
+<link rel="stylesheet" href="analysis/dual-pane-editor.css?v=20261014-l7">
+<link rel="stylesheet" href="analysis/workspace-v8.css?v=20261014-v8-8-rc3">
+<link rel="stylesheet" href="analysis/workspace-v9.css?v=20261015-v9-rc1">
 </head>
-<body>
+<body class="tis-v9">
 <header class="v5-topbar" role="banner">
   <div class="v5-brand" aria-label="Text Integrity Studio">
     <span class="v5-brand-icon" aria-hidden="true">T.</span>
@@ -22,16 +26,7 @@
   </div>
 </header>
 <div class="shell">
-<aside class="app-sidebar" aria-label="Document tools">
-  <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
-  <nav class="side-navigation" aria-label="Workspace navigation">
-    <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
-    <a class="nav-item" href="#studioAiQuick" aria-label="AI Detector"><span aria-hidden="true">◷</span><span id="navResults">AI Detector</span></a>
-    <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
-    <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
-  </nav>
-  <div class="top"><span class="tag" id="localtag">● Private · On your device</span></div>
-</aside>
+
 <main>
   <div id="studioWorkspaceTop" class="studio-workspace-top">
     <div class="studio-heading-path"><span class="studio-top-app">Text Integrity Studio</span><span aria-hidden="true">/</span><strong id="studioTopDocument">Untitled document</strong></div>
@@ -42,10 +37,21 @@
     <h1 id="heading">Check and improve your text.</h1>
     <p id="subtitle">Paste text or upload Word, PDF, or TXT. Review quality findings and, if you choose, try the experimental AI model.</p>
   </section>
-  <div class="steps" aria-label="Three easy steps">
-    <span id="stepInput">1 · Add text</span>
-    <span id="stepScan">2 · Check</span>
-    <span id="stepSave">3 · Review and save</span>
+
+  <div class="steps" hidden aria-hidden="true">
+    <span id="stepInput">1 · Add text</span><span id="stepScan">2 · Check</span><span id="stepSave">3 · Review and save</span>
+  </div>
+  <div id="tisV8Context" class="tis-v8-context" aria-label="Workspace overview">
+    <div class="tis-v8-context-name">
+      <span id="tisV8Eyebrow">YOUR WORKSPACE</span>
+      <strong id="tisV8ContextTitle">Review a document</strong>
+    </div>
+    <p id="tisV8Privacy"><span class="tis-v8-privacy-indicator" aria-hidden="true"></span><span id="tisV8PrivacyText">Private draft · Optional model asset download</span></p>
+  </div>
+  <div id="tisModes" class="tis-modes" role="tablist" aria-label="Workspace modes">
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabDetection" aria-selected="true" aria-controls="tisModePanel" tabindex="0">AI Detection</button>
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabHumanize" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Improve Writing</button>
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabEditor" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Writing Editor</button>
   </div>
   <div class="workspace">
     <div class="workspace-main">
@@ -60,7 +66,18 @@
           <label for="file" id="v5UploadTab" class="v5-upload-tab" tabindex="0">↥ &nbsp; Upload file</label>
           <span id="v5TopCounts" class="v5-counts" aria-live="polite">0 words · 0 sections</span>
         </div>
+        <div class="tis-v8-quick-tools" role="group" aria-label="Text editing shortcuts">
+          <button id="tisV8Paste" type="button"><span aria-hidden="true">⌘</span> Paste text</button>
+          <button id="tisV8Example" type="button"><span aria-hidden="true">✳</span> Try example</button>
+          <span id="tisV8Shortcut">Ctrl + Enter to analyze</span>
+          <span id="tisV8ActionStatus" role="status" aria-live="polite"></span>
+          <span id="tisV8FileState" role="status" aria-live="polite"></span>
+        </div>
         <p id="v6DocumentNote" class="v6-document-note" role="status" aria-live="polite" hidden></p>
+        <div id="tisV8DropOverlay" class="tis-v8-drop-overlay" aria-hidden="true" hidden>
+          <span aria-hidden="true">↥</span>
+          <strong id="tisV8DropLabel">Drop Word, PDF, or text here</strong>
+        </div>
         <div class="studio-docbar" aria-label="Document workspace">
           <div class="studio-doc-title"><strong id="studioDocumentTitle">Untitled document</strong><span id="studioDocumentFormat">Local draft</span></div>
           <div id="studioDocumentStats" class="studio-doc-stats" aria-live="polite">0 words · 0 sections</div>
@@ -73,7 +90,10 @@
           </span>
           <input type="file" id="file" accept=".pdf,.docx,.txt,.md,.csv,.tsv,.json,.log,.yaml,.yml,.tex,.srt,.vtt,text/plain" aria-describedby="fileDescription">
         </label>
-        <label for="source" class="source-label" id="sourceLabel">Text to check</label>
+        <div class="tis-v8-source-heading">
+          <label for="source" class="source-label" id="sourceLabel">Text to check</label>
+          <span id="tisSourceLabel" class="tis-v8-source-kind">Before</span>
+        </div>
         <textarea id="source" placeholder="Paste your text here…" aria-label="Text input" spellcheck="true"></textarea>
         <div class="input-summary" aria-live="polite" id="quickInputState">0 words · Ready to check</div>
         <details id="studioEvidence" class="studio-heatmap-disclosure" hidden>
@@ -123,13 +143,92 @@
         </section>
       </details>
     </div>
-    <div class="workspace-results">
+    <div class="workspace-results" id="tisModePanel" role="tabpanel" aria-labelledby="tisTabDetection">
+      <section id="tisRevisedPane" aria-labelledby="tisRevisedHeading">
+        <div class="tis-revised-head">
+          <h2 id="tisRevisedHeading">Revised draft</h2>
+          <span id="tisDraftBadge">Manual local editing only</span>
+        </div>
+        <p id="tisDraftIntro">Edit this local draft or preview a writing suggestion. Your original text stays unchanged until you apply.</p>
+        <div class="tis-v8-writing-actions" aria-label="Writing review feedback">
+          <p id="tisV8WritingFeedback" role="status" aria-live="polite">Review writing locally without downloading a detector model.</p>
+          <button type="button" id="tisV8ReviewSuggestions" aria-controls="humanizeSuggestions" hidden>View suggestions</button>
+        </div>
+        <label id="tisRevisedLabel" for="tisRevisedText">After</label>
+        <textarea id="tisRevisedText" dir="auto" spellcheck="true" aria-describedby="tisDraftStatus tisGeneratorNotice"></textarea>
+        <div class="tis-draft-actions">
+          <button type="button" id="tisDraftReset">Reset draft</button>
+          <button type="button" id="tisDraftCopy">Copy draft</button>
+          <button type="button" id="tisDraftApply" disabled>Apply reviewed draft</button>
+          <button type="button" id="tisDraftUndo" disabled>Undo apply</button>
+        </div>
+        <div class="tis-v8-compare-tools" role="group" aria-label="Before and after navigation">
+          <span id="tisV8WordComparison" aria-label="Original and revised word count"
+            data-before-words="0" data-after-words="0" data-delta-words="0">Original 0 · Draft 0 · 0 words</span>
+          <label class="tis-v8-scroll-label" for="tisV8ScrollLink">
+            <input id="tisV8ScrollLink" type="checkbox">
+            <span id="tisV8ScrollLinkLabel">Link scrolling</span>
+          </label>
+        </div>
+        <details id="tisV8FindPanel" class="tis-v8-find-panel">
+          <summary id="tisV8FindTitle">Find &amp; replace in draft</summary>
+          <div class="tis-v8-find-body">
+            <div class="tis-v8-find-fields">
+              <label for="tisV8FindText"><span id="tisV8FindLabel">Find</span>
+                <input id="tisV8FindText" type="text" maxlength="512" autocomplete="off" spellcheck="false">
+              </label>
+              <label for="tisV8ReplaceText"><span id="tisV8ReplaceLabel">Replace with</span>
+                <input id="tisV8ReplaceText" type="text" autocomplete="off" spellcheck="false">
+              </label>
+            </div>
+            <div class="tis-v8-find-options">
+              <label for="tisV8CaseSensitive"><input id="tisV8CaseSensitive" type="checkbox">
+                <span id="tisV8CaseLabel">Match case</span></label>
+              <span id="tisV8FindCount" data-count="0">0 matches</span>
+            </div>
+            <div class="tis-v8-find-actions">
+              <button id="tisV8FindNext" type="button" disabled>Find next</button>
+              <button id="tisV8ReplaceNext" type="button" disabled>Replace next</button>
+              <button id="tisV8ReplaceAll" type="button" disabled>Replace all in draft</button>
+            </div>
+            <p id="tisV8FindStatus" role="status" aria-live="polite">Changes stay in the draft. Review protected facts before Apply.</p>
+          </div>
+        </details>
+        <p id="tisDraftStatus" role="status" aria-live="polite">No draft changes to apply.</p>
+        <div class="tis-v8-draft-export">
+          <button id="tisV8SaveDraft" type="button" disabled>Download draft TXT</button>
+          <span id="tisV8SaveHelp">Plain text copy · original preserved</span>
+        </div>
+        <details id="tisV8DiffReview" class="tis-v8-diff-review">
+          <summary id="tisV8DiffTitle">Review the changed passage</summary>
+          <p id="tisV8DiffNote" class="tis-v8-diff-note" role="status" aria-live="polite">Expand to compare a compact excerpt. The full text remains in both editors.</p>
+          <div class="tis-v8-diff-pair">
+            <div>
+              <strong id="tisV8DiffOriginalLabel">Original excerpt</strong>
+              <pre id="tisV8DiffOriginal" dir="auto"></pre>
+            </div>
+            <div>
+              <strong id="tisV8DiffRevisedLabel">Revised excerpt</strong>
+              <pre id="tisV8DiffRevised" dir="auto"></pre>
+            </div>
+          </div>
+        </details>
+        <div class="tis-generator-gate">
+          <button type="button" id="tisLocalRewrite" disabled>Rewrite locally</button>
+          <p id="tisGeneratorNotice">Local generative rewriting is not yet available. A verified on-device model is required; there is no cloud fallback.</p>
+        </div>
+      </section>
       <section class="panel report-panel" id="reportPanel" aria-labelledby="titleAudit">
         <div class="panel-heading v5-results-heading">
           <div><h2 id="titleAudit">Analysis Results</h2><p id="v5ResultsSubtitle">AI model evidence and writing insights</p></div>
           <span id="checkedLabel" class="small">Waiting for analysis</span>
         </div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <p id="tisV9Summary" class="tis-v9-summary" role="status" aria-live="polite" data-state="EMPTY">Paste or upload a document to begin.</p>
+        <div id="tisV8AnalysisStatus" class="tis-v8-analysis-status" role="status" aria-live="polite" data-state="EMPTY">
+          <span id="tisV8StateIcon" class="tis-v8-state-icon" aria-hidden="true">●</span>
+          <span id="tisV8StateText">Add text to begin. Nothing is uploaded automatically.</span>
+        </div>
         <section id="studioAiQuick" class="studio-ai-quick" aria-labelledby="studioAiQuickLabel">
           <div class="v5-signal-heading">
             <strong id="studioAiQuickLabel">AI model signal</strong><span id="studioAiQuickBadge">EXPERIMENTAL</span>
@@ -174,6 +273,20 @@
           </details>
           <div class="studio-export-row"><button id="studioExportReview" type="button">Export writing report</button><span id="studioExportStatus" class="studio-muted" aria-live="polite"></span></div>
         </section>
+        <details id="humanizeSuggestions" class="humanize-disclosure" hidden>
+          <summary>Make writing more natural</summary>
+          <p id="humanizeSubtitle" class="studio-muted">Local editorial guidance · not AI authorship evidence</p>
+          <div id="humanizeSuggestionCards" class="humanize-cards" aria-live="polite"></div>
+          <details id="humanizeMore" class="studio-mini-details" hidden>
+            <summary>More optional suggestions</summary>
+            <div id="humanizeMoreCards" class="humanize-cards"></div>
+          </details>
+          <div class="humanize-footer">
+            <button id="humanizeUndo" type="button" disabled>Undo change</button>
+            <p id="humanizeReviewStatus" class="studio-muted" role="status" aria-live="polite"></p>
+          </div>
+          <p id="humanizeComparison" class="humanize-comparison" role="status" aria-live="polite" hidden></p>
+        </details>
         <section id="v5Breakdown" class="v5-breakdown" aria-labelledby="v5BreakdownTitle">
           <div class="v5-breakdown-top"><h3 id="v5BreakdownTitle">Text breakdown</h3><small id="v5BreakdownCaption">Measured model windows only</small></div>
           <div id="v5BreakdownRows" class="v5-breakdown-rows" aria-live="polite">
@@ -221,7 +334,7 @@
             <summary id="aiEvidenceTitle">View model comparison and analyzed passages</summary>
             <div id="aiEvidenceBody" aria-live="polite"></div>
           </details>
-          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB open-source model and a browser runtime from Hugging Face/CDN. No text is intentionally sent to an AI API.</p>
+          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB English research model from Hugging Face. Runtime code and ONNX WASM are hash-pinned site assets; no document text is intentionally sent to an AI API.</p>
           <p id="aiStatus" class="small" role="status" aria-live="polite"></p>
           <p class="ai-pilot-risk">
             <strong id="aiPilotRisk">Observed false-alert risk:</strong>
@@ -271,7 +384,7 @@
 </footer>
 </div>
 <div id="toast" role="status" aria-live="polite"></div>
-<script src="app.js?v=20261013-v4"></script>
+<script src="app.js?v=20261014-v8-8-rc3"></script>
 <script src="vendor/jszip.min.js"></script>
 <script src="writing-rules.js"></script>
 <script src="docx-editor.js"></script>
@@ -281,9 +394,28 @@
 <script src="experimental-signal.js"></script>
 <script src="experimental-signal-ui.js"></script>
 <script src="simple-ui.js"></script>
-<script src="ai-score-ui.js?v=20261013-v4"></script>
+<script src="ai-evidence-core.js"></script>
+<script src="analysis/eligibility-policy.js?v=20261013-path-a-r3"></script>
+<script src="ai-score-ui.js?v=20261013-path-a-r3"></script>
 <script src="studio-insights-core.js"></script>
-<script src="studio-insights-ui.js?v=20261013-v5"></script>
+<script src="analysis/document-session.js?v=20261013-path-a-r7"></script>
+<script src="analysis/evidence-projection.js?v=20261013-path-a-r7"></script>
+<script src="analysis/evidence-contract.js?v=20261013-path-a-r8"></script>
+<script src="analysis/inference-bridge.js?v=20261013-path-a-r8"></script>
+<script src="analysis/analysis-controller.js?v=20261013-path-a-r8"></script>
+<script src="studio-insights-ui.js?v=20261014-v8-8-rc3"></script>
 <script src="v5-public.js?v=20261013-v6"></script>
+<script src="analysis/natural-writing-advisor.js?v=20261014-h3"></script>
+<script src="analysis/editorial-review.js?v=20261014-h3"></script>
+<script src="analysis/humanize-ui.js?v=20261014-h3"></script>
+<script src="analysis/scan-comparison.js?v=20261014-h4"></script>
+<script src="analysis/rewrite-integrity-check.js?v=20261014-l7"></script>
+<script src="analysis/dual-pane-editor.js?v=20261014-l7"></script>
+<script src="analysis/app-adapter.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/editor-comparison-core.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/draft-find-replace-core.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/draft-diff-preview.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/workspace-v8.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/workspace-v9.js?v=20261015-v9-rc1"></script>
 </body>
 </html>

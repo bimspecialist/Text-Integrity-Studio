@@ -11,6 +11,10 @@ on:
       - 'docs/ai-runtime.html'
       - 'docs/index.html'
       - 'docs/studio-insights-ui.js'
+      - 'docs/analysis/**'
+      - 'docs/analysis/dual-pane-editor.css'
+      - 'docs/word-docx.js'
+      - 'docs/pdf-support.js'
   workflow_dispatch:
   workflow_run:
     workflows: ["pages build and deployment"]
@@ -21,12 +25,13 @@ jobs:
   production-baseline:
     if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     # PR checks observe the currently published site, not the PR preview.
-    # Push/dispatch checks MUST execute a real V5 AI scan on the public Pages origin.
+    # Push/dispatch checks MUST execute both real models and match the V7
+    # Pages release marker; no PR baseline check proves candidate deployment.
     # The platform's built-in Pages workflow may not emit workflow_run; push
     # is an independent mandatory fallthrough public-site verification trigger.
     runs-on: ubuntu-latest
     continue-on-error: ${{ github.event_name == 'pull_request' }}
-    timeout-minutes: 9
+    timeout-minutes: 18
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -34,12 +39,13 @@ jobs:
           node-version: '22'
       - name: Install headless Chromium driver
         run: npm install --no-save --no-package-lock --ignore-scripts puppeteer-core@25.13.0
-      - name: Exercise published domain and save runtime status
+      - name: Verify published Pages release marker and genuine model evidence
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ai-production
           TIS_REQUIRE_V4: ${{ github.event_name != 'pull_request' }}
           TIS_REQUIRE_V5: ${{ github.event_name != 'pull_request' }}
           TIS_REQUIRE_V6: ${{ github.event_name != 'pull_request' }}
+          TIS_REQUIRE_S5: ${{ github.event_name != 'pull_request' }}
         run: node tests/deployed-ai-runtime.test.cjs
       - name: Preserve sanitized diagnostics and screenshot
         if: always()

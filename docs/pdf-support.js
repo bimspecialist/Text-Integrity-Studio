@@ -5,7 +5,7 @@
 'use strict';
 const MAX_FILE=24*1024*1024, MAX_PAGES=80, MAX_OCR_PAGES=12, MAX_TEXT=350000;
 const $=id=>document.getElementById(id);
-let session=null,busy=false,task=null,language='en';
+let session=null,busy=false,task=null,language='en',queuedPdf=null;
 const strings={
 en:{
   title:'PDF document lab',pick:'Choose PDF',description:'Text PDFs are extracted locally. For scanned pages, run English/Arabic OCR on selected pages (slower). This never uploads your PDF.',
@@ -16,6 +16,8 @@ en:{
   scanWarning:'Some pages have no extractable text. Select a page range, then use OCR.',
   noImage:'OCR is limited to 12 pages per run; select a smaller range.',
   finished:'PDF text imported. Review it before editing.',done:'OCR finished. Review recognition accuracy.',loading:'Extracting PDF locally',progress:'OCR processing',
+  queued:'Queued latest PDF; it will open after the current local operation stops.',
+  stale:'The document changed during OCR. The outdated result was discarded; your latest text was kept.',
   missing:'Local PDF/OCR assets are not yet available. Check the GitHub Pages deployment and reload.',nothing:'No text available yet.'
 },
 ar:{
@@ -27,6 +29,8 @@ ar:{
   scanWarning:'بعض الصفحات لا تحتوي على نص قابل للاستخراج. حدد الصفحات واستخدم OCR.',
   noImage:'يسمح OCR بحد أقصى 12 صفحة في كل عملية. حدد نطاقًا أصغر.',
   finished:'تم استخراج النص. راجعه قبل تعديله.',done:'اكتمل OCR. راجع دقة التعرف الضوئي.',loading:'جارٍ استخراج PDF محليًا',progress:'جارٍ التعرف الضوئي',
+  queued:'أُدرج أحدث ملف PDF في الانتظار، وسيفتح بعد انتهاء العملية المحلية الجارية.',
+  stale:'تغيّر المستند أثناء OCR؛ تجاهلنا النتيجة القديمة وحافظنا على أحدث تعديل للنص.',
   missing:'مكتبات PDF/OCR المحلية غير متاحة بعد. تحقق من نشر GitHub Pages وحدّث الصفحة.',nothing:'لا يوجد نص مستخرج حتى الآن.'
 }};
 function t(k){return strings[lang][k];}
@@ -52,15 +56,28 @@ async function getLibrary(){
    return pdfjs;
  }catch(error){throw new Error(t('missing')+' '+error.message);}
 }
-async function loadPdf(file){
- if(busy)return;
+function drainQueuedPdf(){
+ const request=queuedPdf;queuedPdf=null;
+ if(request&&globalThis.TISFileImportGuard.isCurrent(request.ticket))
+  void loadPdf(request.file,request.ticket);
+}
+async function loadPdf(file,ticket){
+ if(busy){
+  // One-slot latest-wins queue; the old request is already superseded
+  // by the shared guard, but its parser must unwind before starting this.
+  queuedPdf={file,ticket};status('queued',file?.name||'');return;
+ }
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
  if(!file||!file.name.toLowerCase().endsWith('.pdf')||file.size>MAX_FILE){status('size','',true);return;}
  const bytes=new Uint8Array(await file.arrayBuffer());
+ // A delayed PDF read is never allowed to replace a newer user edit/file.
+ if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
  if(new TextDecoder('latin1').decode(bytes.subarray(0,8)).indexOf('%PDF-')<0){status('error','Not a PDF file',true);return;}
  busy=true;status('loading',file.name);$('pdfDetails').hidden=false;
  if(globalThis.TextIntegrityWordBridge?.isActive())globalThis.TextIntegrityWordBridge.reset();
  await reset();
  try{
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket))return;
    await new Promise(r=>setTimeout(r,0));
    const lib=await getLibrary();
    const task=lib.getDocument({
@@ -69,16 +86,25 @@ async function loadPdf(file){
      cMapUrl:new URL('./vendor/pdfjs/cmaps/',document.baseURI).href,cMapPacked:true
    });
    const pdf=await task.promise;
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await pdf.destroy();return;
+   }
    const count=Math.min(MAX_PAGES,pdf.numPages);
    const pages=[], warnings=[];
    for(let number=1;number<=count;number++){
      const page=await pdf.getPage(number);
      const content=await page.getTextContent();
+     if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+      page.cleanup();await pdf.destroy();return;
+     }
      const text=content.items.filter(x=>typeof x.str==='string').map(x=>x.str+(x.hasEOL?'\n':' ')).join('').trim();
      pages.push({number,extracted:text.slice(0,MAX_TEXT),ocr:''});
      if(number%3===0||number===count)status('loading',number+'/'+count+' '+t('pages'));
      if(pages.reduce((n,p)=>n+p.extracted.length,0)>MAX_TEXT){warnings.push('Text limit 350,000');break;}
      page.cleanup();
+   }
+   if(!globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await pdf.destroy();return;
    }
    session={file,pdf,pages,warnings,fullPageCount:pdf.numPages};
    setText();
@@ -88,8 +114,15 @@ async function loadPdf(file){
    status('finished',pages.length+'/'+pdf.numPages+(pdf.numPages>count?' · '+t('partial'):''));
    if(pages.some(p=>p.extracted.trim().length<20))status('scanWarning',pages.filter(p=>p.extracted.trim().length<20).length+' '+t('pages'));
  }catch(error){
-   await reset();status('error',error?.message||'Unknown error',true);
- }finally{busy=false;$('file').value='';}
+   if(globalThis.TISFileImportGuard.isCurrent(ticket)){
+    await reset();status('error',error?.message||'Unknown error',true);
+   }
+ }finally{
+   busy=false;
+   // A stale job must never clear the picker for a newer file.
+   if($('file').files?.[0]===file)$('file').value='';
+   drainQueuedPdf();
+ }
 }
 function getFullText(){
  if(!session)return '';
@@ -114,6 +147,16 @@ function loadScript(source){
 }
 async function doOCR(){
  if(busy||!session)return;
+ const startedSession=session,startedText=$('source').value;
+ const startedRevision=globalThis.TISAnalysisApp?.session?.read().revision;
+ const startedImportGeneration=globalThis.TISFileImportGuard?.generation?.();
+ const current=()=>session===startedSession&&$('source').value===startedText&&
+  (startedRevision===undefined||
+   globalThis.TISAnalysisApp?.session?.read().revision===startedRevision)&&
+  (startedImportGeneration===undefined||
+   globalThis.TISFileImportGuard?.generation?.()===startedImportGeneration);
+ const stale=()=>{status('stale');};
+ const recognized=new Map();
  let from=Number($('pdfFrom').value),to=Number($('pdfTo').value);
  if(!Number.isInteger(from)||!Number.isInteger(to)||from<1||to<from||to>session.pages.length){status('error','Invalid page range',true);return;}
  if(to-from+1>MAX_OCR_PAGES){status('noImage','',true);return;}
@@ -123,6 +166,7 @@ async function doOCR(){
  let worker=null;
  try{
    const tesseract=await loadScript(new URL('./vendor/tesseract/tesseract.min.js',document.baseURI).href);
+   if(!current()){stale();return;}
    const config={
      workerPath:new URL('./vendor/tesseract/worker.min.js',document.baseURI).href,
      corePath:new URL('./vendor/tesseract/core/',document.baseURI).href,
@@ -130,25 +174,37 @@ async function doOCR(){
      workerBlobURL:false,cacheMethod:'none',gzip:true
    };
    worker=await tesseract.createWorker($('pdfLanguage').value,1,config);
+   if(!current()){stale();return;}
    for(let i=0;i<wanted.length;i++){
+     if(!current()){stale();return;}
      const p=wanted[i];
-     status('progress',p.number+'/'+session.fullPageCount);
-     const page=await session.pdf.getPage(p.number);
+     status('progress',p.number+'/'+startedSession.fullPageCount);
+     const page=await startedSession.pdf.getPage(p.number);
+     if(!current()){page.cleanup();stale();return;}
      const viewport=page.getViewport({scale:1.8});
      const canvas=document.createElement('canvas');
      canvas.width=Math.ceil(viewport.width);canvas.height=Math.ceil(viewport.height);
      if(canvas.width*canvas.height>16000000)throw new Error('Page image too large for OCR');
      const context=canvas.getContext('2d',{willReadFrequently:true});
      await page.render({canvasContext:context,canvas,viewport}).promise;
+     if(!current()){
+      canvas.width=0;canvas.height=0;page.cleanup();stale();return;
+     }
      const outcome=await worker.recognize(canvas);
-     p.ocr=String(outcome?.data?.text||'').trim();
      canvas.width=0;canvas.height=0;page.cleanup();
+     if(!current()){stale();return;}
+     // Keep interim OCR output private; commit it atomically only when
+     // the same document revision still owns the original source.
+     recognized.set(p.number,String(outcome?.data?.text||'').trim());
    }
+   if(!current()){stale();return;}
+   for(const p of wanted)p.ocr=recognized.get(p.number)||'';
    setText();updateLabels();status('done',wanted.length+' '+t('pages'));
- }catch(error){status('error',error?.message||t('missing'),true);}
+ }catch(error){if(!current())stale();else status('error',error?.message||t('missing'),true);}
  finally{
    if(worker)try{await worker.terminate();}catch{}
    busy=false;$('pdfOcr').disabled=false;
+   drainQueuedPdf();
  }
 }
 function setup(){
@@ -162,10 +218,14 @@ function setup(){
  $('language').addEventListener('click',updateLabels);
  ['clear','sample'].forEach(id=>$(id).addEventListener('click',()=>{void reset();}));
  const older=readFile;
- readFile=async function(file){
+ readFile=async function(file,ticket){
    if(!file)return;
-   if(/\.pdf$/i.test(file.name))return loadPdf(file);
-   await reset();return older(file);
+   const request=ticket||globalThis.TISFileImportGuard.begin(file);
+   if(/\.pdf$/i.test(file.name))return loadPdf(file,request);
+   if(!globalThis.TISFileImportGuard.isCurrent(request))return;
+   await reset();
+   if(!globalThis.TISFileImportGuard.isCurrent(request))return;
+   return older(file,request);
  };
  $('file').accept='.pdf,.docx,.txt,.md,.csv,.json';
  const wordPick=$('wordDrop');

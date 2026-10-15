@@ -13,11 +13,16 @@ const modelFixture = '<!doctype html><html><body><script>'+
  "const secondary={model_id:'onnx-community/roberta-base-openai-detector-ONNX',score:15.5,coverage:100,"+
  "sampleCount:1,range_percent:[15.5,15.5],consistency:'CONSISTENT_PASSAGES',segments:[]};"+
  "const deep=e.data.deep===true;const full=e.data.full===true;primary.coverage=full?95:100;"+
+ "primary.coverageRawPercent=primary.coverage;primary.revision='b9aa251e5bcda7e429fcc936767d921435945b60';"+
+ "secondary.revision='54895bd11f34b47a01369d25b2255224717409b8';secondary.coverageRawPercent=100;"+
+ "secondary.segments=[{start:0,end:75,signal:15.5,words:15,tokens:25}];"+
  "const result={version:'TIS_CONSENSUS_V2_2026_10',primary:primary,"+
  "secondary:deep?secondary:null,models:deep?[primary,secondary]:[primary],"+
  "status:deep?'MODEL_DISAGREEMENT':'SINGLE_UNCALIBRATED_MODEL',score:deep?null:64.2,"+
  "flags:deep?['MODELS_DISAGREE']:[],agreementDifferencePoints:deep?48.7:null,"+
- "calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE'};"+
+ "calibration:'NOT_INDEPENDENTLY_CALIBRATED_FOR_THIS_WEBSITE',"+
+ "valid_for_authorship_decisions:false,score_type:'UNCALIBRATED_CLASSIFIER_SIGNAL_NOT_AUTHORSHIP_PROBABILITY',"+
+ "processing:'CLIENT_ON_DEVICE_NO_REMOTE_INFERENCE',deepRequested:deep,extendedScanRequested:full,language:'en'};"+
  "setTimeout(()=>window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'RESULT',requestId:e.data.requestId,result},location.origin),e.data.text.includes('CANCEL_TEST')?450:0);"+
  "});"+
  "window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},location.origin);"+
@@ -47,9 +52,9 @@ async function run(){
   assert.equal(await page.$eval('#aiBar',e=>e.hidden),true,'No synthetic score shown by default');
   const layout=await page.evaluate(()=>{
    const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,top:r.top,width:r.width};};
-   return {rail:rect('navEditor'),editor:rect('inputPanel'),results:rect('reportPanel')};
+   return {sidebarCount:document.querySelectorAll('aside.app-sidebar').length,editor:rect('inputPanel'),results:rect('reportPanel')};
   });
-  assert(layout.editor.left>layout.rail.left,'Workspace sidebar visible on desktop');
+  assert.equal(layout.sidebarCount,0,'V9 removes redundant navigation rail');
   assert(layout.results.left>layout.editor.left,'Results form a distinct right-hand column');
   await page.screenshot({path:path.join(output,'workspace-desktop.png'),fullPage:true});
 

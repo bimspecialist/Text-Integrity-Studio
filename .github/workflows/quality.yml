@@ -87,6 +87,234 @@ jobs:
         run: |
           node --check tests/approved-v5-one-click.test.cjs
           node tests/approved-v5-one-click.test.cjs
+      - name: Canonical eligibility policy shared by both browser result UIs
+        run: |
+          node --check tests/analysis/eligibility-policy-browser.test.cjs
+          node tests/analysis/eligibility-policy-browser.test.cjs
+      - name: V8.13 recover reset draft without stale revision restore
+        run: |
+          node --check tests/analysis/draft-reset-recovery-browser.test.cjs
+          node tests/analysis/draft-reset-recovery-browser.test.cjs
+      - name: V8.12 prevent unsaved draft loss when undoing prior Apply
+        run: |
+          node --check tests/analysis/draft-undo-unsaved-browser.test.cjs
+          node tests/analysis/draft-undo-unsaved-browser.test.cjs
+      - name: V8.11 concurrent DOCX PDF import latest selection wins
+        run: |
+          node --check tests/analysis/import-overlap-browser.test.cjs
+          node tests/analysis/import-overlap-browser.test.cjs
+      - name: V8.10 OCR completion never overwrites edits made during recognition
+        run: |
+          node --check tests/analysis/ocr-edit-race-browser.test.cjs
+          node tests/analysis/ocr-edit-race-browser.test.cjs
+      - name: V8.9 no stale TXT DOCX or PDF import overwrites recent edits
+        run: |
+          node --check tests/analysis/import-race-browser.test.cjs
+          node tests/analysis/import-race-browser.test.cjs
+      - name: V8.8 literal Unicode find replace safety unit tests
+        run: |
+          node --check docs/analysis/draft-find-replace-core.js
+          node --check docs/analysis/workspace-v8.js
+          node tests/analysis/draft-find-replace-core.test.cjs
+      - name: V8.8 draft-only literal find replace in Chromium
+        env:
+          TIS_V8_EMBED_VISUAL: '1'
+        run: |
+          node --check tests/analysis/draft-find-replace-browser.test.cjs
+          node tests/analysis/draft-find-replace-browser.test.cjs
+      - name: V8.7 pure comparison-word and proportional scroll unit tests
+        run: |
+          node --check docs/analysis/editor-comparison-core.js
+          node --check docs/analysis/workspace-v8.js
+          node --check docs/studio-insights-ui.js
+          node tests/analysis/editor-comparison-core.test.cjs
+      - name: V8.7 linked before-after scrolling and honest bilingual mode action in real Chromium
+        run: |
+          node --check tests/analysis/linked-dual-editor-browser.test.cjs
+          node tests/analysis/linked-dual-editor-browser.test.cjs
+      - name: V8.5 mode-aware local review and explicit research detector opt-in
+        run: |
+          node --check tests/analysis/writing-mode-local-review-browser.test.cjs
+          node tests/analysis/writing-mode-local-review-browser.test.cjs
+      - name: V8.3 latest-revision responsive 20k-word Chromium editor
+        run: |
+          node --check tests/analysis/long-editor-responsiveness.test.cjs
+          node tests/analysis/long-editor-responsiveness.test.cjs
+      - name: V8.2 Unicode-safe bounded local change preview unit tests
+        run: |
+          node --check docs/analysis/draft-diff-preview.js
+          node tests/analysis/draft-diff-preview.test.cjs
+      - name: V8.1 drag drop and authoritative revision lifecycle in Chromium
+        run: |
+          node --check tests/analysis/workspace-v8-interactions.test.cjs
+          node tests/analysis/workspace-v8-interactions.test.cjs
+      - name: V9 semantic layout, truthful states and canonical Chromium workflow
+        run: |
+          node --check docs/analysis/workspace-v9.js
+          node tests/analysis/workspace-v9-structure.test.cjs
+          node tests/analysis/workspace-v9-state.test.cjs
+          node tests/analysis/workspace-v9-workflows-browser.test.cjs
+      - name: V9 writing-mode clarity and disabled unverified generator
+        run: node tests/analysis/workspace-v9-mode-copy.test.cjs
+      - name: V9 local writing, unsupported detector privacy and failure clarity
+        run: |
+          node tests/analysis/workspace-v9-mode-state.test.cjs
+          node --check tests/analysis/workspace-v9-privacy-browser.test.cjs
+          node tests/analysis/workspace-v9-privacy-browser.test.cjs
+      - name: V9 mode-specific primary Analyze or Review copy, no inference leakage
+        run: |
+          node tests/analysis/workspace-v9-mode-action.test.cjs
+          node --check tests/analysis/workspace-v9-mode-action-browser.test.cjs
+          node tests/analysis/workspace-v9-mode-action-browser.test.cjs
+      - name: V9 public guide, privacy and explicit release blockers
+        run: node tests/analysis/workspace-v9-docs.test.cjs
+      - name: V9 dead sidebar stylesheet and event handler cleanup
+        run: |
+          node --check docs/analysis/workspace-v8.js
+          node --check docs/v5-public.js
+          node tests/analysis/workspace-v9-dead-rail.test.cjs
+      - name: V9 advanced grouped document tools and import regression
+        run: |
+          node tests/analysis/workspace-v9-document-tools.test.cjs
+          node --check tests/analysis/workspace-v9-document-tools-browser.test.cjs
+          node tests/analysis/workspace-v9-document-tools-browser.test.cjs
+      - name: V9 local writing insights visible in both writing modes
+        run: node tests/analysis/workspace-v9-review-visibility.test.cjs
+      - name: V9 minimum-width bilingual tab legibility
+        run: node tests/analysis/workspace-v9-mobile-readability.test.cjs
+      - name: V9 mobile tabpanel accessibility structure
+        run: |
+          node tests/analysis/workspace-v9-accessibility-contract.test.cjs
+          node --check tests/analysis/workspace-v9-accessibility-browser.test.cjs
+          node tests/analysis/workspace-v9-accessibility-browser.test.cjs
+      - name: V9 responsive real Chromium geometry and screenshots
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: |
+          node tests/analysis/workspace-v9-style-contract.test.cjs
+          node --check tests/analysis/workspace-v9-responsive-browser.test.cjs
+          node tests/analysis/workspace-v9-responsive-browser.test.cjs
+      - name: V8 dark dual-editor redesign actual Chromium visual and interaction smoke
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+          TIS_V8_EMBED_VISUAL: '1'
+        run: |
+          node --check tests/analysis/workspace-v8-browser.test.cjs
+          node tests/analysis/workspace-v8-browser.test.cjs
+      - name: S5 deployed-candidate marker and independent merge authorization gate
+        run: |
+          node --check tests/analysis/public-postdeploy-contract.test.cjs
+          node tests/analysis/public-postdeploy-contract.test.cjs
+      - name: S4 accessible dual-pane keyboard and long DOCX mobile RTL
+        run: |
+          node --check tests/analysis/accessibility-browser.test.cjs
+          node tests/analysis/accessibility-browser.test.cjs
+      - name: S3 Chromium synthetic editor responsiveness, not model performance
+        run: |
+          node --check tests/analysis/performance-browser.test.cjs
+          node tests/analysis/performance-browser.test.cjs
+      - name: S3 reproducible performance-budget evidence contracts
+        run: |
+          node --check tests/analysis/performance-budget.test.js
+          node tests/analysis/performance-budget.test.js
+      - name: S2 pinned model and dependency supply-chain evidence
+        run: |
+          node --check tests/analysis/model-provenance.test.js
+          node tests/analysis/model-provenance.test.js
+      - name: S1 actual Chromium postMessage trust boundary and privacy
+        run: |
+          node --check tests/analysis/privacy-network.test.cjs
+          node tests/analysis/privacy-network.test.cjs
+      - name: L8 no-external-text-request and real Worker fail-closed browser check
+        run: |
+          node --check tests/analysis/local-rewriter-network-privacy.test.cjs
+          node tests/analysis/local-rewriter-network-privacy.test.cjs
+      - name: L7 dual-pane editor browser and RTL integration
+        run: |
+          node --check tests/analysis/dual-pane-editor-browser.test.cjs
+          node tests/analysis/dual-pane-editor-browser.test.cjs
+      - name: L6 draft review and revision-safe accept/undo
+        run: |
+          node --check tests/analysis/local-rewrite-controller.test.js
+          node tests/analysis/local-rewrite-controller.test.js
+      - name: L5 protected facts and inert local rewrite prompt contracts
+        run: |
+          node --check tests/analysis/rewrite-integrity-check.test.js
+          node tests/analysis/rewrite-integrity-check.test.js
+      - name: L4 exact tokenizer budget and full-source rewrite coverage
+        run: |
+          node --check tests/analysis/rewrite-chunk-planner.test.js
+          node tests/analysis/rewrite-chunk-planner.test.js
+      - name: L3 same-origin local rewriting Worker lifecycle contracts
+        run: |
+          node --check docs/analysis/local-rewrite-bridge.js
+          node tests/analysis/local-rewrite-bridge.test.js
+      - name: Local rewrite WebGPU capability and informed consent enforcement
+        run: |
+          node --check tests/analysis/rewrite-capability-policy.test.js
+          node tests/analysis/rewrite-capability-policy.test.js
+          node --check tests/analysis/local-model-registry.test.js
+          node tests/analysis/local-model-registry.test.js
+      - name: Local WebGPU generator research provenance and no-auto-download gate
+        run: |
+          node --check tests/analysis/local-model-manifest.test.js
+          node tests/analysis/local-model-manifest.test.js
+          node --check tests/analysis/local-rewriter-feasibility-browser.test.cjs
+          node tests/analysis/local-rewriter-feasibility-browser.test.cjs
+      - name: Comparable pinned post-edit signals and user-authorized browser rescan
+        run: |
+          node --check tests/analysis/scan-comparison.test.js
+          node tests/analysis/scan-comparison.test.js
+          node --check tests/analysis/humanize-e2e-browser.test.cjs
+          node tests/analysis/humanize-e2e-browser.test.cjs
+      - name: Compact Humanize suggestions, reviewed editing and RTL browser contract
+        run: |
+          node --check tests/analysis/humanize-browser.test.cjs
+          node tests/analysis/humanize-browser.test.cjs
+      - name: User-reviewed natural-writing edits and bounded Undo
+        run: |
+          node --check tests/analysis/editorial-review.test.js
+          node tests/analysis/editorial-review.test.js
+      - name: Source-accurate local bilingual Humanize advice
+        run: |
+          node --check tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/natural-writing-advisor.test.js
+      - name: One canonical browser Analyze lifecycle and secure evidence
+        run: |
+          node --check tests/analysis/analysis-integration-browser.test.cjs
+          node tests/analysis/analysis-integration-browser.test.cjs
+      - name: Both browser result views share paragraph coverage projection
+        run: |
+          node --check tests/analysis/evidence-projection-browser.test.cjs
+          node tests/analysis/evidence-projection-browser.test.cjs
+      - name: Source-accurate per-paragraph model coverage and abstention
+        run: |
+          node --check tests/analysis/evidence-projection.test.js
+          node tests/analysis/evidence-projection.test.js
+      - name: Single revision-safe analysis controller and timeouts
+        run: |
+          node --check tests/analysis/analysis-controller.test.js
+          node tests/analysis/analysis-controller.test.js
+      - name: Trustworthy lazy iframe bridge and cancel race contracts
+        run: |
+          node --check tests/analysis/inference-bridge.test.js
+          node tests/analysis/inference-bridge.test.js
+      - name: Strict evidence model revision and scientific abstention contracts
+        run: |
+          node --check tests/analysis/evidence-contract.test.js
+          node tests/analysis/evidence-contract.test.js
+      - name: Shared detector-language and eligibility policy
+        run: |
+          node --check tests/analysis/eligibility-policy.test.js
+          node tests/analysis/eligibility-policy.test.js
+      - name: DocumentSession immutability and source revision contracts
+        run: |
+          node --check tests/analysis/document-session.test.js
+          node tests/analysis/document-session.test.js
+      - name: Frozen V6 detector characterization before Path A refactor
+        run: |
+          node --check tests/analysis/baseline-parity.test.js
+          node tests/analysis/baseline-parity.test.js
       - name: Token-aware detector validation, coverage and disagreement safeguards
         run: node tests/ai-evidence-core.test.js
       - name: Real research model adapter rules (no fake numbers)

@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const help=fs.readFileSync('docs/help.html','utf8');
+const privacy=fs.readFileSync('docs/privacy.html','utf8');
+const release=fs.readFileSync('docs/release/PATH_A_RELEASE_CHECKLIST.md','utf8');
+assert(help.includes('<strong>Improve Writing</strong>'),'guide uses actual mode');
+assert(!help.includes('<strong>Humanize</strong>'),'obsolete mode not shown');
+assert(help.includes('More document tools')&&help.includes('Documents &amp; OCR'),'guided advanced document grouping');
+assert(privacy.includes('<em>Analyze Text</em>'),'privacy discloses opt-in entrypoint');
+assert(privacy.includes('uncalibrated'),'no certified authorship claim');
+assert(release.includes('PR #18')&&release.includes('OWNER APPROVAL REQUIRED'),'release stays independent');
+console.log('PASS V9 docs: mode names, grouped tools, research disclaimer, owner release HOLD');
