@@ -49,6 +49,18 @@
   const dict=messages[locale==='ar'?'ar':'en'];
   return dict[kind]||dict.ERROR;
  }
+ function describeModeStatus({status='EMPTY',mode='detection',locale='en',suggestions=0}={}){
+  const state=messages.en[status]?status:'ERROR',ar=locale==='ar';
+  if(mode==='detection')return describeStatus(state,locale);
+  let detail=mode==='editor'?
+   (ar?'عدّل المسودة بجانب النص الأصلي، ثم راجعها قبل التطبيق.':'Edit the draft beside your original, then review it before applying.'):
+   (ar?'راجع المقترحات المحلية وطبّق فقط التغييرات التي تختارها. لا يوجد توليد تلقائي.':'Review local suggestions and apply only changes you choose. No automatic generative rewrite.');
+  if(mode==='humanize'&&Number.isSafeInteger(suggestions)&&suggestions>0)
+   detail=ar?suggestions+' مقترحات كتابة محلية للمراجعة.':suggestions+' local writing suggestions available for review.';
+  if(['STALE','ERROR','CANCELLED'].includes(state))
+   return describeStatus(state,locale)+' '+detail;
+  return detail;
+ }
  function mount({documentObject,source,scanButton,resultRoot}={}){
   const doc=documentObject;
   const node=doc?.getElementById?.('tisV9Summary');
@@ -60,14 +72,9 @@
   function render(){
    if(disposed)return;
    const selected=mode(),state=messages.en[last?.status]?last.status:'ERROR';
-   const local=language()==='ar';
-   let content=describeStatus(state,language());
-   if(selected==='humanize')content=local?'راجع المقترحات المحلية ثم طبّق التغييرات التي تختارها. لا يوجد توليد تلقائي.':'Review local suggestions and apply only changes you choose. No automatic generative rewrite.';
-   if(selected==='editor')content=local?'عدّل المسودة بجانب النص الأصلي، ثم راجعها قبل التطبيق.':'Edit the draft beside your original, then review it before applying.';
-   if(selected==='humanize'&&review&&review.suggestions>0)
-    content=local?review.suggestions+' مقترحات كتابة محلية للمراجعة.':review.suggestions+' local writing suggestions available for review.';
+   const content=describeModeStatus({status:state,mode:selected,locale:language(),suggestions:review?.suggestions??0});
    node.textContent=content;
-   node.dataset.state=selected==='detection'?state:'WRITING_ONLY';
+   node.dataset.state=selected==='detection'||['STALE','ERROR','CANCELLED'].includes(state)?state:'WRITING_ONLY';
    doc.body.dataset.tisV9State=state;
    doc.body.dataset.tisV9Mode=selected;
   }
@@ -90,5 +97,5 @@
   function dispose(){if(disposed)return;disposed=true;observer.disconnect();}
   return Object.freeze({setAnalysisState,setWritingReviewResult,dispose});
  }
- return Object.freeze({describeStatus,mount});
+ return Object.freeze({describeStatus,describeModeStatus,mount});
 });
