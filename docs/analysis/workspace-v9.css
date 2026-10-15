@@ -1,0 +1,6 @@
+/* V9 semantic styling: scoped and layered above legacy V8 until parity is proven. */
+body.tis-v9 .shell{display:block!important;grid-template-columns:none!important;min-height:calc(100vh - 70px)}
+body.tis-v9 .shell>main{display:block!important;grid-column:auto!important;min-width:0;
+  width:100%;max-width:1480px;margin:0 auto!important;padding:22px clamp(15px,2.4vw,36px) 48px!important}
+body.tis-v9 .shell>footer{grid-column:auto!important}
+@media(max-width:900px){body.tis-v9 .shell>main{padding:15px clamp(12px,3vw,20px) 28px!important}}
