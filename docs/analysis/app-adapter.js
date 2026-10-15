@@ -55,7 +55,8 @@
   function showState(state){
    if(disposed)return;
    root.TISWorkspaceV8?.setAnalysisState?.(state);
-   root.TISWorkspaceV9?.setAnalysisState?.(state);
+   root.TISWorkspaceV9?.setAnalysisState?.(state.status==='STALE'&&!scanAttempted?
+    {...state,status:'READY'}:state);
    if(['WRITING_ONLY','UNSUPPORTED','LOADING','ANALYZING',
        'RESEARCH_SIGNAL','INCONCLUSIVE','ERROR','CANCELLED'].includes(state.status))
     scanAttempted=true;

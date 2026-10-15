@@ -16,6 +16,7 @@ async function main(){
   assert.equal(await page.$eval('#tisLocalRewrite',e=>e.disabled),true,'never advertise unverified generative rewriting as working');
   const arabic='هذه تجربة محلية لمراجعة كتابة تقرير هندسي عن مشروع مساحته 25 m² [12].';
   await page.$eval('#source',(e,text)=>{e.value=text;e.dispatchEvent(new Event('input',{bubbles:true}));},arabic);
+  assert.equal(await page.$eval('#tisV9Summary',e=>e.dataset.state),'READY','typing before first scan must not show stale research evidence');
   await page.click('#tisTabHumanize');
   await page.click('#scanAI');
   assert.equal(await page.evaluate(()=>window.TISAnalysisApp.session.read().text),arabic);
