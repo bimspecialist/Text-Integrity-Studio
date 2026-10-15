@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'self'; worker-src 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="tis-release-marker" content="TIS_V8_PATH_A_20261014_S5_RC3">
+<meta name="tis-release-marker" content="TIS_V9_SIMPLIFIED_20261015_RC1">
 <meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -334,7 +334,7 @@
             <summary id="aiEvidenceTitle">View model comparison and analyzed passages</summary>
             <div id="aiEvidenceBody" aria-live="polite"></div>
           </details>
-          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB open-source model and a browser runtime from Hugging Face/CDN. No text is intentionally sent to an AI API.</p>
+          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB English research model from Hugging Face. Runtime code and ONNX WASM are hash-pinned site assets; no document text is intentionally sent to an AI API.</p>
           <p id="aiStatus" class="small" role="status" aria-live="polite"></p>
           <p class="ai-pilot-risk">
             <strong id="aiPilotRisk">Observed false-alert risk:</strong>

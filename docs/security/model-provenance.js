@@ -19,7 +19,14 @@
    revision:'54895bd11f34b47a01369d25b2255224717409b8'
   }
  };
- const RUNTIME_URI='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
+ const RUNTIME_URI='./vendor/transformers/transformers.min.js';
+ const ARCHIVE_SHA='207714c36765b87accfd9b7b0672c3505805af97140990e0d9f8ac6e3cd5471e';
+ const VERIFIED_ASSETS={
+   "docs/vendor/transformers/transformers.min.js": "aa5002b70e789798da263f5f99c62bd3e8fcd0c119258a493c40c180648365fa",
+   "docs/vendor/transformers/ort-wasm-simd-threaded.jsep.mjs": "08fb86ec433c78bfb032c5d84a68b8e8e5a8d81268fa39e24314179a5767a5b9",
+   "docs/vendor/transformers/ort-wasm-simd-threaded.jsep.wasm": "c46655e8a94afc45338d4cb2b840475f88e5012d524509916e505079c00bfa39",
+   "docs/vendor/transformers/LICENSE": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+ };
  const LICENSE_PATHS=[
   ['docs/vendor/JSZIP_LICENSE.txt','MIT License'],
   ['docs/vendor/pdfjs/LICENSE','Apache License'],
@@ -28,7 +35,7 @@
  ];
  const CANDIDATE='onnx-community/Qwen3-0.6B-ONNX';
  const CANDIDATE_REV='558750086ed49d78cb701ed6fa85af33fd16453f';
- function verifyModelManifest(manifest,sourceFiles={}){
+ function verifyModelManifest(manifest,sourceFiles={},binaryHashes={}){
   const violations=new Set();
   const add=code=>violations.add(code);
   if(!manifest||typeof manifest!=='object'||!sourceFiles||
@@ -59,13 +66,21 @@
   if(runtime.uri!==RUNTIME_URI||runtime.packageVersion!=='3.8.1'||
    !code.includes("const LIBRARY_URL='"+RUNTIME_URI+"'"))
    add('PINNED_RUNTIME_SOURCE_MISMATCH');
-  if(runtime.integrityStatus!=='UNVERIFIED_NO_SRI')add('UNVERIFIED_RUNTIME_HASH_ATTESTATION');
-  add('RUNTIME_EXECUTABLE_INTEGRITY_UNVERIFIED');
-  if(runtime.licenseStatus!=='UNKNOWN_NOT_INDEPENDENTLY_REVIEWED')
+  const checksumList=sourceFiles['docs/vendor/transformers/SHA256SUMS']||'';
+  const assetEntries=Object.entries(VERIFIED_ASSETS);
+  const runtimeIntegrityVerified=runtime.integrityStatus==='VENDORED_HASHES_VERIFIED'&&
+   runtime.archiveSha256===ARCHIVE_SHA&&assetEntries.every(([path,hash])=>
+    runtime.assets?.[path]===hash&&binaryHashes?.[path]===hash&&
+    checksumList.includes(hash+'  '+path.split('/').at(-1)));
+  if(!runtimeIntegrityVerified)add('RUNTIME_VENDORED_ASSET_INTEGRITY_FAILURE');
+  if(runtime.licenseStatus!=='NPM_PUBLISHED_APACHE_2_0_LICENSE'||
+    !sourceFiles['docs/vendor/transformers/LICENSE']?.includes('Apache License'))
    add('UNVERIFIED_LICENSE_ATTESTATION');
+  // Model cards' license claims and repository revisions are not proof of each
+  // remote ONNX binary's integrity: retain the separate experimental-model HOLD.
   add('DETECTOR_MODEL_LICENSE_UNVERIFIED');
   const runtimeHTML=sourceFiles['docs/ai-runtime.html']||'';
-  if(!runtimeHTML.includes('https://cdn.jsdelivr.net')||
+  if(runtimeHTML.includes('https://cdn.jsdelivr.net')||
    !runtimeHTML.includes("script-src 'self'")||
    !runtimeHTML.includes("default-src 'none'"))
    add('MODEL_IFRAME_CSP_CHANGED');
@@ -98,6 +113,7 @@
   return Object.freeze({
    ok:violations.size===0,
    modelIdentityPinned,
+   runtimeIntegrityVerified,
    deploymentAllowed:false,
    violations:Object.freeze([...violations].sort())
   });
