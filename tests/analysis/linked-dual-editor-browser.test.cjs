@@ -24,7 +24,7 @@ async function main(){
    el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
   },original);
   await page.click('#tisTabHumanize');
-  assert.equal(await page.$eval('#scanAI .v5-action-title',el=>el.textContent.trim()),'Analyze Text');
+  assert.equal(await page.$eval('#scanAI .v5-action-title',el=>el.textContent.trim()),'Review writing');
   assert.match(await page.$eval('#scanAI .v5-action-sub',el=>el.textContent),
     /writing|editorial|local/i,'Humanize action must not promise AI detector inference');
   assert(await page.$('#tisV8WordComparison'),'local before/after word comparison must exist');

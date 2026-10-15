@@ -269,6 +269,7 @@
   const arabic=document.documentElement.lang==='ar';
   const writing=document.body.dataset.tisMode==='humanize'||document.body.dataset.tisMode==='editor';
   first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):
+   writing?(arabic?'مراجعة الكتابة':'Review writing'):
    (arabic?'تحليل النص':'Analyze Text');
   second.textContent=state.aiRunning?(arabic?'إيقاف فحص النموذج':'Stop model analysis'):
    writing?(arabic?'مراجعة الكتابة محليًا':'Local writing review'):
