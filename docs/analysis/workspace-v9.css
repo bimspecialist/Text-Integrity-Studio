@@ -4,3 +4,23 @@ body.tis-v9 .shell>main{display:block!important;grid-column:auto!important;min-w
   width:100%;max-width:1480px;margin:0 auto!important;padding:22px clamp(15px,2.4vw,36px) 48px!important}
 body.tis-v9 .shell>footer{grid-column:auto!important}
 @media(max-width:900px){body.tis-v9 .shell>main{padding:15px clamp(12px,3vw,20px) 28px!important}}
+/* Contextual result panel: no invented percent, no idle dashboard clutter. */
+body.tis-v9 #tisV9Summary{margin:0 0 14px;padding:13px 16px;line-height:1.55;
+ background:#22263a;border:1px solid #414869;border-radius:12px;color:#e1e3f4;
+ font-size:13px;overflow-wrap:anywhere}
+body.tis-v9 #tisV9Summary[data-state="INCONCLUSIVE"],
+body.tis-v9 #tisV9Summary[data-state="STALE"],
+body.tis-v9 #tisV9Summary[data-state="UNSUPPORTED"]{background:#28241e;border-color:#665739}
+body.tis-v9 #tisV9Summary[data-state="ERROR"]{background:#382128;border-color:#83515e}
+body.tis-v9 #tisV9Summary[data-state="RESEARCH_SIGNAL"]{background:#182924;border-color:#426b5c}
+body.tis-v9 #tisV8AnalysisStatus{display:none!important}
+body.tis-v9[data-tis-v9-state="EMPTY"] #studioAiQuick,
+body.tis-v9[data-tis-v9-state="READY"] #studioAiQuick,
+body.tis-v9[data-tis-v9-state="EMPTY"] #studioReview,
+body.tis-v9[data-tis-v9-state="READY"] #studioReview,
+body.tis-v9[data-tis-v9-state="EMPTY"] #v5Breakdown,
+body.tis-v9[data-tis-v9-state="READY"] #v5Breakdown,
+body.tis-v9[data-tis-v9-state="WRITING_ONLY"] #studioAiQuick,
+body.tis-v9[data-tis-v9-state="UNSUPPORTED"] #studioAiQuick,
+body.tis-v9[data-tis-v9-state="WRITING_ONLY"] #v5Breakdown,
+body.tis-v9[data-tis-v9-state="UNSUPPORTED"] #v5Breakdown{display:none!important}

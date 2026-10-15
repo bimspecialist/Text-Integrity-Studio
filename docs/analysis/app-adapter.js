@@ -55,6 +55,7 @@
   function showState(state){
    if(disposed)return;
    root.TISWorkspaceV8?.setAnalysisState?.(state);
+   root.TISWorkspaceV9?.setAnalysisState?.(state);
    if(['WRITING_ONLY','UNSUPPORTED','LOADING','ANALYZING',
        'RESEARCH_SIGNAL','INCONCLUSIVE','ERROR','CANCELLED'].includes(state.status))
     scanAttempted=true;
@@ -165,6 +166,7 @@
    root.TISWorkspaceV8?.setWritingReviewResult?.({
     revision:snapshot.revision,suggestions
    });
+   root.TISWorkspaceV9?.setWritingReviewResult?.({revision:snapshot.revision,suggestions});
    return true;
   }
   function analyze(){

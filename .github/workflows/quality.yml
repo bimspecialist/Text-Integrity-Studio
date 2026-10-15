@@ -148,6 +148,12 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v8-interactions.test.cjs
           node tests/analysis/workspace-v8-interactions.test.cjs
+      - name: V9 semantic layout, truthful states and canonical Chromium workflow
+        run: |
+          node --check docs/analysis/workspace-v9.js
+          node tests/analysis/workspace-v9-structure.test.cjs
+          node tests/analysis/workspace-v9-state.test.cjs
+          node tests/analysis/workspace-v9-workflows-browser.test.cjs
       - name: V8 dark dual-editor redesign actual Chromium visual and interaction smoke
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots

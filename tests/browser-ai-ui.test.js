@@ -52,9 +52,9 @@ async function run(){
   assert.equal(await page.$eval('#aiBar',e=>e.hidden),true,'No synthetic score shown by default');
   const layout=await page.evaluate(()=>{
    const rect=id=>{const r=document.getElementById(id).getBoundingClientRect();return {left:r.left,top:r.top,width:r.width};};
-   return {rail:rect('navEditor'),editor:rect('inputPanel'),results:rect('reportPanel')};
+   return {sidebarCount:document.querySelectorAll('aside.app-sidebar').length,editor:rect('inputPanel'),results:rect('reportPanel')};
   });
-  assert(layout.editor.left>layout.rail.left,'Workspace sidebar visible on desktop');
+  assert.equal(layout.sidebarCount,0,'V9 removes redundant navigation rail');
   assert(layout.results.left>layout.editor.left,'Results form a distinct right-hand column');
   await page.screenshot({path:path.join(output,'workspace-desktop.png'),fullPage:true});
 
