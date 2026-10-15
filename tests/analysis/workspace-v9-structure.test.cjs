@@ -14,5 +14,5 @@ for(const id of ['source','file','scanAI','tisRevisedText','tisModes','tisModePa
 }
 assert.equal(count(/\brole="tab"/gu),3,'three discoverable modes');
 assert.match(html,/id="v5Toolbox"/u,'all advanced tools retained');
-assert.doesNotMatch(html,/<div\s+class="steps"/u,'remove redundant three-step banner');
+assert.match(html,/<div\s+class="steps" hidden aria-hidden="true"/u,'keep old localized step IDs inert, with no visible banner');
 console.log('PASS V9 structure: one header, no sidebar, 3 modes, one canonical editor/action and retained tools');
