@@ -29,14 +29,15 @@ const MODELS={
 const LIBRARY_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
 const clients=new Map();
 let libraryPromise=null,busy=false,nextRequest=null,cancelled=false;
+let parentOrigin=null,frameToken=null;
 
 function status(message){
  const element=document.getElementById('engine-status');
  if(element)element.textContent=message;
 }
 function send(op,requestId,details={}){
- if(window.parent!==window){
-  window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',op,requestId,...details},location.origin);
+ if(window.parent!==window&&parentOrigin&&frameToken){
+  window.parent.postMessage({channel:'TIS_BROWSER_AI_V1',token:frameToken,op,requestId,...details},parentOrigin);
  }
 }
 function aiSignalFromOutput(outputs,modelKey='primary'){
@@ -169,9 +170,18 @@ async function perform(data){
  }
 }
 window.addEventListener('message',event=>{
- if(event.source!==window.parent||event.origin!==location.origin)return;
+ if(event.source!==window.parent)return;
  const data=event.data;
  if(!data||data.channel!=='TIS_BROWSER_AI_V1')return;
+ if(data.op==='INIT'){
+  if(parentOrigin||!/^https?:\/\//u.test(event.origin)||
+   typeof data.token!=='string'||!/^[a-f0-9]{32}$/u.test(data.token))return;
+  parentOrigin=event.origin;frameToken=data.token;
+  status('Optional models ready for user-initiated analysis.');
+  send('READY','');
+  return;
+ }
+ if(event.origin!==parentOrigin||data.token!==frameToken)return;
  if(data.op==='CANCEL'){
   cancelled=true;
   return;
@@ -183,5 +193,4 @@ window.addEventListener('message',event=>{
   nextRequest=data;
  }else perform(data);
 });
-status('Optional models ready for on-demand download. No document uploaded.');
-send('READY','');
+status('Waiting for the secure document-host handshake. No document uploaded.');

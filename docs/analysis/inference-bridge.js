@@ -21,7 +21,15 @@
    typeof onEvent!=='function')throw new TypeError('Invalid iframe bridge dependencies');
   const host=documentObject.defaultView;
   if(!host||typeof host.addEventListener!=='function')throw new TypeError('Browser message target missing');
-  let iframe=null,ready=false,active=null,disposed=false;
+  let iframe=null,ready=false,active=null,disposed=false,frameToken=null;
+  // Unique token binds every opaque-origin frame to its creator (including retries).
+  function freshToken(){
+   const bytes=new Uint8Array(16);
+   const crypto=host.crypto||globalThis.crypto;
+   if(typeof crypto?.getRandomValues!=='function')throw Error('Secure RNG required');
+   crypto.getRandomValues(bytes);
+   return [...bytes].map(v=>v.toString(16).padStart(2,'0')).join('');
+  }
   const subscribers=new Set([onEvent]);
   function broadcast(op,requestId,payload={}){
    const event=Object.freeze({op,requestId,payload});
@@ -29,7 +37,7 @@
   }
   function destroyFrame(){
    if(iframe&&typeof iframe.remove==='function')iframe.remove();
-   iframe=null;ready=false;
+   iframe=null;ready=false;frameToken=null;
   }
   function ensureFrame(){
    if(iframe)return;
@@ -37,16 +45,22 @@
    frame.id='tisOnDeviceModel';
    frame.title='Optional, user-triggered on-device AI model runtime';
    frame.hidden=true;
-   frame.setAttribute('sandbox','allow-scripts allow-same-origin');
+   // No allow-same-origin: remote executable cannot inspect parent DOM.
+   frame.setAttribute('sandbox','allow-scripts');
    frame.setAttribute('referrerpolicy','no-referrer');
    frame.setAttribute('aria-hidden','true');
    frame.src=src;
+   frameToken=freshToken();
    iframe=frame;
+   frame.addEventListener('load',()=>{
+    if(disposed||frame!==iframe)return;
+    frame.contentWindow?.postMessage({channel:CHANNEL,op:'INIT',token:frameToken},'*');
+   },{once:true});
    container.appendChild(frame);
   }
   function send(message){
    if(iframe?.contentWindow)
-    iframe.contentWindow.postMessage({channel:CHANNEL,...message},origin);
+    iframe.contentWindow.postMessage({channel:CHANNEL,token:frameToken,...message},'*');
   }
   function sendRun(){
    if(!active||active.started||!ready)return;
@@ -55,10 +69,11 @@
     deep:active.deep,full:active.full,context:active.context});
   }
   function onMessage(event){
-   if(disposed||!iframe||event.origin!==origin||
+   if(disposed||!iframe||event.origin!=='null'||
     event.source!==iframe.contentWindow)return;
    const message=event.data;
-   if(!message||message.channel!==CHANNEL||typeof message.op!=='string')return;
+   if(!message||message.channel!==CHANNEL||
+    message.token!==frameToken||typeof message.op!=='string')return;
    if(message.op==='READY'){
     if(!active||ready)return;
     ready=true;

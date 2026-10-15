@@ -3,20 +3,20 @@ const assert=require('node:assert/strict');
 const {createInferenceBridge}=require('../../docs/analysis/inference-bridge.js');
 
 class FakeWindow{
- constructor(){this.listeners=new Set();}
+ constructor(){this.listeners=new Set();this.crypto={getRandomValues(bytes){bytes.forEach((_,i)=>bytes[i]=i+1);return bytes;}};}
  addEventListener(type,fn){if(type==='message')this.listeners.add(fn);}
  removeEventListener(type,fn){if(type==='message')this.listeners.delete(fn);}
  emit(data,source,origin='https://tis.example'){for(const fn of [...this.listeners])fn({data,source,origin});}
 }
 function harness(){
  const host=new FakeWindow(),frames=[],children=[];
- const container={appendChild(frame){children.push(frame);frame.isConnected=true;}};
+ const container={appendChild(frame){children.push(frame);frame.isConnected=true;frame.load?.();}};
  const documentObject={defaultView:host,createElement(type){
   assert.equal(type,'iframe');
   const attrs={};
   const frame={attrs,hidden:false,isConnected:false,
    setAttribute(k,v){attrs[k]=v;},
-   addEventListener(){},
+   addEventListener(type,cb){if(type==='load')frame.load=cb;},
    remove(){frame.isConnected=false;const ix=children.indexOf(frame);if(ix!==-1)children.splice(ix,1);},
    contentWindow:{posted:[],postMessage(message,origin){this.posted.push({message,origin});}}
   };
@@ -26,7 +26,7 @@ function harness(){
  const bridge=createInferenceBridge({documentObject,origin:'https://tis.example',container,
   onEvent:event=>events.push(event)});
  const emit=(frame,op,requestId,extra={})=>
-  host.emit({channel:'TIS_BROWSER_AI_V1',op,requestId,...extra},frame.contentWindow);
+  host.emit({channel:'TIS_BROWSER_AI_V1',token:frame.attrs.token||frame.contentWindow.posted[0]?.message?.token,op,requestId,...extra},frame.contentWindow,'null');
  return {bridge,host,frames,children,events,emit};
 }
 const snapshot={text:'Private text for inference - never log this value.',revision:4};
@@ -41,11 +41,14 @@ const snapshot={text:'Private text for inference - never log this value.',revisi
  assert.equal(frame.src,'ai-runtime.html');
  assert.equal(frame.attrs.referrerpolicy,'no-referrer');
  assert.match(frame.attrs.sandbox,/allow-scripts/);
- assert.equal(frame.contentWindow.posted.length,0,'RUN only after authentic READY');
+ assert.equal(frame.attrs.sandbox,'allow-scripts','no same-origin privileges');
+ assert.equal(frame.contentWindow.posted.length,1,'INIT only until authenticated READY');
+ assert.equal(frame.contentWindow.posted[0].message.op,'INIT');
  h.emit(frame,'READY','');
- assert.equal(frame.contentWindow.posted.length,1);
- const sent=frame.contentWindow.posted[0];
- assert.equal(sent.origin,'https://tis.example');
+ assert.equal(frame.contentWindow.posted.length,3);
+ const sent=frame.contentWindow.posted[1];
+ assert.equal(sent.origin,'*');
+ assert.match(sent.message.token,/^[a-f0-9]{32}$/);
  assert.equal(sent.message.channel,'TIS_BROWSER_AI_V1');
  assert.equal(sent.message.op,'RUN');
  assert.equal(sent.message.text,snapshot.text);
@@ -54,7 +57,7 @@ const snapshot={text:'Private text for inference - never log this value.',revisi
  assert.equal(sent.message.full,true);
  assert.equal(sent.message.context,'academic');
  h.emit(frame,'READY','');
- assert.equal(frame.contentWindow.posted.length,1,'duplicated READY never repeats a request');
+ assert.equal(frame.contentWindow.posted.length,2,'duplicated READY never repeats a request');
  h.bridge.dispose();
  assert.equal(h.children.length,0);
  assert.equal(h.host.listeners.size,0);
@@ -67,7 +70,7 @@ const snapshot={text:'Private text for inference - never log this value.',revisi
  h.host.emit({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},frame.contentWindow,'https://attacker.example');
  h.host.emit({channel:'TIS_BROWSER_AI_V1',op:'READY',requestId:''},other);
  h.host.emit({channel:'evil',op:'READY',requestId:''},frame.contentWindow);
- assert.equal(frame.contentWindow.posted.length,0);
+ assert.equal(frame.contentWindow.posted.length,1);
  h.emit(frame,'READY','');
  h.emit(frame,'RESULT','r-old',{result:{score:99}});
  h.emit(frame,'PROGRESS','r-old',{stage:'ANALYZING',percent:50});
@@ -88,11 +91,11 @@ const snapshot={text:'Private text for inference - never log this value.',revisi
  const current=h.frames[1];
  h.emit(old,'READY','');
  h.emit(old,'RESULT','r1',{result:{score:90}});
- assert.equal(current.contentWindow.posted.length,0,'stale previous iframe cannot ready new run');
+ assert.equal(current.contentWindow.posted.length,1,'stale previous iframe cannot ready new run');
  assert.equal(h.events.some(x=>x.op==='RESULT'),false);
  h.emit(current,'READY','');
- assert.equal(current.contentWindow.posted.length,1);
- assert.equal(current.contentWindow.posted[0].message.requestId,'r2');
+ assert.equal(current.contentWindow.posted.length,2);
+ assert.equal(current.contentWindow.posted[1].message.requestId,'r2');
  h.emit(current,'RESULT','r2',{result:{status:'INCONCLUSIVE',score:null}});
  assert.equal(h.events.filter(x=>x.op==='RESULT').length,1);
  assert.equal(h.events.at(-1).payload.result.score,null);
