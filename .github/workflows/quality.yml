@@ -154,6 +154,13 @@ jobs:
           node tests/analysis/workspace-v9-structure.test.cjs
           node tests/analysis/workspace-v9-state.test.cjs
           node tests/analysis/workspace-v9-workflows-browser.test.cjs
+      - name: V9 responsive real Chromium geometry and screenshots
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
+        run: |
+          node tests/analysis/workspace-v9-style-contract.test.cjs
+          node --check tests/analysis/workspace-v9-responsive-browser.test.cjs
+          node tests/analysis/workspace-v9-responsive-browser.test.cjs
       - name: V8 dark dual-editor redesign actual Chromium visual and interaction smoke
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots

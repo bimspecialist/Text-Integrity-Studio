@@ -24,3 +24,108 @@ body.tis-v9[data-tis-v9-state="WRITING_ONLY"] #studioAiQuick,
 body.tis-v9[data-tis-v9-state="UNSUPPORTED"] #studioAiQuick,
 body.tis-v9[data-tis-v9-state="WRITING_ONLY"] #v5Breakdown,
 body.tis-v9[data-tis-v9-state="UNSUPPORTED"] #v5Breakdown{display:none!important}
+/* V9 UX hierarchy: a workspace, not a dashboard of nested panels. */
+body.tis-v9{--v9-bg:#0b0e16;--v9-surface:#151925;--v9-editor:#101522;
+ --v9-border:#30374c;--v9-quiet:#aab3c9;--v9-brand:#9487ff;
+ --v9-positive:#75d9b2;--v9-focus:#b9adff;line-height:1.5}
+body.tis-v9 .v5-topbar{height:66px;min-height:66px;background:#10141f;border-color:#2c3546;
+ box-shadow:none;padding-inline:clamp(16px,3vw,44px)}
+body.tis-v9 .v5-brand-icon{width:37px;height:37px;flex-basis:37px;
+ font-size:21px;background:#8271f5;border-radius:11px}
+body.tis-v9 .v5-brand-text span{display:none}
+body.tis-v9 .v5-brand-text strong{font-size:16px;letter-spacing:-.3px}
+body.tis-v9 .v5-header-privacy{background:transparent;border:0;color:#a6dabd;font-weight:600}
+body.tis-v9 .tis-v8-context{display:none!important}
+body.tis-v9 .tis-modes{width:min(100%,580px);margin:4px 0 19px;padding:5px;
+ background:#181d2c;border-color:#343b4f;border-radius:12px}
+body.tis-v9 .tis-mode-tab{font-size:13px;min-height:44px;border-radius:8px;font-weight:650;
+ color:#b6bed3;white-space:normal;overflow-wrap:normal}
+body.tis-v9 .tis-mode-tab[aria-selected="true"]{background:#373353;color:#f8f7ff;
+ border-color:#6f63a3;box-shadow:none}
+body.tis-v9 .workspace{gap:16px;align-items:start}
+body.tis-v9 #inputPanel,body.tis-v9 #reportPanel,body.tis-v9 #tisRevisedPane{
+ background:var(--v9-surface);border:1px solid var(--v9-border);
+ border-radius:16px;box-shadow:0 10px 30px #0002}
+body.tis-v9 #inputPanel{padding:24px;margin-bottom:14px}
+body.tis-v9 #reportPanel{padding:24px;max-height:none!important;overflow:visible!important;
+ overscroll-behavior:auto!important;margin:0 0 15px}
+body.tis-v9 #v5Headline{font-size:clamp(19px,1.8vw,25px);line-height:1.35;margin:0 0 4px}
+body.tis-v9 #v5Subtitle{font-size:12.5px;line-height:1.6;margin:0 0 14px;
+ color:var(--v9-quiet);max-width:65ch}
+body.tis-v9 .v5-input-tab{display:none!important}
+body.tis-v9 .v5-editor-tabs{margin:0 0 6px;align-items:center}
+body.tis-v9 .v5-upload-tab{font-size:12px;font-weight:700;min-height:40px;
+ background:#262b3d;border-color:#49516b;padding:10px 14px}
+body.tis-v9 #inputPanel .v5-counts{font-size:12px;color:var(--v9-quiet)}
+body.tis-v9 .tis-v8-quick-tools{margin:2px 0 14px;gap:9px}
+body.tis-v9 .tis-v8-quick-tools button{font-size:12px;padding:7px 9px;
+ color:#cbd1e1;min-height:35px}
+body.tis-v9 #tisV8Shortcut{font-size:11px;color:#929bb2}
+body.tis-v9 .tis-v8-source-heading{margin:0 0 9px}
+body.tis-v9 #inputPanel .source-label,body.tis-v9 #tisRevisedLabel{font-size:12px;font-weight:730;
+ color:#e2e7f5}
+body.tis-v9 #inputPanel #source,body.tis-v9 #tisRevisedPane #tisRevisedText{
+ height:clamp(290px,38vh,480px)!important;min-height:290px!important;
+ background:var(--v9-editor);border-color:#3b455f;border-radius:12px;
+ font-size:14px;line-height:1.8;padding:17px 18px;box-shadow:none}
+body.tis-v9 #inputPanel .input-summary{display:none}
+body.tis-v9 #inputPanel .main-actions{margin:16px 0 0}
+body.tis-v9 #inputPanel .main-actions #scanAI{min-height:58px;
+ background:#8e7df9!important;color:#17122b!important;border:1px solid #aa9fff;
+ border-radius:12px;box-shadow:none}
+body.tis-v9 #inputPanel .main-actions #scanAI:hover:not(:disabled){background:#a295ff!important;
+ border-color:#c2baff}
+body.tis-v9 #inputPanel #v5ClickNote{font-size:11px;line-height:1.6;margin-top:10px;color:#9aa4b9}
+body.tis-v9 .v5-results-heading{padding-bottom:10px;margin-bottom:12px}
+body.tis-v9 #titleAudit{font-size:20px;line-height:1.4}
+body.tis-v9 #v5ResultsSubtitle{display:none}
+body.tis-v9 #checkedLabel{font-size:11px;color:#929bb3}
+body.tis-v9 #tisV9Summary{font-size:13px;line-height:1.65;padding:15px 17px;
+ background:#20283a;border-color:#3b4b67}
+body.tis-v9 #studioReview,body.tis-v9 #studioAiQuick,
+body.tis-v9 #v5Breakdown{border-radius:12px}
+body.tis-v9 #tisRevisedPane{padding:22px}
+body.tis-v9 #tisDraftIntro{font-size:12px;color:#aab3ca;line-height:1.6}
+body.tis-v9 #tisRevisedPane .tis-draft-actions{gap:9px;justify-content:flex-start}
+body.tis-v9 #tisRevisedPane .tis-draft-actions button{font-size:12px;min-height:42px}
+body.tis-v9 #tisRevisedPane #tisDraftApply:not(:disabled){background:#483b83;border-color:#8f7bea;color:#fff}
+body.tis-v9 #v5Toolbox{margin-block:18px 12px;border-color:#353d54;border-radius:12px}
+body.tis-v9 #v5Toolbox>summary{min-height:48px;padding:13px 16px;font-size:13px}
+body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
+@media(max-width:900px){
+ body.tis-v9 .workspace{display:flex!important;flex-direction:column!important;gap:12px}
+ body.tis-v9 .workspace-main,body.tis-v9 .workspace-results{display:contents!important}
+ body.tis-v9 #inputPanel{order:0;width:100%}
+ body.tis-v9 #tisRevisedPane{order:1;width:100%}
+ body.tis-v9 #reportPanel{order:2;width:100%;margin:0}
+ body.tis-v9 .shell>main{padding:16px clamp(12px,2.8vw,22px) 34px!important}
+ body.tis-v9 #inputPanel #source,body.tis-v9 #tisRevisedPane #tisRevisedText{
+  height:clamp(260px,34vh,340px)!important;min-height:260px!important}
+}
+@media(max-width:560px){
+ body.tis-v9 .v5-topbar{height:61px;min-height:61px;padding-inline:13px}
+ body.tis-v9 .v5-brand-icon{width:33px;height:33px;flex-basis:33px;font-size:19px}
+ body.tis-v9 .v5-brand-text strong{font-size:12px;white-space:normal}
+ body.tis-v9 .tis-modes{width:100%;padding:4px;margin:4px 0 12px;gap:3px}
+ body.tis-v9 .tis-mode-tab{font-size:11px;line-height:1.45;padding:9px 5px;min-height:43px}
+ body.tis-v9 #inputPanel,body.tis-v9 #reportPanel,body.tis-v9 #tisRevisedPane{
+  padding:16px;border-radius:13px}
+ body.tis-v9 #v5Headline{font-size:19px}
+ body.tis-v9 #v5Subtitle{font-size:11.5px;margin-bottom:10px}
+ body.tis-v9 #inputPanel .v5-counts{font-size:10.5px}
+ body.tis-v9 .tis-v8-quick-tools{gap:2px;margin:2px 0 8px}
+ body.tis-v9 .tis-v8-quick-tools button{font-size:11px;min-height:34px;padding:6px 7px}
+ body.tis-v9 #tisV8Shortcut{display:none}
+ body.tis-v9 #inputPanel #source,body.tis-v9 #tisRevisedPane #tisRevisedText{
+  height:260px!important;min-height:250px!important;font-size:13.5px;padding:12px 13px}
+ body.tis-v9 #inputPanel #v5ClickNote{font-size:10.5px}
+ body.tis-v9 #tisV9Summary{font-size:12px;padding:12px 14px}
+ body.tis-v9 #titleAudit{font-size:18px}
+ body.tis-v9 #tisRevisedPane .tis-draft-actions button{flex:1 1 auto;min-height:44px}
+}
+@media(max-width:360px){
+ body.tis-v9 .v5-brand-text strong{font-size:11px}
+ body.tis-v9 .tis-mode-tab{font-size:10px;padding-inline:3px}
+ body.tis-v9 #v5Headline{font-size:18px}
+ body.tis-v9 #v5Subtitle{font-size:11px}
+}
