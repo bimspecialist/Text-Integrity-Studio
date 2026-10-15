@@ -1,0 +1,39 @@
+name: V9 npm runtime supply chain intake
+on:
+  push:
+    branches: [security/v9-vendored-runtime]
+    paths: ['.github/workflows/v9-runtime-intake.yml']
+permissions:
+  contents: read
+jobs:
+  inspect-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve exact npm registry package and preserve provenance
+        run: |
+          set -eu
+          mkdir -p /tmp/npm-intake
+          npm view @huggingface/transformers@3.8.1 dist.integrity --registry=https://registry.npmjs.org/ | tee /tmp/npm-intake/registry-integrity.txt
+          npm pack @huggingface/transformers@3.8.1 --pack-destination /tmp/npm-intake --ignore-scripts --registry=https://registry.npmjs.org/
+          sha256sum /tmp/npm-intake/*.tgz | tee /tmp/npm-intake/sha256.txt
+          tar -tzf /tmp/npm-intake/*.tgz | grep -E '^package/(dist/|LICENSE|package.json)' | head -120
+          tar -xzf /tmp/npm-intake/*.tgz -C /tmp/npm-intake
+          node -e "const p=require('/tmp/npm-intake/package/package.json'); if(p.version!=='3.8.1') process.exit(1);console.log(JSON.stringify({name:p.name,version:p.version,license:p.license,main:p.main,module:p.module,jsdelivr:p.jsdelivr},null,2))" | tee /tmp/npm-intake/identity.json
+          find /tmp/npm-intake/package/dist -maxdepth 2 -type f -printf '%P %s bytes\\n' | head -100 | tee /tmp/npm-intake/dist-files.txt
+          test -s /tmp/npm-intake/package/LICENSE
+      - name: Preserve immutable intake evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: tis-transformers-v3-8-1-intake
+          path: |
+            /tmp/npm-intake/registry-integrity.txt
+            /tmp/npm-intake/sha256.txt
+            /tmp/npm-intake/identity.json
+            /tmp/npm-intake/dist-files.txt
+            /tmp/npm-intake/*.tgz
+          retention-days: 3
