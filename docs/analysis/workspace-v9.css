@@ -136,3 +136,10 @@ body.tis-v9[data-tis-v9-state="READY"][data-tis-v9-reviewed="true"] #studioRevie
 /* Writing and Editor are document-review modes; their local suggestions stay available. */
 body.tis-v9[data-tis-v9-mode="humanize"] #studioReview,
 body.tis-v9[data-tis-v9-mode="editor"] #studioReview{display:block!important}
+
+/* Grouping is visible only inside the user-opened advanced tools disclosure. */
+body.tis-v9 #v5ToolboxItems .v9-tools-group{display:grid;gap:8px;padding:14px 2px 16px;
+ border-bottom:1px solid var(--v9-border)}
+body.tis-v9 #v5ToolboxItems .v9-tools-group:last-child{border-bottom:0}
+body.tis-v9 #v5ToolboxItems .v9-tools-group>h3{font-size:12px;font-weight:750;
+ color:#b2baff;line-height:1.5;margin:0;padding-inline:9px}
