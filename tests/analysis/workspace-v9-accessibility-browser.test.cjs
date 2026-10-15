@@ -32,7 +32,7 @@ async function run(){
   await page.click('#tisTabDetection');
   assert.match(await page.$eval('#tisV8Shortcut',el=>el.textContent),/للتحليل/u);
   await page.setViewport({width:320,height:700});
-  const tabs=await page.$eval('.tis-mode-tab',els=>els.map(el=>({font:parseFloat(getComputedStyle(el).fontSize),
+  const tabs=await page.evaluate(()=>Array.from(document.querySelectorAll('.tis-mode-tab'),el=>({font:parseFloat(getComputedStyle(el).fontSize),
    scroll:el.scrollWidth,inner:el.clientWidth})));
   assert(tabs.every(t=>t.font>=12),'tabs must stay readable at minimum mobile width: '+JSON.stringify(tabs));
   assert(tabs.every(t=>t.scroll<=t.inner+2),'localized tab text must not be clipped');
