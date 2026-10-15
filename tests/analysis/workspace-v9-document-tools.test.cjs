@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const js=fs.readFileSync('docs/v5-public.js','utf8');
+for(const id of ['v9ToolsWriting','v9ToolsDocuments','v9ToolsResearch'])assert(js.includes(id),'Missing V9 group '+id);
+for(const id of ['writingTools','cleanupTools','pdfTools','wordReportTools','wordPickerOptions','aboutResults','researchTools','v6WordTools'])assert(js.includes(id),'Lost original tool '+id);
+assert(js.includes("v9ToolsWritingLabel:t.groupWriting"),'localizable writing section');
+assert(js.includes("v9ToolsDocumentsLabel:t.groupDocuments"),'localizable docs section');
+assert(js.includes("v9ToolsResearchLabel:t.groupResearch"),'localizable research section');
+console.log('PASS V9 toolbox: 3 translated groups with original tool IDs');
