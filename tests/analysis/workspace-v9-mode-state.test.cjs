@@ -1,0 +1,10 @@
+'use strict';
+const assert=require('node:assert/strict');
+const {describeModeStatus}=require('../../docs/analysis/workspace-v9.js');
+assert.match(describeModeStatus({status:'ERROR',mode:'humanize',locale:'en'}),/model could not finish/i,'error must be preserved after switching to writing');
+assert.match(describeModeStatus({status:'STALE',mode:'editor',locale:'en'}),/text has changed/i,'stale evidence must not disappear behind the editor');
+assert.match(describeModeStatus({status:'CANCELLED',mode:'humanize',locale:'ar'}),/أُلغي/u,'cancel notice must remain accurate in Arabic writing mode');
+assert.match(describeModeStatus({status:'WRITING_ONLY',mode:'editor',locale:'en'}),/draft/i,'writing editor explains the current task');
+assert.match(describeModeStatus({status:'WRITING_ONLY',mode:'humanize',locale:'ar',suggestions:3}),/3 مقترحات/u,'advice count must match controller source');
+assert.doesNotMatch(describeModeStatus({status:'INCONCLUSIVE',mode:'detection',locale:'en'}),/%|probability/i,'no fabricated percentage');
+console.log('PASS V9 mode-aware truthfulness: error, stale, cancellation and local writing');

@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const css=fs.readFileSync('docs/analysis/workspace-v9.css','utf8');
+const html=fs.readFileSync('docs/index.html','utf8');
+const js=fs.readFileSync('docs/analysis/workspace-v8.js','utf8');
+assert.match(html,/id="tisModePanel"[^>]*role="tabpanel"/u);
+assert.match(css,/body\.tis-v9 \.workspace-main\s*,\s*body\.tis-v9 \.workspace-results\s*\{display:flex!important/u);
+assert.match(css,/body\.tis-v9 \.workspace-results\s*\{[^}]*flex-direction:column/u);
+assert.match(js,/shortcutReview:'Ctrl \+ Enter to review writing'/u);
+assert.match(js,/shortcutReview:'Ctrl \+ Enter لمراجعة الكتابة'/u);
+assert.match(js,/put\('tisV8Shortcut',selected==='detection'\?dict\.shortcut:dict\.shortcutReview\)/u);
+console.log('PASS V9 accessible mobile tabpanel and bilingual shortcut guidance');

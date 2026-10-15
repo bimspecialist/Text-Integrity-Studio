@@ -37,7 +37,7 @@
      editor:'Edit beside your original text. Preserve facts and references, then apply or undo your reviewed changes.'},
     eyebrow:'YOUR WORKSPACE',
     privacy:'Private draft · Optional local AI model download',
-    paste:'Paste text',example:'Try example',shortcut:'Ctrl + Enter to analyze',
+    paste:'Paste text',example:'Try example',shortcut:'Ctrl + Enter to analyze',shortcutReview:'Ctrl + Enter to review writing',
     pasted:'Text pasted into the original editor.',empty:'The clipboard has no text.',
     blocked:'Clipboard access is unavailable. Click the editor and press Ctrl + V.',
     locked:'Word source is read-only. Use the existing document tools to revise your file.',
@@ -64,14 +64,14 @@
     saveDone:'UTF-8 TXT saved locally. Your original text and Word file were not changed.',
     saveEmpty:'Write in the draft editor before saving.',
     saveError:'Local download failed. Use Copy draft instead.',
-    writingIdle:'Analyze Text reviews your writing here without a detector download.',
-    writingStale:'The text changed. Run Analyze Text to refresh your writing suggestions.',
+    writingIdle:'Review writing checks your text locally without a detector download.',
+    writingStale:'The text changed. Choose Review writing to refresh suggestions.',
     writingFound:n=>n+' local writing suggestion'+(n===1?'':'s')+
      ' ready. Nothing has been applied.',
     writingNone:'Local writing review complete. No specific changes found; this does not establish authorship.',
     reviewSuggestions:'View suggestions',
     detectorHint:'Eligible English AI detection downloads external model assets only when you select Analyze Text. Signals are uncalibrated.',
-    writingHint:'Analyze Text reviews writing locally in this mode. No detector download or automatic generative rewriting.',
+    writingHint:'Review writing works locally in this mode. No detector download or automatic generative rewriting.',
     dropLabel:'Drop Word, PDF or text here',
     selected:name=>'Selected file: '+name,
     invalidFile:'Unsupported file. Choose DOCX, PDF or a text format.',
@@ -101,7 +101,7 @@
      editor:'عدّل مسودة بجانب الأصل مع الحفاظ على الأرقام والمراجع وإمكانية التراجع.'},
     eyebrow:'مساحة العمل',
     privacy:'مسودة خاصة · تنزيل النموذج المحلي اختياري',
-    paste:'لصق النص',example:'تجربة مثال',shortcut:'Ctrl + Enter للتحليل',
+    paste:'لصق النص',example:'تجربة مثال',shortcut:'Ctrl + Enter للتحليل',shortcutReview:'Ctrl + Enter لمراجعة الكتابة',
     pasted:'تم لصق النص في المحرر الأصلي.',empty:'الحافظة لا تحتوي على نص.',
     blocked:'تعذّر الوصول للحافظة. اضغط على المحرر واستخدم Ctrl + V.',
     locked:'نص Word للقراءة فقط. استخدم أدوات المستند لتحرير الملف.',
@@ -128,13 +128,13 @@
     saveDone:'حُفظت نسخة TXT محليًا. لم يتغيّر النص الأصلي أو ملف Word.',
     saveEmpty:'أضف نصًا إلى المسودة أولًا.',
     saveError:'تعذّر تنزيل الملف محليًا. استخدم زر نسخ المسودة.',
-    writingIdle:'يراجع زر تحليل النص الصياغة محليًا دون تنزيل نموذج الكشف.',
-    writingStale:'تغيّر النص. اضغط تحليل النص لتحديث المقترحات التحريرية.',
+    writingIdle:'يراجع زر مراجعة الكتابة الصياغة محليًا دون تنزيل نموذج الكشف.',
+    writingStale:'تغيّر النص. اضغط مراجعة الكتابة لتحديث المقترحات التحريرية.',
     writingFound:n=>n+' مقترحات تحرير محلية جاهزة للمراجعة. لم يُطبّق أي تعديل.',
     writingNone:'اكتملت مراجعة الكتابة محليًا دون العثور على تعديل محدد. هذا لا يثبت مصدر النص.',
     reviewSuggestions:'عرض المقترحات',
     detectorHint:'يُنزل كشف AI الإنجليزي المؤهل ملفات نماذج خارجية فقط بعد الضغط على تحليل النص. الإشارات غير معايرة.',
-    writingHint:'يراجع زر تحليل النص الكتابة محليًا هنا، دون تنزيل نموذج الكشف أو إعادة صياغة توليدية تلقائية.',
+    writingHint:'يراجع زر مراجعة الكتابة النص محليًا، دون تنزيل نموذج الكشف أو إعادة صياغة توليدية تلقائية.',
     dropLabel:'أفلت ملف Word أو PDF أو نص هنا',
     selected:name=>'الملف المحدد: '+name,
     invalidFile:'صيغة غير مدعومة. اختر DOCX أو PDF أو ملفًا نصيًا.',
@@ -378,7 +378,7 @@
    put('v5Headline',dict.headline[selected]);
    put('v5Subtitle',dict.sub[selected]);
    // UI keeps one primary Analyze button. Existing localization code owns it.
-   put('tisV8Shortcut',dict.shortcut);
+   put('tisV8Shortcut',selected==='detection'?dict.shortcut:dict.shortcutReview);
    paste.lastChild.textContent=' '+dict.paste;
    sample.lastChild.textContent=' '+dict.example;
    put('tisSourceLabel',dict.source);
@@ -406,15 +406,6 @@
      dict[lastFileStatus](lastFileName):dict[lastFileStatus]||'';
    setAnalysisState(root.TISAnalysisApp?.controller?.getState());
    put('tisV8ActionStatus',lastStatus?dict[lastStatus]||'':'');
-   const nav=document.querySelectorAll('.side-navigation .nav-item');
-   for(const item of nav){
-    const navId=item.getAttribute('href');
-    const current=selected==='detection'?navId==='#studioAiQuick':
-     navId==='#inputPanel';
-    item.classList.toggle('current',current);
-    if(current)item.setAttribute('aria-current','page');
-    else item.removeAttribute('aria-current');
-   }
   }
   function message(code){lastStatus=code;put('tisV8ActionStatus',t()[code]||'');}
   async function pasteFromClipboard(){

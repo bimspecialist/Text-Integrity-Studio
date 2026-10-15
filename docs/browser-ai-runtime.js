@@ -26,7 +26,7 @@ const MODELS={
   training:'GPT2_2019_LEGACY'
  }
 };
-const LIBRARY_URL='https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1';
+const LIBRARY_URL='./vendor/transformers/transformers.min.js';
 const clients=new Map();
 let libraryPromise=null,busy=false,nextRequest=null,cancelled=false;
 
@@ -56,7 +56,10 @@ async function getClassifier(which,requestId){
  if(!metadata)throw Error('UNKNOWN_MODEL');
  const promise=(async()=>{
   if(!libraryPromise)libraryPromise=import(LIBRARY_URL).catch(e=>{libraryPromise=null;throw e;});
-  const {pipeline}=await libraryPromise;
+  const {pipeline,env}=await libraryPromise;
+  // All executable runtime and ONNX WASM assets are pinned first-party files.
+  // Only model weights are downloaded, after the user's explicit action.
+  env.backends.onnx.wasm.wasmPaths=new URL('./vendor/transformers/',location.href).href;
   send('PROGRESS',requestId,{stage:'LOADING',model:which});
   const pipe=await pipeline('text-classification',metadata.id,{
     dtype:'q8',

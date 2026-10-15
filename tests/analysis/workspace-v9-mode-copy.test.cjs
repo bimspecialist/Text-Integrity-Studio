@@ -1,0 +1,10 @@
+'use strict';
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const code = fs.readFileSync('docs/analysis/dual-pane-editor.js','utf8');
+const markup = fs.readFileSync('docs/index.html','utf8');
+assert.match(code, /humanize:'Improve Writing'/u, 'mode label must plainly describe available writing help without implying generation');
+assert.match(markup, /id="tisTabHumanize"[^>]*>Improve Writing</u, 'static fallback has same transparent mode label');
+assert.match(code, /humanize:'تحسين الكتابة'/u, 'Arabic wording stays explicit');
+assert.match(markup, /id="tisLocalRewrite" disabled/u, 'unverified generator remains disabled');
+console.log('PASS V9 mode labels: clearer bilingual writing assistance and disabled generator');

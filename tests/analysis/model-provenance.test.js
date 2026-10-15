@@ -4,7 +4,7 @@
  * a converted ONNX license, or a security release approval.
  */
 const assert=require('node:assert/strict');
-const fs=require('node:fs'),path=require('node:path');
+const fs=require('node:fs'),path=require('node:path'),crypto=require('node:crypto');
 const {verifyModelManifest}=require('../../docs/security/model-provenance.js');
 const manifest=require('../../docs/security/DEPENDENCY_AND_MODEL_MANIFEST.json');
 const root=path.resolve(__dirname,'../..');
@@ -12,17 +12,20 @@ const sources=Object.fromEntries([
  'docs/browser-ai-runtime.js','docs/ai-runtime.html',
  'docs/analysis/local-rewrite-model-manifest.json','docs/index.html',
  'docs/vendor/JSZIP_LICENSE.txt','docs/vendor/pdfjs/LICENSE',
- 'docs/fonts/MANROPE-OFL.txt','docs/fonts/IBM-PLEX-ARABIC-OFL.txt'
+ 'docs/fonts/MANROPE-OFL.txt','docs/fonts/IBM-PLEX-ARABIC-OFL.txt',
+ 'docs/vendor/transformers/LICENSE','docs/vendor/transformers/SHA256SUMS'
 ].map(p=>[p,fs.readFileSync(path.join(root,p),'utf8')]));
-const check=(data=manifest,files=sources)=>verifyModelManifest(data,files);
+const realHashes=Object.fromEntries(Object.keys(manifest.detector.runtime.assets).map(p=>
+ [p,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,p))).digest('hex')]));
+const check=(data=manifest,files=sources,hashes=realHashes)=>verifyModelManifest(data,files,hashes);
 
 (function currentPinningsRecordedButNotDeclaredApproved(){
  const r=check();
  assert.equal(r.ok,false,'missing executable integrity and license review must block supply-chain release');
  assert.equal(r.modelIdentityPinned,true);
  assert.equal(r.deploymentAllowed,false);
- for(const blocker of ['RUNTIME_EXECUTABLE_INTEGRITY_UNVERIFIED',
-   'DETECTOR_MODEL_LICENSE_UNVERIFIED','GENERATOR_CONVERTED_LICENSE_UNVERIFIED'])
+ assert.equal(r.runtimeIntegrityVerified,true,'npm-vendored JS/WASM hashes computed from shipped bytes');
+ for(const blocker of ['DETECTOR_MODEL_LICENSE_UNVERIFIED','GENERATOR_CONVERTED_LICENSE_UNVERIFIED'])
   assert(r.violations.includes(blocker),blocker);
  assert.equal(manifest.localGenerator.productionDefault,null);
  assert.equal(manifest.localGenerator.realModelVerified,false);
@@ -37,7 +40,7 @@ const check=(data=manifest,files=sources)=>verifyModelManifest(data,files);
 })();
 (function swappingRealRuntimeSourceFails(){
  const altered={...sources,'docs/browser-ai-runtime.js':
-  sources['docs/browser-ai-runtime.js'].replace('@huggingface/transformers@3.8.1','@huggingface/transformers@3.9.0')};
+  sources['docs/browser-ai-runtime.js'].replace('./vendor/transformers/transformers.min.js','./vendor/transformers/evil.js')};
  assert(check(manifest,altered).violations.includes('PINNED_RUNTIME_SOURCE_MISMATCH'));
  const modified=structuredClone(manifest);
  modified.detector.runtime.uri='https://evil.invalid/runtime.js';
@@ -56,8 +59,10 @@ const check=(data=manifest,files=sources)=>verifyModelManifest(data,files);
  bad.detector.models.primary.licenseStatus='VERIFIED';
  assert(check(bad).violations.includes('UNVERIFIED_LICENSE_ATTESTATION'));
  const fake=structuredClone(manifest);
- fake.detector.runtime.integrityStatus='VERIFIED_WITH_SRI';
- assert(check(fake).violations.includes('UNVERIFIED_RUNTIME_HASH_ATTESTATION'));
+ fake.detector.runtime.integrityStatus='FAKE_VERIFIED';
+ assert(check(fake).violations.includes('RUNTIME_VENDORED_ASSET_INTEGRITY_FAILURE'));
+ const tampered={...realHashes,'docs/vendor/transformers/transformers.min.js':'f'.repeat(64)};
+ assert(check(manifest,sources,tampered).violations.includes('RUNTIME_VENDORED_ASSET_INTEGRITY_FAILURE'));
  const candidate=structuredClone(manifest);
  candidate.localGenerator.convertedLicenseStatus='APPROVED';
  assert(check(candidate).violations.includes('UNVERIFIED_LICENSE_ATTESTATION'));
@@ -75,4 +80,4 @@ const check=(data=manifest,files=sources)=>verifyModelManifest(data,files);
   sources['docs/analysis/local-rewrite-model-manifest.json'].replace('"productionDefault": null','"productionDefault": "qwen"')};
  assert(check(manifest,bad).violations.includes('UNAPPROVED_GENERATOR_ACTIVE'));
 })();
-console.log('PASS S2: source-pinned models and dependency inventory; unknown executable integrity/licensing correctly HOLD');
+console.log('PASS S2: npm SHA-pinned first-party JS/WASM hashes verified against shipped files; model-science and separate licenses stay HOLD');

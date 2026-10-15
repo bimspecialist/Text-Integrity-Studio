@@ -77,3 +77,18 @@ The GitHub Actions `Deployed AI detection integration diagnostic` workflow is bl
 | Owner approval | Explicit human decision | NOT GIVEN |
 
 This checklist is an operational release contract, **not a claim that the site is merged, deployed, scientifically validated, privacy certified, or ready for a commercial announcement**.
+
+## V9 simplified workspace candidate — PR #18 (DRAFT)
+
+**Status:** OWNER APPROVAL REQUIRED before merge/publish. No public V9 candidate has been deployed. The owner approved implementation on a separate development branch; this does NOT approve release.
+
+- [ ] Record the exact current head of feature/v9-simplified-workspace; verify all tests from the SAME commit.
+- [ ] Run V9 structure, responsiveness, privacy, grouped document tools, source/draft, bilingual modes and docs checks. Preserve Word/PDF/OCR, import concurrency, Unicode and security suites.
+- [ ] Run primary and secondary real ONNX browser smoke at candidate SHA. A simulated score or prior SHA does not qualify; never present authorship certainty.
+- [ ] Inspect actual Chromium screenshots at 1440, 1150 RTL, 768, 390 and 320; review 200% zoom, keyboard, touch and assistive technology separately.
+- [ ] Review remote runtime code and model license/integrity, same-origin iframe CSP and outbound requests independently. Existing supply-chain issues remain unresolved; do not imply guaranteed no text exfiltration.
+- [ ] Keep full local generative rewrite DISABLED until real licensed AR/EN WebGPU generation, quality, memory and privacy gates pass. Scientific calibration stays independently HOLD.
+- [ ] Require explicit owner approval for merge and separately for publication; verify GitHub Pages marker at actual deployed SHA, not merely green PR checks.
+- [ ] Remove temporary v9-source-snapshot.yml CI workflow before final review; it is a development-only transfer aid.
+
+All V8 security, privacy, scientific and owner-approval gates above remain in force for V9; an improved interface never overrides release blockers.

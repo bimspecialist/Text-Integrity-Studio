@@ -14,7 +14,7 @@
  const ids={detection:'tisTabDetection',humanize:'tisTabHumanize',editor:'tisTabEditor'};
  const words={
   en:{
-   group:'Workspace modes',detection:'AI Detection',humanize:'Humanize',editor:'Writing Editor',
+   group:'Workspace modes',detection:'AI Detection',humanize:'Improve Writing',editor:'Writing Editor',
    original:'Original text',revised:'Revised draft',before:'Before',after:'After',
    draftIntro:'Edit this local draft or preview a writing suggestion. Your original text stays unchanged until you apply.',
    idle:'The revised pane starts with a copy of the source. No rewrite has been generated.',

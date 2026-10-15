@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; connect-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; object-src 'none'; frame-src 'self'; worker-src 'self'">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="tis-release-marker" content="TIS_V8_PATH_A_20261014_S5_RC3">
+<meta name="tis-release-marker" content="TIS_V9_SIMPLIFIED_20261015_RC1">
 <meta name="description" content="Private, easy text and document checking. Scan, review improvements, and export Word, PDF or text analysis, all in your browser.">
 <title>Text Integrity Studio — Check and Improve Documents</title>
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -12,8 +12,9 @@
 <link rel="stylesheet" href="v5-public.css?v=20261013-v6">
 <link rel="stylesheet" href="analysis/dual-pane-editor.css?v=20261014-l7">
 <link rel="stylesheet" href="analysis/workspace-v8.css?v=20261014-v8-8-rc3">
+<link rel="stylesheet" href="analysis/workspace-v9.css?v=20261015-v9-rc1">
 </head>
-<body>
+<body class="tis-v9">
 <header class="v5-topbar" role="banner">
   <div class="v5-brand" aria-label="Text Integrity Studio">
     <span class="v5-brand-icon" aria-hidden="true">T.</span>
@@ -25,16 +26,7 @@
   </div>
 </header>
 <div class="shell">
-<aside class="app-sidebar" aria-label="Document tools">
-  <div class="brand"><span class="logo" aria-hidden="true">T.</span><span>Text Integrity <span class="brand-studio">Studio</span></span></div>
-  <nav class="side-navigation" aria-label="Workspace navigation">
-    <a class="nav-item current" href="#inputPanel"><span aria-hidden="true">▤</span><span id="navEditor">Editor</span></a>
-    <a class="nav-item" href="#studioAiQuick" aria-label="AI Detector"><span aria-hidden="true">◷</span><span id="navResults">AI Detector</span></a>
-    <a class="nav-item" href="#writingTools"><span aria-hidden="true">✎</span><span id="navWriting">Writing tools</span></a>
-    <a class="nav-item" href="#cleanupTools"><span aria-hidden="true">◇</span><span id="navCleanup">Cleanup</span></a>
-  </nav>
-  <div class="top"><span class="tag" id="localtag">● Private · On your device</span></div>
-</aside>
+
 <main>
   <div id="studioWorkspaceTop" class="studio-workspace-top">
     <div class="studio-heading-path"><span class="studio-top-app">Text Integrity Studio</span><span aria-hidden="true">/</span><strong id="studioTopDocument">Untitled document</strong></div>
@@ -45,10 +37,9 @@
     <h1 id="heading">Check and improve your text.</h1>
     <p id="subtitle">Paste text or upload Word, PDF, or TXT. Review quality findings and, if you choose, try the experimental AI model.</p>
   </section>
-  <div class="steps" aria-label="Three easy steps">
-    <span id="stepInput">1 · Add text</span>
-    <span id="stepScan">2 · Check</span>
-    <span id="stepSave">3 · Review and save</span>
+
+  <div class="steps" hidden aria-hidden="true">
+    <span id="stepInput">1 · Add text</span><span id="stepScan">2 · Check</span><span id="stepSave">3 · Review and save</span>
   </div>
   <div id="tisV8Context" class="tis-v8-context" aria-label="Workspace overview">
     <div class="tis-v8-context-name">
@@ -59,7 +50,7 @@
   </div>
   <div id="tisModes" class="tis-modes" role="tablist" aria-label="Workspace modes">
     <button type="button" class="tis-mode-tab" role="tab" id="tisTabDetection" aria-selected="true" aria-controls="tisModePanel" tabindex="0">AI Detection</button>
-    <button type="button" class="tis-mode-tab" role="tab" id="tisTabHumanize" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Humanize</button>
+    <button type="button" class="tis-mode-tab" role="tab" id="tisTabHumanize" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Improve Writing</button>
     <button type="button" class="tis-mode-tab" role="tab" id="tisTabEditor" aria-selected="false" aria-controls="tisModePanel" tabindex="-1">Writing Editor</button>
   </div>
   <div class="workspace">
@@ -233,6 +224,7 @@
           <span id="checkedLabel" class="small">Waiting for analysis</span>
         </div>
         <p id="quickReport" class="report-lead" role="status" aria-live="polite">Add text or a document to get started.</p>
+        <p id="tisV9Summary" class="tis-v9-summary" role="status" aria-live="polite" data-state="EMPTY">Paste or upload a document to begin.</p>
         <div id="tisV8AnalysisStatus" class="tis-v8-analysis-status" role="status" aria-live="polite" data-state="EMPTY">
           <span id="tisV8StateIcon" class="tis-v8-state-icon" aria-hidden="true">●</span>
           <span id="tisV8StateText">Add text to begin. Nothing is uploaded automatically.</span>
@@ -342,7 +334,7 @@
             <summary id="aiEvidenceTitle">View model comparison and analyzed passages</summary>
             <div id="aiEvidenceBody" aria-live="polite"></div>
           </details>
-          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB open-source model and a browser runtime from Hugging Face/CDN. No text is intentionally sent to an AI API.</p>
+          <p class="ai-consent" id="aiConsent">On first use, downloads an approximately 126 MB English research model from Hugging Face. Runtime code and ONNX WASM are hash-pinned site assets; no document text is intentionally sent to an AI API.</p>
           <p id="aiStatus" class="small" role="status" aria-live="polite"></p>
           <p class="ai-pilot-risk">
             <strong id="aiPilotRisk">Observed false-alert risk:</strong>
@@ -424,5 +416,6 @@
 <script src="analysis/draft-find-replace-core.js?v=20261014-v8-8-rc3"></script>
 <script src="analysis/draft-diff-preview.js?v=20261014-v8-8-rc3"></script>
 <script src="analysis/workspace-v8.js?v=20261014-v8-8-rc3"></script>
+<script src="analysis/workspace-v9.js?v=20261015-v9-rc1"></script>
 </body>
 </html>

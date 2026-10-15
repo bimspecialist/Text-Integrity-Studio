@@ -31,7 +31,7 @@ async function run(){
    return {width:innerWidth,overflow:document.documentElement.scrollWidth-innerWidth,
     top:rect('scanAI'),source:rect('source'),report:rect('reportPanel'),
     modes:rect('tisModes'),background:getComputedStyle(document.body).backgroundColor,
-    sidebar:getComputedStyle(document.querySelector('aside.app-sidebar')).display};
+    sidebarCount:document.querySelectorAll('aside.app-sidebar').length};
   });
   assert(layout.overflow<=8,'no horizontal scroll on desktop');
   assert(layout.source.w>350&&layout.report.w>300,'detector offers useful split input/results');
@@ -39,9 +39,7 @@ async function run(){
   assert(layout.top.bottom<=900,'primary Analyze Text is visible at 900px desktop height');
   assert(layout.source.y>layout.modes.y,'document follows the mode tabs');
   assert(layout.background!=='rgb(255, 255, 255)');
-  const navWidth=await page.$eval('aside.app-sidebar .side-navigation .nav-item',
-   e=>e.getBoundingClientRect().width);
-  assert(navWidth>=130,'sidebar labels must not wrap into old 47px icon buttons: '+navWidth);
+  assert.equal(layout.sidebarCount,0,'V9 removes duplicate sidebar navigation');
   assert.equal(await page.$eval('#tisLocalRewrite',n=>n.disabled),true,
    'the unverified local generator cannot be enabled by design alone');
   assert.equal(await page.$('#tisOnDeviceModel'),null,'no pre-consent AI download');

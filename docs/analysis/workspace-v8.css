@@ -53,24 +53,6 @@ a{color:var(--v8-accent-bright)}
 #language.v5-language:hover{background:#302c48}
 .shell{max-width:1920px;width:100%;padding:0;display:grid;
  grid-template-columns:170px minmax(0,1fr);min-height:calc(100vh - 70px)}
-aside.app-sidebar{display:flex;grid-column:1;grid-row:1 / span 2;position:sticky;top:0;align-self:start;
- height:calc(100vh - 70px);padding:24px 11px;background:var(--v8-rail);
- border-inline-end:1px solid var(--v8-stroke)}
-.app-sidebar .brand{display:none}
-.side-navigation{gap:7px}
-.side-navigation .nav-item{min-height:48px;gap:10px;padding:11px 12px;
- font-size:12px;font-weight:680;border:1px solid transparent;border-radius:11px;color:var(--v8-muted)}
-/* V6 desktop rules fixed nav width at 47px for an icon-only rail.
-   The V8 rail is 170px and restores complete, readable labels. */
-aside.app-sidebar .side-navigation .nav-item{width:100%;min-width:0;
- max-width:none;white-space:nowrap;justify-content:flex-start}
-.side-navigation .nav-item>span:first-child{font-size:18px;color:var(--v8-faint);min-width:22px}
-.side-navigation .nav-item.current,.side-navigation .nav-item:hover{
- background:var(--v8-tint);border-color:#433c65;color:var(--v8-text);box-shadow:none}
-.side-navigation .nav-item.current>span:first-child{color:var(--v8-accent-bright)}
-aside.app-sidebar .top{border-top:1px solid var(--v8-stroke);padding:17px 3px 0}
-aside.app-sidebar .tag{font-size:10px;color:var(--v8-safe);background:#13231e;
- border:1px solid #355848;border-radius:11px;padding:11px 8px}
 main{grid-column:2;min-width:0;padding:18px clamp(16px,2.35vw,38px) 54px}
 #studioWorkspaceTop,.hero,.steps{display:none!important}
 
@@ -327,7 +309,6 @@ select,textarea.result{background:#171b27;color:var(--v8-body);border-color:var(
 /* Tablet/laptop: content takes precedence over a redundant sidebar. */
 @media(max-width:1199px){
  .shell{grid-template-columns:1fr}
- aside.app-sidebar{display:none}
  main{grid-column:1;padding:20px clamp(14px,2.2vw,30px) 40px}
  .workspace{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
 }
@@ -517,7 +498,6 @@ body[data-tis-mode=editor] #tisV8AnalysisStatus{display:none}
 
 html[dir=rtl] .tis-v8-context,#tisModes{direction:inherit}
 html[dir=rtl] #inputPanel .main-actions #scanAI .v5-action-arrow{transform:scaleX(-1)}
-html[dir=rtl] .side-navigation .nav-item{text-align:start}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}
 }
