@@ -406,15 +406,6 @@
      dict[lastFileStatus](lastFileName):dict[lastFileStatus]||'';
    setAnalysisState(root.TISAnalysisApp?.controller?.getState());
    put('tisV8ActionStatus',lastStatus?dict[lastStatus]||'':'');
-   const nav=document.querySelectorAll('.side-navigation .nav-item');
-   for(const item of nav){
-    const navId=item.getAttribute('href');
-    const current=selected==='detection'?navId==='#studioAiQuick':
-     navId==='#inputPanel';
-    item.classList.toggle('current',current);
-    if(current)item.setAttribute('aria-current','page');
-    else item.removeAttribute('aria-current');
-   }
   }
   function message(code){lastStatus=code;put('tisV8ActionStatus',t()[code]||'');}
   async function pasteFromClipboard(){

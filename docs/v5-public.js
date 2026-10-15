@@ -265,16 +265,6 @@
   }
   const history=$('studioEditHistory'),exportRow=document.querySelector('.studio-export-row');
   if(history&&exportRow)history.append(exportRow);
-  for(const link of document.querySelectorAll('.side-navigation a[href^="#"]')){
-   link.addEventListener('click',event=>{
-    const id=link.getAttribute('href')?.slice(1);
-    if(!id||!items.contains($(id)))return;
-    event.preventDefault();
-    toolbox.open=true;
-    const details=$(id);if(details?.tagName==='DETAILS')details.open=true;
-    details?.scrollIntoView({block:'start',behavior:'auto'});
-   });
-  }
   // Opening a file must not open a long advanced panel over the main CTA.
   const refresh=()=>updateDocumentNotice();
   for(const id of ['wordToolbar','pdfDetails']){

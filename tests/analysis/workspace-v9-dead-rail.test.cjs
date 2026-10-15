@@ -1,0 +1,13 @@
+'use strict';
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const html=fs.readFileSync('docs/index.html','utf8');
+const css=fs.readFileSync('docs/analysis/workspace-v8.css','utf8');
+const v8=fs.readFileSync('docs/analysis/workspace-v8.js','utf8');
+const v5=fs.readFileSync('docs/v5-public.js','utf8');
+assert(!html.includes('class="app-sidebar"'),'no sidebar in V9');
+assert.doesNotMatch(css,/\.app-sidebar|\.side-navigation/u,'unused V8 rail style must not ship');
+assert.doesNotMatch(v8,/\.side-navigation/u,'no unused V8 listeners');
+assert.doesNotMatch(v5,/\.side-navigation/u,'no unused V5 listeners');
+assert(html.includes('id="stepInput"'),'hidden legacy localization hooks survive');
+console.log('PASS V9 dead rail removal while preserving compatibility');
