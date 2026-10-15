@@ -156,6 +156,11 @@ jobs:
           node tests/analysis/workspace-v9-workflows-browser.test.cjs
       - name: V9 writing-mode clarity and disabled unverified generator
         run: node tests/analysis/workspace-v9-mode-copy.test.cjs
+      - name: V9 local writing, unsupported detector privacy and failure clarity
+        run: |
+          node tests/analysis/workspace-v9-mode-state.test.cjs
+          node --check tests/analysis/workspace-v9-privacy-browser.test.cjs
+          node tests/analysis/workspace-v9-privacy-browser.test.cjs
       - name: V9 responsive real Chromium geometry and screenshots
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots
