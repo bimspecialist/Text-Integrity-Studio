@@ -132,3 +132,7 @@ body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
 
 /* Legacy editorial review remains accessible after its own local check. */
 body.tis-v9[data-tis-v9-state="READY"][data-tis-v9-reviewed="true"] #studioReview{display:block!important}
+
+/* Writing and Editor are document-review modes; their local suggestions stay available. */
+body.tis-v9[data-tis-v9-mode="humanize"] #studioReview,
+body.tis-v9[data-tis-v9-mode="editor"] #studioReview{display:block!important}
