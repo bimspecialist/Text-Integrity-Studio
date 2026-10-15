@@ -67,6 +67,7 @@
   if(!node||!source||!scanButton||!resultRoot||typeof doc?.defaultView?.MutationObserver!=='function')
    throw new TypeError('V9_PRESENTATION_DEPENDENCIES_MISSING');
   let disposed=false,last={status:'EMPTY'},review=null;
+  const cards=doc.getElementById('studioReviewCards');
   const mode=()=>['humanize','editor'].includes(doc.body.dataset.tisMode)?doc.body.dataset.tisMode:'detection';
   const language=()=>doc.documentElement.lang==='ar'?'ar':'en';
   function render(){
@@ -77,6 +78,7 @@
    node.dataset.state=selected==='detection'||['STALE','ERROR','CANCELLED'].includes(state)?state:'WRITING_ONLY';
    doc.body.dataset.tisV9State=state;
    doc.body.dataset.tisV9Mode=selected;
+   doc.body.dataset.tisV9Reviewed=cards?.querySelector('.studio-suggestion')?'true':'false';
   }
   function setAnalysisState(state){
    if(disposed)return false;
@@ -93,6 +95,7 @@
   const observer=new doc.defaultView.MutationObserver(()=>render());
   observer.observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
   observer.observe(doc.body,{attributes:true,attributeFilter:['data-tis-mode']});
+  if(cards)observer.observe(cards,{childList:true,subtree:true});
   render();
   function dispose(){if(disposed)return;disposed=true;observer.disconnect();}
   return Object.freeze({setAnalysisState,setWritingReviewResult,dispose});

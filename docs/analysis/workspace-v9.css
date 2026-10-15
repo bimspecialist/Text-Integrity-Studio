@@ -129,3 +129,6 @@ body.tis-v9 .footer{padding-block:20px;border-color:#30374a;color:#a1abc0}
  body.tis-v9 #v5Headline{font-size:18px}
  body.tis-v9 #v5Subtitle{font-size:11px}
 }
+
+/* Legacy editorial review remains accessible after its own local check. */
+body.tis-v9[data-tis-v9-state="READY"][data-tis-v9-reviewed="true"] #studioReview{display:block!important}
