@@ -27,6 +27,7 @@
    uncovered:'Unscanned',modelSignal:'Model signal',more:'More analyzed sections are available in Advanced Details.',
    noText:'Paste or upload text to begin.',export:'Export report',advanced:'Advanced details',
    action:'Analyze Text',actionSub:'حلّل النص',cancel:'Cancel analysis',cancelSub:'إلغاء التحليل',moreTools:'More document tools',
+   groupWriting:'Writing & cleanup',groupDocuments:'Documents & OCR',groupResearch:'Privacy & research',
    wordTools:'Word document tools',wordNotice:'DOCX · Read-only text extraction. Your original document is unchanged. Use More document tools for Word-specific editing and export.',
    pdfNotice:'PDF · Extracted text. Verify reading order and formulas; OCR and export are in More document tools.',
    reasonHetero:'Model signals vary considerably between passages; one overall percentage would hide that disagreement.',
@@ -57,6 +58,7 @@
    uncovered:'لم يُفحص',modelSignal:'إشارة النموذج',more:'تظهر التفاصيل الإضافية في قسم التفاصيل المتقدمة.',
    noText:'الصق نصًا أو ارفع ملفًا أولًا.',export:'تصدير التقرير',advanced:'التفاصيل المتقدمة',
    action:'Analyze Text',actionSub:'حلّل النص',cancel:'إلغاء التحليل',cancelSub:'Cancel analysis',moreTools:'المزيد من أدوات المستندات',
+   groupWriting:'الكتابة والتنظيف',groupDocuments:'المستندات و OCR',groupResearch:'الخصوصية والفحص البحثي',
    wordTools:'أدوات مستند Word',wordNotice:'DOCX · النص المستخرج للقراءة فقط. المستند الأصلي محفوظ دون تغيير. أدوات Word والتصدير موجودة تحت المزيد من أدوات المستندات.',
    pdfNotice:'PDF · النص مستخرج. راجع ترتيب الأسطر والمعادلات؛ أدوات OCR والتصدير تحت المزيد من أدوات المستندات.',
    reasonHetero:'إشارات النموذج تختلف بين المقاطع، لذلك النسبة الموحدة قد تخفي هذا الاختلاف.',
@@ -89,7 +91,8 @@
    v5ClickNote:t.click,titleAudit:t.result,v5ResultsSubtitle:t.resultSub,
    v5RingCaption:t.ring,studioAiQuickLabel:t.signal,studioAiConfidence:t.confidence,
    v5InsightsSubtitle:t.insightsSub,v5BreakdownTitle:t.breakdown,
-   v5BreakdownCaption:t.breakdownSub,v5ToolboxLabel:t.moreTools
+   v5BreakdownCaption:t.breakdownSub,v5ToolboxLabel:t.moreTools,
+   v9ToolsWritingLabel:t.groupWriting,v9ToolsDocumentsLabel:t.groupDocuments,v9ToolsResearchLabel:t.groupResearch
   }))set(id,value);
   // The editor owns the actual ONNX start/cancel state and the action label.
   if(!state.model&&!state.active&&!source.value.trim())set('v5ResultHeadline',t.ready);
@@ -240,9 +243,21 @@
   for(const id of ['wordDrop','wordToolbar','wordReport']){
    const control=$(id);if(control)contents.append(control);
   }
-  wordDetails.append(contents);items.append(wordDetails);
-  for(const id of ['writingTools','cleanupTools','pdfTools','wordReportTools','wordPickerOptions','aboutResults','researchTools']){
-   const el=$(id);if(el)items.append(el);
+  wordDetails.append(contents);
+  // Move the original tool nodes to grouped sections. Never clone controls.
+  const groups=[
+   ['v9ToolsWriting','v9ToolsWritingLabel',current().groupWriting,['writingTools','cleanupTools']],
+   ['v9ToolsDocuments','v9ToolsDocumentsLabel',current().groupDocuments,['v6WordTools','wordReportTools','wordPickerOptions','pdfTools']],
+   ['v9ToolsResearch','v9ToolsResearchLabel',current().groupResearch,['aboutResults','researchTools']]
+  ];
+  for(const [id,label,title,ids] of groups){
+   const group=document.createElement('section');group.id=id;group.className='v9-tools-group';
+   const heading=document.createElement('h3');heading.id=label;heading.textContent=title;group.append(heading);
+   for(const child of ids){
+    const control=child==='v6WordTools'?wordDetails:$(child);
+    if(control)group.append(control);
+   }
+   items.append(group);
   }
   // Hide scientific and extended editorial controls inside one advanced area.
   for(const id of ['studioStyleGuide','studioSectionDetails','studioEditHistory','reportMore']){
