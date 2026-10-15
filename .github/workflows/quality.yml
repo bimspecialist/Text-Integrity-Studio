@@ -161,6 +161,8 @@ jobs:
           node tests/analysis/workspace-v9-mode-state.test.cjs
           node --check tests/analysis/workspace-v9-privacy-browser.test.cjs
           node tests/analysis/workspace-v9-privacy-browser.test.cjs
+      - name: V9 public guide, privacy and explicit release blockers
+        run: node tests/analysis/workspace-v9-docs.test.cjs
       - name: V9 dead sidebar stylesheet and event handler cleanup
         run: |
           node --check docs/analysis/workspace-v8.js
