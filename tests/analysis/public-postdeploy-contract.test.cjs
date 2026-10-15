@@ -35,8 +35,10 @@ function checks(extra={}){
 }
 (function releaseMarkerMustBeShippedInRealCandidate(){
  const html=fs.readFileSync(path.join(__dirname,'../../docs/index.html'),'utf8');
- assert.match(RELEASE_MARKER,/^TIS_V8_PATH_A_20261014_S5_[A-Z0-9_]+$/);
+ assert.match(RELEASE_MARKER,/^TIS_V9_SIMPLIFIED_20261015_[A-Z0-9_]+$/);
  assert(html.includes('name="tis-release-marker" content="'+RELEASE_MARKER+'"'));
+ assert(html.includes('href="analysis/workspace-v9.css?v=20261015-v9-rc1"'));
+ assert(html.includes('src="analysis/workspace-v9.js?v=20261015-v9-rc1"'));
  for(const asset of ['app.js','analysis/app-adapter.js',
   'analysis/workspace-v8.js','analysis/draft-diff-preview.js',
   'studio-insights-ui.js','analysis/editor-comparison-core.js',
