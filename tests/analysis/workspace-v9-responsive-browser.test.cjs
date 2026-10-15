@@ -17,10 +17,11 @@ async function main(){
   await page.goto('http://127.0.0.1:'+server.address().port+'/',{waitUntil:'load'});
   await page.evaluate(()=>document.fonts.ready);
   const desktop=await page.evaluate(()=>{
-   const box=id=>document.getElementById(id).getBoundingClientRect();
+   const rect=e=>{const r=e.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,top:r.top,bottom:r.bottom,right:r.right};};
+   const box=id=>rect(document.getElementById(id));
    return {overflow:document.documentElement.scrollWidth-innerWidth,
     input:box('inputPanel'),report:box('reportPanel'),button:box('scanAI'),
-    main:document.querySelector('.shell>main').getBoundingClientRect(),
+    main:rect(document.querySelector('.shell>main')),
     summary:box('tisV9Summary'),
     reportScroll:getComputedStyle(document.getElementById('reportPanel')).overflowY,
     idleSignal:getComputedStyle(document.getElementById('studioAiQuick')).display,
@@ -41,9 +42,9 @@ async function main(){
   await page.setViewport({width:1150,height:730});
   const rtl=await page.evaluate(()=>({
    dir:document.documentElement.dir,
-   main:document.querySelector('.shell>main').getBoundingClientRect(),
-   source:document.getElementById('source').getBoundingClientRect(),
-   draft:document.getElementById('tisRevisedText').getBoundingClientRect(),
+   main:{width:document.querySelector('.shell>main').getBoundingClientRect().width},
+   source:{width:document.getElementById('source').getBoundingClientRect().width},
+   draft:{width:document.getElementById('tisRevisedText').getBoundingClientRect().width},
    overflow:document.documentElement.scrollWidth-innerWidth}));
   assert.equal(rtl.dir,'rtl');
   assert(rtl.main.width>=1080,'RTL laptop must not waste half the viewport');
@@ -52,7 +53,7 @@ async function main(){
   for(const width of [768,390,320]){
    await page.setViewport({width,height:844});
    const geo=await page.evaluate(()=>{
-    const r=id=>document.getElementById(id).getBoundingClientRect();
+    const r=id=>{const box=document.getElementById(id).getBoundingClientRect();return {top:box.top,width:box.width};};
     return {overflow:document.documentElement.scrollWidth-innerWidth,
      a:r('inputPanel'),b:r('tisRevisedPane'),modes:r('tisModes'),
      button:r('scanAI'),viewport:innerWidth};
