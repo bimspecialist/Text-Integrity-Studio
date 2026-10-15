@@ -39,6 +39,16 @@ async function main(){
   await page.click('#tisTabEditor');await page.click('#tisTabHumanize');
   assert.equal(await page.$eval('#tisRevisedText',el=>el.value),unsaved,'mode round-trip preserves unsaved draft');
   assert.equal(await page.evaluate(()=>window.TISAnalysisApp.session.read().text),input+' Changed.');
+  // V9 protects academic references, engineering units and URLs in unsaved local drafts.
+  const engineering='The slab test measured 25 kPa [12]. See https://example.org/report for details.';
+  await page.$eval('#source',(el,text)=>{el.value=text;el.dispatchEvent(new Event('input',{bubbles:true}));},engineering);
+  await page.click('#tisDraftReset');
+  await page.$eval('#tisRevisedText',el=>{el.value='The slab test measured 35 kPa [12]. See https://example.org/report for details.';el.dispatchEvent(new Event('input',{bubbles:true}));});
+  assert.equal(await page.$eval('#tisDraftApply',el=>el.disabled),true,'protected measurement change cannot Apply');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.session.read().text),engineering,'source unchanged by rejected edit');
+  const protectedDraft=await page.$eval('#tisRevisedText',el=>el.value);
+  await page.click('#tisTabDetection');await page.click('#tisTabEditor');
+  assert.equal(await page.$eval('#tisRevisedText',el=>el.value),protectedDraft,'unsaved protected draft survives mode switches');
   await page.click('#language');
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert(/[\u0600-\u06ff]/u.test(await page.$eval('#tisV9Summary',el=>el.textContent)),'V9 feedback translates to Arabic');

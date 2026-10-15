@@ -154,6 +154,8 @@ jobs:
           node tests/analysis/workspace-v9-structure.test.cjs
           node tests/analysis/workspace-v9-state.test.cjs
           node tests/analysis/workspace-v9-workflows-browser.test.cjs
+      - name: V9 writing-mode clarity and disabled unverified generator
+        run: node tests/analysis/workspace-v9-mode-copy.test.cjs
       - name: V9 responsive real Chromium geometry and screenshots
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-ui-screenshots

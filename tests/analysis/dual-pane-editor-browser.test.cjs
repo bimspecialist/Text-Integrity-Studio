@@ -20,7 +20,7 @@ async function run(){
   assert.equal(await page.evaluate(()=>typeof window.TISDualPaneEditor?.mount),'function');
   assert.equal(await page.evaluate(()=>window.TISAnalysisApp?.dualEditor?.getState().mode),'detection');
   assert.deepEqual(await page.$$eval('.tis-mode-tab',nodes=>nodes.map(x=>x.textContent.trim())),
-   ['AI Detection','Humanize','Writing Editor']);
+   ['AI Detection','Improve Writing','Writing Editor']);
   assert.equal(await page.$$eval('#scanAI',nodes=>nodes.length),1);
   assert.equal(await page.$eval('#tisRevisedPane',n=>getComputedStyle(n).display),'none',
    'detection retains prominent existing model results, not a second analyze');
