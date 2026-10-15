@@ -1,0 +1,27 @@
+name: V9 automated WCAG A-AA browser audit
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'tests/analysis/v9-axe-wcag-browser.test.cjs'
+      - '.github/workflows/v9-accessibility-audit.yml'
+  push:
+    branches: [feature/v9-postrelease-evidence-gates]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wcag-browser-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned accessibility audit and Chromium driver
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact axe-core@4.10.3 puppeteer-core@25.13.0
+      - name: Inspect actual EN and AR UI modes at 1440 768 390 and 320px
+        run: |
+          node --check tests/analysis/v9-axe-wcag-browser.test.cjs
+          node tests/analysis/v9-axe-wcag-browser.test.cjs
