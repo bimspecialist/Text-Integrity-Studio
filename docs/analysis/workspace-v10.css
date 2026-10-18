@@ -314,3 +314,18 @@ body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel #source{
   height:230px!important;min-height:210px!important;
  }
 }
+
+/* V10.2 legible disabled scan state: no input means not actionable.
+ * Disabled labels are visually readable and the active state remains
+ * purple with white text; these rules cannot affect the default V9 UI. */
+body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI .v5-action-spark{
+ color:#fff!important;
+}
+body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel .main-actions button#scanAI:disabled{
+ background:#d9dce8!important;border-color:#bdc6d8!important;
+ color:#34415b!important;opacity:1!important;cursor:not-allowed!important;
+}
+body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel .main-actions button#scanAI:disabled .v5-action-title,
+body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel .main-actions button#scanAI:disabled .v5-action-spark{
+ color:#34415b!important;
+}
