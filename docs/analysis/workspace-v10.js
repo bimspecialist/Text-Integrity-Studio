@@ -170,6 +170,10 @@
   const exportExplanation=attach(results,'p','tisV10ExportExplanation','tis-v10-meta');
   const exportStatus=attach(results,'p','tisV10ExportStatus','tis-v10-meta');
   exportStatus.setAttribute('role','status');exportStatus.setAttribute('aria-live','polite');
+  // Keep the next actions available before potentially thousands of text lines.
+  results.insertBefore(actions,resultGrid);
+  results.insertBefore(exportExplanation,resultGrid);
+  results.insertBefore(exportStatus,resultGrid);
   const dialog=attach(doc.body,'dialog','tisV10InspectorDialog','tis-v10-dialog');
   const dialogTitle=attach(dialog,'h3','tisV10DialogTitle',null);
   const dialogText=attach(dialog,'p','tisV10DialogText',null);
