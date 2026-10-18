@@ -40,6 +40,7 @@ jobs:
       - name: Test V10 keyboard file import, cancel, errors and visible report export
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
+          TIS_VISUAL_LOG: '1'
         run: |
           node --check tests/analysis/workspace-v10-acceptance-browser.test.cjs
           node tests/analysis/workspace-v10-acceptance-browser.test.cjs
