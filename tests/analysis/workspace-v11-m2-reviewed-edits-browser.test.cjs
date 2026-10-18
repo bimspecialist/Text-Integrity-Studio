@@ -47,7 +47,8 @@ async function run(){
   assert.equal(await page.$eval('#tisV11Undo',el=>el.disabled),true,'No unrelated undo history is exposed');
   await openPreview(page,index);
   assert.equal(await page.$eval(sel(index,'apply'),el=>el.disabled),false);
-  assert.match(await page.$eval('#tisV11Preview'+index,el=>el.textContent),/\bthe\b/);
+  assert.equal(await page.$eval('#tisV11Preview'+index+' .tis-v11-after',el=>el.textContent),'the',
+   'Preview must show the exact replacement, not inferred words from joined labels');
   assert.equal(await page.$eval('#source',el=>el.value),en,'Preview must never change source');
   assert.equal(await page.evaluate(()=>window.TISAnalysisApp.session.read().revision),rev);
   await capture(page,'v11-m2-before-apply-en');
