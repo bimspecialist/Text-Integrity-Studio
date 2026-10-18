@@ -91,3 +91,58 @@ body.tis-v11[data-v10-screen="writing"] #tisV11Research{display:none!important}
  body.tis-v11 #tisV11Research{border:1px solid CanvasText!important;}
  body.tis-v11 .tis-v11-proposed{color:CanvasText!important;text-decoration:underline!important}
 }
+
+/* V11 M2 reversible, explicit suggestion review. No styling outside V11. */
+body.tis-v11 .tis-v11-suggestion-actions{
+ display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;
+}
+body.tis-v11 .tis-v11-suggestion-actions button{
+ min-height:44px;max-width:100%;padding:9px 14px;
+ border:1px solid #c7d0e4;border-radius:9px;background:#f7f8fc;
+ color:#343a71;font-size:13px;font-weight:600;cursor:pointer;
+}
+body.tis-v11 .tis-v11-suggestion-actions button.tis-v11-apply:not(:disabled){
+ background:#4c43bb;color:#fff;border-color:#4c43bb;
+}
+body.tis-v11 .tis-v11-suggestion-actions button:disabled,
+body.tis-v11 #tisV11Undo:disabled{
+ background:#edf0f6;color:#4d5a73;border-color:#c9d0de;
+ opacity:1;cursor:not-allowed;
+}
+body.tis-v11 .tis-v11-suggestion-actions button:focus-visible,
+body.tis-v11 #tisV11Undo:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v11 .tis-v11-preview[hidden]{display:none!important}
+body.tis-v11 .tis-v11-preview{
+ margin:13px 0 4px;padding:14px 16px;
+ border:1px solid var(--v10-border);border-radius:10px;background:#f7f8fc;
+ display:grid;gap:7px;
+}
+body.tis-v11 .tis-v11-preview strong{color:var(--v10-text);font-size:13px}
+body.tis-v11 .tis-v11-preview .tis-v11-excerpt{
+ margin:0;padding:11px 13px;white-space:pre-wrap;overflow-wrap:anywhere;
+ background:#fff;border-inline-start:3px solid #c7d0e4;
+ border-radius:5px;line-height:1.75;color:var(--v10-text);font-size:14px;
+}
+body.tis-v11 .tis-v11-preview .tis-v11-after{
+ border-inline-start-color:#287254;
+}
+body.tis-v11 .tis-v11-preview-note{
+ margin:0;font-size:13px;line-height:1.7;color:var(--v10-muted);
+}
+@media(max-width:540px){
+ body.tis-v11 .tis-v11-suggestion-actions{
+  flex-direction:column;align-items:stretch;
+ }
+ body.tis-v11 .tis-v11-suggestion-actions button{width:100%}
+}
+@media(forced-colors:active){
+ body.tis-v11 .tis-v11-preview,
+ body.tis-v11 .tis-v11-preview .tis-v11-excerpt{
+  border-color:CanvasText!important;color:CanvasText!important;
+ }
+ body.tis-v11 .tis-v11-suggestion-actions button:disabled{
+  border-style:dashed!important;
+ }
+}
