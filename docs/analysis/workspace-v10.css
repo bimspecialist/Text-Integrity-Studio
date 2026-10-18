@@ -249,3 +249,11 @@ body.tis-v10 #tisV10BackFromWriting{
  margin:0 0 17px!important;cursor:pointer;
 }
 body.tis-v10[data-v10-screen="writing"] #tisV10BackFromWriting{display:inline-flex!important;align-items:center!important}
+
+/* A neutral legend is required because yellow marks model coverage, not an
+ * AI-authorship decision. The text must remain readable without color. */
+body.tis-v10 #tisV10HighlightLegend{
+ margin:0 0 16px;color:#4f5b72;font-size:13px;line-height:1.75;
+ border-inline-start:3px solid #c99a4d;padding:7px 12px;
+ background:#fffaf0;border-radius:4px;
+}
