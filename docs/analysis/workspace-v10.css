@@ -333,3 +333,23 @@ body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel .main-actions button#sc
 body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel .main-actions button#scanAI:disabled .v5-action-spark{
  color:#34415b!important;
 }
+
+/* V10.4 forced-colors measured-window indicator. Windows contrast themes
+ * intentionally suppress the yellow background, so use both a system-colored
+ * border and a familiar text underline to identify measured windows.
+ * Text legend and dialog still explain that a window is NOT proof of origin.
+ * All selectors are scoped to the opt-in V10 preview. */
+@media (forced-colors: active){
+ body.tis-v10 .tis-v10-highlight{
+  text-decoration:underline solid!important;
+  text-underline-offset:.18em!important;
+  border-bottom:2px solid LinkText!important;
+ }
+ body.tis-v10 .tis-v10-highlight:focus-visible{
+  outline-color:Highlight!important;
+ }
+ body.tis-v10 #tisV10HighlightLegend{
+  border-inline-start-color:CanvasText!important;
+  color:CanvasText!important;
+ }
+}
