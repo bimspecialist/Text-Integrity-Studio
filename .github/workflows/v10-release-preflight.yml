@@ -8,6 +8,7 @@ on:
       - 'tests/analysis/workspace-v10-contrast-browser.test.cjs'
       - 'tests/analysis/workspace-v10-long-import.test.cjs'
       - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
+      - 'tests/analysis/workspace-v10-acceptance-browser.test.cjs'
       - '.github/workflows/v10-release-preflight.yml'
   workflow_dispatch:
 permissions:
@@ -35,6 +36,20 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-keyboard-focus.test.cjs
           node tests/analysis/workspace-v10-keyboard-focus.test.cjs
+      - name: Test V10 keyboard file import, cancel, errors and visible report export
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
+        run: |
+          node --check tests/analysis/workspace-v10-acceptance-browser.test.cjs
+          node tests/analysis/workspace-v10-acceptance-browser.test.cjs
+      - name: Archive V10 acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-acceptance-browser-screenshots
+          path: /tmp/tis-v10-acceptance-shots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
   long-document-import:
     runs-on: ubuntu-latest
     timeout-minutes: 12
