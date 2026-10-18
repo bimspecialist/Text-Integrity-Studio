@@ -404,3 +404,9 @@ body.tis-v11[data-v10-screen="writing"] #tisV8SaveHelp{
  }
  body.tis-v11 #tisV11SignalValue{color:CanvasText!important}
 }
+
+/* V10 restores the original upload control with a high-specificity !important.
+ * Override it only in the Refine writing workspace, never in input mode. */
+body.tis-v9.tis-v10.tis-v11[data-v10-screen="writing"] #inputPanel label.file-input{
+ display:none!important;
+}
