@@ -315,9 +315,13 @@ body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel #source{
  }
 }
 
-/* V10.2 legible disabled scan state: no input means not actionable.
- * Disabled labels are visually readable and the active state remains
- * purple with white text; these rules cannot affect the default V9 UI. */
+/* V10.2 contrast: inherited V8 background-color transitions briefly flash
+ * a pale purple with low white-label contrast during V10 activation.
+ * The actual idle button is enabled; snap its color to the stable V10 palette.
+ * Neutral disabled styling is retained only for a future disabled state. */
+body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI{
+ transition:none!important;
+}
 body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI .v5-action-spark{
  color:#fff!important;
 }
