@@ -9,7 +9,8 @@
  if(!root?.document)return;
  root.TISWorkspaceV10=api;
  const setup=()=>{
-  if(new URL(root.location.href).searchParams.get('v10preview')!=='1')return;
+  const flags=new URL(root.location.href).searchParams;
+  if(flags.get('v10preview')!=='1'&&flags.get('v11preview')!=='1')return;
   const view=api.mount({documentObject:root.document,app:root.TISAnalysisApp});
   root.TISWorkspaceV10=Object.freeze({...api,...view});
   view.setAnalysisState(root.TISAnalysisApp?.controller?.getState()||{status:'EMPTY'});
