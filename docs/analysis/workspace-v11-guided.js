@@ -230,10 +230,14 @@
     allowed?.reason==='TOO_SHORT'?t.optShort:
     allowed?.languageClass==='en'&&allowed?.reason==='MIN_WORDS'?t.optShort:
     allowed?.languageClass==='en'&&allowed?.words<120?t.optShort:t.optUnsupported;
+   const desired=includeAI.checked?t.combinedButton:t.button;
    const title=action.querySelector('.v5-action-title');
-   if(title)title.textContent=includeAI.checked?t.combinedButton:t.button;
-   action.setAttribute('aria-label',includeAI.checked?t.combinedButton:t.button);
-   note.textContent=includeAI.checked?t.combinedHelp:t.help;
+   // V9 still localizes the shared button for its own mode. Do not edit that
+   // protected release; correct only changed V11 labels without feedback loops.
+   if(title&&title.textContent!==desired)title.textContent=desired;
+   if(action.getAttribute('aria-label')!==desired)action.setAttribute('aria-label',desired);
+   const help=includeAI.checked?t.combinedHelp:t.help;
+   if(note.textContent!==help)note.textContent=help;
   }
   function presentModelEvidence(){
    const state=app.controller.getState(),snapshot=app.session.read(),t=tr();
@@ -516,6 +520,15 @@
   const unsubscribe=app.session.subscribe(onRevision);
   const observer=new win.MutationObserver(()=>win.queueMicrotask(copy));
   observer.observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
+  const buttonCopyObserver=new win.MutationObserver(()=>{
+   // Restore the selected AI disclosure if the legacy V9 view relabels the
+   // common action following a language or research lifecycle event.
+   if(!disposed)win.queueMicrotask(renderScanChoice);
+  });
+  buttonCopyObserver.observe(action,{
+   attributes:true,attributeFilter:['aria-label'],
+   childList:true,characterData:true,subtree:true
+  });
   const viewObserver=new win.MutationObserver(()=>{
    if(doc.body.dataset.v10Screen==='writing')byId('tisRevisedHeading').textContent=tr().refinedHeading;
    presentModelEvidence();
@@ -536,7 +549,7 @@
   copy();
   function dispose(){
    if(disposed)return;disposed=true;
-   observer.disconnect();viewObserver.disconnect();unsubscribe();
+   observer.disconnect();buttonCopyObserver.disconnect();viewObserver.disconnect();unsubscribe();
    action.removeEventListener('click',startReview,true);
    edit.removeEventListener('click',openInput);
    improve.removeEventListener('click',enterWriting);
