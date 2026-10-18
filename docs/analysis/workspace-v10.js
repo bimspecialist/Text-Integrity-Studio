@@ -183,6 +183,7 @@
   let last={status:'EMPTY'},lastProgress=null,selected=null,disposed=false,previousScreen='input';
   const locale=()=>doc.documentElement.lang==='ar'?'ar':'en';
   const t=()=>words[locale()];
+  let renderedLocale=null;
   function show(screen){
    if(disposed)return;
    const previous=doc.body.dataset.v10Screen;
@@ -209,6 +210,11 @@
    doc.getElementById('tisRevisedText')?.focus();
   }
   function renderLocale(){
+   const current=locale();
+   // A prior download status is transient. Never leave stale English
+   // feedback in Arabic (or vice versa) after changing the UI language.
+   if(renderedLocale!==null&&renderedLocale!==current)exportStatus.textContent='';
+   renderedLocale=current;
    const strings=t();
    const set=(id,value)=>{const el=doc.getElementById(id);if(el)el.textContent=value;};
    set('v5Headline',strings.heading);set('v5Subtitle',strings.subheading);
