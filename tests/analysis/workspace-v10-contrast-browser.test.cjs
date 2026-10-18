@@ -30,18 +30,18 @@ function ratio(foreground, background, opacity) {
   const a = luminance(mixed), b = luminance(bg.rgb);
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
-async function inspect(page, selector) {
-  return page.$eval(selector, el => {
-    const pseudo = getComputedStyle(el, '::placeholder');
+async function inspect(page, selector, mode = 'placeholder') {
+  return page.$eval(selector, (el, mode) => {
     const style = getComputedStyle(el);
+    const foregroundStyle = mode === 'placeholder' ? getComputedStyle(el, '::placeholder') : style;
     return {
-      foreground: pseudo.color,
+      foreground: foregroundStyle.color,
       background: style.backgroundColor,
-      opacity: Number(pseudo.opacity),
+      opacity: Number(foregroundStyle.opacity),
       visible: !!el.getClientRects().length,
       placeholder: el.getAttribute('placeholder') || ''
     };
-  });
+  }, mode);
 }
 async function run() {
   const server = serve();
@@ -88,12 +88,20 @@ async function run() {
           await page.click('#tisV10Improve');
           assert.equal(await page.evaluate(() => document.body.dataset.v10Screen), 'writing');
 
-          const revised = await inspect(page, '#tisRevisedText');
+          const revised = await inspect(page, '#tisRevisedText', 'text');
           assert(revised.visible, 'Revised editor hidden at ' + width + '/' + lang);
           const revisedRatio = ratio(revised.foreground, revised.background, revised.opacity);
-          metrics.push({width, lang, control: 'revised', ratio: Number(revisedRatio.toFixed(2)),
+          metrics.push({width, lang, control: 'revised-text', ratio: Number(revisedRatio.toFixed(2)),
             foreground: revised.foreground, background: revised.background});
-          assert(revisedRatio >= 4.5, 'Revised placeholder below WCAG AA: ' + JSON.stringify(metrics.at(-1)));
+          assert(revisedRatio >= 4.5, 'Revised editor text below WCAG AA: ' + JSON.stringify(metrics.at(-1)));
+          if (revised.placeholder) {
+            const revisedPlaceholder = await inspect(page, '#tisRevisedText', 'placeholder');
+            const placeholderRatio = ratio(revisedPlaceholder.foreground, revisedPlaceholder.background, revisedPlaceholder.opacity);
+            metrics.push({width, lang, control: 'revised-placeholder', ratio: Number(placeholderRatio.toFixed(2)),
+              foreground: revisedPlaceholder.foreground, background: revisedPlaceholder.background});
+            assert(placeholderRatio >= 4.5,
+              'Revised placeholder below WCAG AA: ' + JSON.stringify(metrics.at(-1)));
+          }
           assert((await page.evaluate(() => document.documentElement.scrollWidth - innerWidth)) <= 8,
             'Unexpected horizontal overflow at ' + width + '/' + lang);
         } finally { await page.close(); }
@@ -101,7 +109,7 @@ async function run() {
     }
     assert.deepEqual(errors, [], 'Browser JS exceptions in contrast regression');
     console.log('V10 computed placeholder contrast ' + JSON.stringify(metrics));
-    console.log('PASS V10 computed CSS placeholder WCAG AA contrast: source and revised, EN/AR at 320/390/768/1440px');
+    console.log('PASS V10 computed CSS contrast: source placeholder and revised editor text, EN/AR at 320/390/768/1440px');
   } finally {
     await browser.close();
     await new Promise(resolve => server.close(resolve));
