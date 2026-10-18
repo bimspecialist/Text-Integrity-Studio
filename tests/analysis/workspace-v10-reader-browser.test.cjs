@@ -47,6 +47,20 @@ async function run(){
   await page.setViewport({width:390,height:844});
   await page.click('#tisV10ReaderBody .tis-v10-highlight');
   assert.equal(await page.$eval('#tisV10InspectorDialog',el=>el.open),true,'mobile passage details use native dialog');
+
+  const modalGeometry=await page.evaluate(()=>{
+   const dlg=document.getElementById('tisV10InspectorDialog');
+   const rect=dlg.getBoundingClientRect();
+   return {left:rect.left,right:rect.right,width:rect.width,
+    vw:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+    scrollX,dir:document.documentElement.dir};
+  });
+  console.log('V10.1 mobile modal geometry',JSON.stringify(modalGeometry));
+  assert(modalGeometry.left>=-2&&modalGeometry.right<=modalGeometry.vw+2,
+   'mobile modal must stay entirely inside phone viewport');
+  assert(modalGeometry.scrollWidth-modalGeometry.vw<=8,
+   'opening mobile modal must not introduce page horizontal overflow');
+
   await saveShot('v10-1-mobile-inspector-synthetic.png');
   await page.keyboard.press('Escape');
   assert.equal(await page.$eval('#tisV10InspectorDialog',el=>el.open),false);
