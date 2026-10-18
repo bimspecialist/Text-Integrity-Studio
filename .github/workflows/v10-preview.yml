@@ -26,6 +26,10 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-flow-browser.test.cjs
           node tests/analysis/workspace-v10-flow-browser.test.cjs
+      - name: Authentic progress, range highlights and mobile inspector regression
+        run: |
+          node --check tests/analysis/workspace-v10-reader-browser.test.cjs
+          node tests/analysis/workspace-v10-reader-browser.test.cjs
       - name: Archive preview screenshots if any
         if: always()
         uses: actions/upload-artifact@v4
