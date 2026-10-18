@@ -1,0 +1,37 @@
+name: V10.1 genuine on-device ONNX acceptance
+on:
+  push:
+    branches: [feature/v10-1-centered-flow]
+    paths:
+      - 'tests/analysis/workspace-v10-live-browser.test.cjs'
+      - 'docs/analysis/workspace-v10.js'
+      - 'docs/analysis/app-adapter.js'
+      - '.github/workflows/v10-real-model.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-v10-detection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium harness and XML parser
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Actual V10 on-device detector, authenticated source ranges, privacy
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-live-shots
+        run: |
+          node --check tests/analysis/workspace-v10-live-browser.test.cjs
+          node tests/analysis/workspace-v10-live-browser.test.cjs
+      - name: Preserve genuine model screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-genuine-onnx-result
+          path: /tmp/tis-v10-live-shots/*.png
+          retention-days: 3
+          if-no-files-found: ignore

@@ -1,0 +1,93 @@
+name: V10.1 release preflight axe and imported files
+on:
+  push:
+    branches: [feature/v10-1-centered-flow]
+    paths:
+      - 'docs/**'
+      - 'tests/analysis/workspace-v10-preflight-axe.test.cjs'
+      - 'tests/analysis/workspace-v10-contrast-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-long-import.test.cjs'
+      - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
+      - 'tests/analysis/workspace-v10-ax-semantics-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-acceptance-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-transport-retry-browser.test.cjs'
+      - '.github/workflows/v10-release-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  axe-accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned axe-core and Chromium harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact axe-core@4.10.3 puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Test EN AR input progress eligibility results and writing at 320-1440px
+        run: |
+          node --check tests/analysis/workspace-v10-preflight-axe.test.cjs
+          node tests/analysis/workspace-v10-preflight-axe.test.cjs
+      - name: Verify computed placeholder contrast at 320-1440px in EN and AR
+        run: |
+          node --check tests/analysis/workspace-v10-contrast-browser.test.cjs
+          node tests/analysis/workspace-v10-contrast-browser.test.cjs
+      - name: Verify real Chromium keyboard focus on every scan-state transition
+        run: |
+          node --check tests/analysis/workspace-v10-keyboard-focus.test.cjs
+          node tests/analysis/workspace-v10-keyboard-focus.test.cjs
+      - name: Verify bilingual accessibility tree, native dialog and reduced motion
+        run: |
+          node --check tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
+          node tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
+      - name: Check simulated Windows forced colors and text enlargement
+        env:
+          TIS_FORCED_COLOR_SHOTS: /tmp/tis-v10-forced-colors
+        run: |
+          node --check tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs
+          node tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs
+      - name: Test V10 keyboard file import, cancel, errors and visible report export
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
+        run: |
+          node --check tests/analysis/workspace-v10-acceptance-browser.test.cjs
+          node tests/analysis/workspace-v10-acceptance-browser.test.cjs
+      - name: Verify real controller transport failure, retry, cancel and stale rejection
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
+        run: |
+          node --check tests/analysis/workspace-v10-transport-retry-browser.test.cjs
+          node tests/analysis/workspace-v10-transport-retry-browser.test.cjs
+      - name: Archive adaptive-color test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-forced-colors-screenshots
+          path: /tmp/tis-v10-forced-colors/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+      - name: Archive V10 acceptance screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-acceptance-browser-screenshots
+          path: /tmp/tis-v10-acceptance-shots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+  long-document-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium harness for DOCX and PDF
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Import genuine long Word and PDF with EN AR reflow
+        run: |
+          node --check tests/analysis/workspace-v10-long-import.test.cjs
+          node tests/analysis/workspace-v10-long-import.test.cjs

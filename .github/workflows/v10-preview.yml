@@ -1,0 +1,46 @@
+name: V10.1 isolated UI preview checks
+on:
+  push:
+    branches: [feature/v10-1-centered-flow]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  centered-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium test harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Pure status progress and evidence contract
+        run: |
+          node --check docs/analysis/workspace-v10.js
+          node tests/analysis/workspace-v10-flow.test.cjs
+      - name: Real Chromium centered input and language flow
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-preview-shots
+        run: |
+          node --check tests/analysis/workspace-v10-flow-browser.test.cjs
+          node tests/analysis/workspace-v10-flow-browser.test.cjs
+      - name: Authentic progress, range highlights and mobile inspector regression
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-preview-shots
+        run: |
+          node --check tests/analysis/workspace-v10-reader-browser.test.cjs
+          node tests/analysis/workspace-v10-reader-browser.test.cjs
+      - name: V10.1 writing editor return navigation and source safety
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-preview-shots
+        run: node tests/analysis/workspace-v10-writing-browser.test.cjs
+      - name: Archive preview screenshots if any
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-preview-browser-screenshots
+          path: /tmp/tis-v10-preview-shots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
