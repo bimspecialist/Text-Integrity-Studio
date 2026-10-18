@@ -40,3 +40,13 @@ Record tester, date, OS/browser version, physical device, screen-reader name/ver
 - Any keyboard trap, missing accessible name, lost passage-dialog focus, missing error recovery, content loss, or unlabelled false-positive AI claim is **BLOCKING**.
 - Report axe-core **incomplete** contrast nodes as pending a manual computed/raster review unless another dedicated test measures the actual style; an axe zero-violation summary alone does not resolve them.
 - Keep PR #22 as **Draft**, no merge or Pages deployment until manual checks are recorded and the project owner explicitly authorizes release.
+
+## V10.4 simulated accessibility evidence (2026-10-18)
+
+This is **additional automated evidence, not physical AT approval**.
+
+- Chromium CDP emulated `forced-colors: active` and `prefers-reduced-motion: reduce` in **English and Arabic** at **320/390/1280 CSS pixels**. A dedicated V10-only CSS rule preserves system-colored focus and makes measured passages visually recognizable with an **underline and a bottom border** when the yellow background is suppressed.
+- The regression `tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs` checks focus outlines, the non-color measured-window indicator, optional local text-size 200% enlargement **only as a stress fixture**, clear primary actions, export button text, and absence of tested horizontal overflow.
+- [Passing regression and short-lived screenshots](https://github.com/bimspecialist/Text-Integrity-Studio/actions/runs/39114594086). The computed highlights retained a 2px bottom border **and** text underline; focus outlines remained 3px.
+- An earlier failed run was a **test harness issue**, because the site's CSP correctly blocked injected `<style>` elements. The harness now tests enlarged text via element CSSOM instead of relaxing CSP. Another initial test failure came from incorrectly assuming programmatic focus was equivalent to keyboard `:focus-visible`; the harness now starts with keyboard modality.
+- **Not yet tested:** actual Windows high-contrast color palette, actual Chrome/Edge/Safari 200%/400% page zoom, user-defined OS text scaling, physical NVDA/TalkBack/VoiceOver, or real mobile touch. The manual AT-01 through AT-12 rows remain **NOT RUN**; release decision remains **HOLD**.
