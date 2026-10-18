@@ -1,0 +1,52 @@
+name: V11 M2 isolated reviewed-edits acceptance
+on:
+  push:
+    branches: [feature/v11-m2-reviewed-edits]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewed-edits:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated browser and accessibility harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: JavaScript syntax and authoritative editorial engine tests
+        run: |
+          node --check docs/analysis/workspace-v11-guided.js
+          node --check tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+          node --check tests/analysis/workspace-v11-m2-axe-browser.test.cjs
+          node tests/analysis/editorial-review.test.js
+          node tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/analysis-controller.test.js
+      - name: Real Chromium keyboard preview confirm apply undo dismiss and safety
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v11-m2-screenshots
+        run: node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+      - name: V11 M1 one click and real DOCX PDF preserved
+        run: |
+          node tests/analysis/workspace-v11-guided-browser.test.cjs
+          node tests/analysis/workspace-v11-file-review-browser.test.cjs
+      - name: Bilingual M2 axe regression including expanded previews and DOCX
+        run: |
+          node tests/analysis/workspace-v11-m2-axe-browser.test.cjs
+          node tests/analysis/workspace-v11-axe-browser.test.cjs
+      - name: V10 preflight unchanged for centered preview and writing editor
+        run: |
+          node tests/analysis/workspace-v10-flow-browser.test.cjs
+          node tests/analysis/workspace-v10-writing-browser.test.cjs
+      - name: Preserve V10 long real DOCX and PDF import
+        run: node tests/analysis/workspace-v10-long-import.test.cjs
+      - name: Archive M2 real browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-m2-reviewed-edits-chromium
+          path: /tmp/tis-v11-m2-screenshots/*.png
+          retention-days: 3
+          if-no-files-found: ignore
