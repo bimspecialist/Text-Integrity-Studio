@@ -165,7 +165,13 @@
   textBody.dir='auto';
   const inspector=attach(resultGrid,'aside','tisV10Inspector','tis-v10-inspector');
   const inspectorHeading=attach(inspector,'h3','tisV10InspectorTitle',null);
+  inspector.setAttribute('role','region');
+  inspector.setAttribute('aria-labelledby','tisV10InspectorTitle');
   const inspectorText=attach(inspector,'p','tisV10InspectorText',null);
+  // Keep focus on the selected highlight; announce updated details politely.
+  inspectorText.setAttribute('role','status');
+  inspectorText.setAttribute('aria-live','polite');
+  inspectorText.setAttribute('aria-atomic','true');
   const inspectorNotice=attach(inspector,'p','tisV10InspectorNotice','tis-v10-meta');
   const actions=attach(results,'div',null,'tis-v10-result-actions');
   const improve=attach(actions,'button','tisV10Improve','tis-v10-primary');improve.type='button';
@@ -178,6 +184,9 @@
   results.insertBefore(exportExplanation,resultGrid);
   results.insertBefore(exportStatus,resultGrid);
   const dialog=attach(doc.body,'dialog','tisV10InspectorDialog','tis-v10-dialog');
+  // Native modal needs a programmatic name, independent of source language.
+  dialog.setAttribute('aria-labelledby','tisV10DialogTitle');
+  dialog.setAttribute('aria-describedby','tisV10DialogNote');
   const dialogTitle=attach(dialog,'h3','tisV10DialogTitle',null);
   const dialogText=attach(dialog,'p','tisV10DialogText',null);
   const dialogNote=attach(dialog,'p','tisV10DialogNote','tis-v10-meta');
