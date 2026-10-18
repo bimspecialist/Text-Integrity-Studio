@@ -109,15 +109,20 @@
   const edit=make(actions,'button','tisV11Edit','tis-v10-secondary');edit.type='button';
   const improve=make(actions,'button','tisV11Improve','tis-v10-primary');improve.type='button';
   const exportButton=make(actions,'button','tisV11Export','tis-v10-secondary');exportButton.type='button';
+  const qaFromResults=make(actions,'a','tisV11QaResults','tis-v11-qa-link');
+  qaFromResults.href='quality/v11-manual-acceptance.html';qaFromResults.rel='noopener';
   const undoButton=make(actions,'button','tisV11Undo','tis-v10-secondary');undoButton.type='button';undoButton.disabled=true;
   const status=make(stage,'p','tisV11Status','tis-v11-status');
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const research=make(inputPanel,'details','tisV11Research','tis-v11-research');
+  const qaFromInput=make(inputPanel,'a','tisV11QaInput','tis-v11-qa-link');
+  qaFromInput.href='quality/v11-manual-acceptance.html';qaFromInput.rel='noopener';
   const researchTitle=make(research,'summary','tisV11ResearchTitle',null);
   const researchHelp=make(research,'p','tisV11ResearchHelp',null);
   const researchAction=make(research,'button','tisV11ResearchRun','tis-v10-secondary');
   researchAction.type='button';researchAction.setAttribute('aria-describedby','tisV11ResearchHelp');
   inputPanel.insertBefore(research,note.nextSibling);
+  research.after(qaFromInput);
   const inputStatus=make(inputPanel,'p','tisV11InputStatus','tis-v11-status');
   inputStatus.setAttribute('role','status');inputStatus.setAttribute('aria-live','polite');
   inputPanel.insertBefore(inputStatus,research);
@@ -151,6 +156,8 @@
    heading.textContent=t.reviewTitle;
    disclaimer.textContent=t.reviewLimit;
    edit.textContent=t.edit;improve.textContent=t.improve;exportButton.textContent=t.export;
+   qaFromInput.textContent=qaFromResults.textContent=
+    doc.documentElement.lang==='ar'?'فتح لوحة اختبارات V11':'Open V11 testing desk';
    undoButton.textContent=t.undoAction;undoButton.disabled=ownUndoCount===0;
    docxNote.textContent=t.docx;
    if(reviewRevision!==null){renderSuggestions();status.textContent=t[lastNotice]||t.status;}
@@ -376,7 +383,8 @@
    undoButton.removeEventListener('click',undoSuggestion);
    researchAction.removeEventListener('click',optionalResearch);
    backFromWriting?.removeEventListener('click',returnFromWriting,true);
-   stage.remove();research.remove();inputStatus.remove();doc.body.classList.remove('tis-v11');
+   stage.remove();research.remove();qaFromInput.remove();inputStatus.remove();
+   doc.body.classList.remove('tis-v11');
   }
   return Object.freeze({dispose,showReview,reviewState:()=>Object.freeze({
    revision:reviewRevision,visible:doc.body.dataset.v10Screen==='guided-review',
