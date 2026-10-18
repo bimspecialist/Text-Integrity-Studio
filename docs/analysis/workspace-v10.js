@@ -102,6 +102,8 @@
   const workspace=doc?.querySelector?.('.workspace');
   if(!doc||!win||!source||!action||!main||!workspace||!app?.controller||!app?.session)
    throw new TypeError('V10_1_MISSING_CANONICAL_APP_DEPENDENCIES');
+  // Original text direction is independent of the interface language.
+  source.setAttribute('dir','auto');
   const make=(tag,id,cls,content)=>{
    const n=doc.createElement(tag);
    if(id)n.id=id;if(cls)n.className=cls;if(content!==undefined)n.textContent=content;
@@ -186,6 +188,7 @@
    set('tisV10EligibilityHeading',strings.unsupported);
    set('tisV10ErrorHeading',strings.error);
    set('tisV10ResultHeading',strings.results);
+   textBody.setAttribute('aria-label',strings.details+' — '+strings.signal);
    set('tisV10InspectorTitle',strings.details);
    set('tisV10InspectorNotice',strings.detailsExplain);
    set('tisV10DialogTitle',strings.modalTitle);
@@ -267,6 +270,11 @@
     lastProgress=null;
    if(doc.body.dataset.v10Screen==='writing'&&last.status!=='ERROR'&&last.status!=='STALE')return true;
    const screen=screenForStatus(last.status);
+   // Invalidate stale/cleared evidence in the DOM, not only visually via CSS.
+   if(['STALE','EMPTY','READY','CANCELLED'].includes(last.status)){
+    textBody.replaceChildren();selected=null;
+    inspectorText.textContent=t().detailsDefault;
+   }
    show(screen);
    if(screen==='progress')renderProgress();
    if(screen==='eligibility')renderEligibility();
