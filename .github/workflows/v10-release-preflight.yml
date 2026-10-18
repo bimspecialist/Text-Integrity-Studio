@@ -9,6 +9,7 @@ on:
       - 'tests/analysis/workspace-v10-long-import.test.cjs'
       - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
       - 'tests/analysis/workspace-v10-acceptance-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-transport-retry-browser.test.cjs'
       - '.github/workflows/v10-release-preflight.yml'
   workflow_dispatch:
 permissions:
@@ -42,6 +43,12 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-acceptance-browser.test.cjs
           node tests/analysis/workspace-v10-acceptance-browser.test.cjs
+      - name: Verify real controller transport failure, retry, cancel and stale rejection
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
+        run: |
+          node --check tests/analysis/workspace-v10-transport-retry-browser.test.cjs
+          node tests/analysis/workspace-v10-transport-retry-browser.test.cjs
       - name: Archive V10 acceptance screenshots
         if: always()
         uses: actions/upload-artifact@v4
