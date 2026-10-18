@@ -8,6 +8,7 @@ on:
       - 'tests/analysis/workspace-v10-contrast-browser.test.cjs'
       - 'tests/analysis/workspace-v10-long-import.test.cjs'
       - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
+      - 'tests/analysis/workspace-v10-ax-semantics-browser.test.cjs'
       - 'tests/analysis/workspace-v10-acceptance-browser.test.cjs'
       - 'tests/analysis/workspace-v10-transport-retry-browser.test.cjs'
       - '.github/workflows/v10-release-preflight.yml'
@@ -37,6 +38,10 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-keyboard-focus.test.cjs
           node tests/analysis/workspace-v10-keyboard-focus.test.cjs
+      - name: Verify bilingual accessibility tree, native dialog and reduced motion
+        run: |
+          node --check tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
+          node tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
       - name: Test V10 keyboard file import, cancel, errors and visible report export
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
