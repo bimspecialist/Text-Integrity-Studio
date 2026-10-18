@@ -5,6 +5,7 @@ body.tis-v10{
  --v10-page:#f7f8fc;--v10-surface:#fff;--v10-text:#20283c;
  --v10-muted:#4d5a73;--v10-border:#e0e5ee;
  --v10-brand:#5952d8;--v10-focus:#5549c8;--v10-highlight:#fff1d6;
+ --v10-placeholder:#586781;
  --v10-radius:19px;
  background:var(--v10-page)!important;color:var(--v10-text)!important;
  color-scheme:light;line-height:1.65;
@@ -281,4 +282,13 @@ body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisDraftStatus,
 body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisV8SaveHelp,
 body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisGeneratorNotice{
  color:#34415b!important;opacity:1!important;
+}
+
+/* V10.2: V8's dark-theme placeholder (#8188a2) is only 3.51:1 on
+ * V10's white editor. Scope the 5.72:1 replacement to opt-in V10 only,
+ * including the revised text pane; leave the default V9 UI untouched. */
+body.tis-v10 #inputPanel #source::placeholder,
+body.tis-v10 #tisRevisedPane #tisRevisedText::placeholder{
+ color:var(--v10-placeholder)!important;
+ opacity:1!important;
 }
