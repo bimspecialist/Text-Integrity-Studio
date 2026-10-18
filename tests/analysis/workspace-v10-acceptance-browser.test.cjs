@@ -31,9 +31,16 @@ async function run(){
   const save=async filename=>{
    if(shotDir)await page.screenshot({path:path.join(shotDir,filename),fullPage:true});
   };
+  const visual=async label=>{
+   if(process.env.TIS_VISUAL_LOG==='1'){
+    const jpeg=await page.screenshot({type:'jpeg',quality:32,encoding:'base64'});
+    console.log('V10_VISUAL_'+label+'_JPEG='+jpeg);
+   }
+  };
   await page.setViewport({width:1440,height:900});
   await page.goto('http://127.0.0.1:'+server.address().port+'/?v10preview=1',{waitUntil:'load'});
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'input');
+  await visual('INPUT_DESKTOP');
 
   // The native file picker must be reachable by keyboard, without a mouse.
   await page.focus('#file');
@@ -126,12 +133,14 @@ async function run(){
   const feedback=await page.$eval('#tisV10ExportStatus',el=>el.textContent.trim());
   assert(feedback.length>0,'Result download feedback must be visible and accessible');
   await save('v10-2-results-export-desktop.png');
+  await visual('RESULTS_DESKTOP');
   await page.click('#language');
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert.equal(await page.$eval('#tisV10ExportReport',el=>!!el.getClientRects().length),true);
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,'RTL results/export must not overflow');
   await save('v10-2-results-export-mobile-ar.png');
+  await visual('RESULTS_MOBILE_AR');
   assert.deepEqual(errors,[],'Browser JavaScript exception');
   console.log('PASS V10 report: visible keyboard-triggerable JSON export, privacy/no original text, bilingual mobile');
  }finally{
