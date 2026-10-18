@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; base-uri 'none'; form-action 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'">
+<meta name="robots" content="noindex,nofollow">
+<title>اختبارات قبول V11 | Text Integrity Studio</title>
+<link rel="stylesheet" href="v11-manual-acceptance.css?v=1">
+</head>
+<body>
+<header class="header">
+ <div class="brand"><span class="mark" aria-hidden="true">TIS</span><div><strong>Text Integrity Studio</strong><small id="brandNote">لوحة اختبار V11 — معاينة فقط</small></div></div>
+ <div class="headerActions">
+  <a id="livePreview" class="btn btnPrimary" href="../?v11preview=1" rel="noopener">تجربة V11 على الموقع <span aria-hidden="true">↗</span></a>
+  <button type="button" id="toggleLanguage" aria-label="Switch language">English</button>
+ </div>
+</header>
+<main class="main">
+ <div class="eyebrow" id="eyebrow">اختبار يدوي — لا توجد نتائج مفترضة</div>
+ <h1 id="pageTitle">مراجعة جاهزية V11 على الموقع</h1>
+ <p id="introduction">جرّب V11 في نافذة أخرى وسجّل هنا ما تحقق على جهازك. هذه الصفحة لا تفحص جهازك تلقائيًا ولا ترفع بياناتك.</p>
+ <div class="notice" role="note"><strong id="holdTitle">حالة الإصدار: HOLD</strong><p id="holdText">كل اختبار يبدأ «لم يُنفذ». لن يعني تصدير التقرير الموافقة على دمج أو نشر الإصدار.</p></div>
+ <section class="metrics" aria-label="Review progress" id="metrics" aria-live="polite">
+  <div><strong id="statPass">0</strong><span id="passLabel">ناجح</span></div>
+  <div><strong id="statFail">0</strong><span id="failLabel">فشل / عائق</span></div>
+  <div><strong id="statNotRun">18</strong><span id="notRunLabel">لم يُنفذ</span></div>
+  <div><strong id="statSamples">0 / 60</strong><span id="samplesLabel">عينات مكتملة</span></div>
+ </section>
+ <nav class="tabs" aria-label="Review sections">
+  <button type="button" id="tabCases" aria-current="page">اختبارات الأجهزة</button>
+  <button type="button" id="tabSamples">تقييم الكتابة</button>
+  <button type="button" id="tabSummary">ملخص القرار</button>
+ </nav>
+ <div class="toolbar">
+  <p id="privacyNote">خصوصيتك: الإدخالات تبقى مؤقتًا داخل هذه الصفحة فقط؛ احفظ ملف JSON قبل مغادرتها. لا تكتب بيانات حساسة.</p>
+  <div class="toolbarButtons">
+   <button type="button" id="importEvidence">استيراد JSON</button>
+   <button type="button" id="exportEvidence" class="btnPrimary">حفظ النتائج JSON</button>
+   <input id="evidenceFile" class="visuallyHidden" type="file" accept=".json,application/json" aria-label="JSON evidence file">
+  </div>
+ </div>
+ <section id="casesPanel" class="panel" aria-labelledby="casesHeading">
+  <div class="panelHeader"><div><h2 id="casesHeading">فحص الأجهزة والوصول</h2><p id="casesIntro">اختر اختبارًا. لا تختَر PASS إلا بعد إجراء الاختبار وتوثيقه.</p></div></div>
+  <div class="twoColumns">
+   <div id="caseList" class="caseList" role="group" aria-label="Manual test cases"></div>
+   <div class="fields">
+    <h3 id="caseTitle" tabindex="-1">اختبار</h3>
+    <p id="caseContext"></p>
+    <ol id="caseSteps" class="steps"></ol>
+    <label for="caseStatus" id="statusLabel">الحالة</label>
+    <select id="caseStatus"><option value="NOT_RUN">لم يُنفذ</option><option value="PASS">PASS</option><option value="FAIL">FAIL</option><option value="BLOCKED">BLOCKED</option></select>
+    <label for="caseTester" id="testerLabel">رمز المختبر (دون اسم حقيقي)</label><input id="caseTester" maxlength="80" autocomplete="off">
+    <label for="caseDevice" id="deviceLabel">الجهاز / النظام / المتصفح / نسخة قارئ الشاشة</label><input id="caseDevice" maxlength="180" autocomplete="off">
+    <label for="caseObservation" id="observationLabel">النتيجة التي شاهدتها فعليًا</label><textarea id="caseObservation" rows="4" maxlength="2000"></textarea>
+    <label for="caseEvidence" id="evidenceLabel">مرجع دليل منقّح (بدون بيانات شخصية)</label><input id="caseEvidence" maxlength="180" autocomplete="off">
+    <p class="validation" id="caseValidation" role="status" aria-live="polite"></p>
+    <div class="buttons"><button id="previousCase" type="button">السابق</button><button id="nextCase" type="button">التالي</button><button id="saveCase" class="btnPrimary" type="button">حفظ الحالة</button></div>
+   </div>
+  </div>
+ </section>
+ <section id="samplesPanel" class="panel" aria-labelledby="samplesHeading" hidden>
+  <h2 id="samplesHeading">تقييم فائدة اقتراحات الكتابة</h2>
+  <p id="samplesIntro">30 نصًا عربيًا و30 نصًا إنجليزيًا من مصادر مشروعة موثّقة، يقيمها مراجعان بشريان مختلفان بصورة مستقلة.</p>
+  <div class="formGrid">
+   <div><label for="reviewerA" id="reviewerALabel">رمز المراجع الأول</label><input id="reviewerA" maxlength="60"></div>
+   <div><label for="reviewerB" id="reviewerBLabel">رمز المراجع الثاني</label><input id="reviewerB" maxlength="60"></div>
+   <div><label for="sampleSelect" id="sampleSelectLabel">رمز العينة</label><select id="sampleSelect"></select></div>
+   <div><label for="sampleSource" id="sampleSourceLabel">مرجع المصدر المرخص (بدون النص)</label><input id="sampleSource" maxlength="180"></div>
+  </div>
+  <label class="checkboxLabel"><input type="checkbox" id="sampleVerified"><span id="verifiedLabel">تحققت من صحة مصدر هذه العينة وحق استخدامها</span></label>
+  <div class="formGrid">
+   <div><label for="sampleTotal" id="sampleTotalLabel">عدد الاقتراحات الحقيقي</label><input type="number" id="sampleTotal" min="0" max="999" step="1"></div>
+   <div class="help" id="sampleInstructions">يجب أن يراجع كل مختبر جميع اقتراحات العينة. لا تستعمل نتائج مختلقة.</div>
+  </div>
+  <div class="reviewGrid">
+   <fieldset><legend id="legendA">المراجع الأول</legend><label for="aReviewed" id="aReviewedLabel">تمت مراجعتها</label><input id="aReviewed" type="number" min="0" max="999"><label for="aUseful" id="aUsefulLabel">مفيدة وتحافظ على المعنى</label><input id="aUseful" type="number" min="0" max="999"><label for="aRisk" id="aRiskLabel">تعديلات خطرة على الحقائق</label><input id="aRisk" type="number" min="0" max="999"></fieldset>
+   <fieldset><legend id="legendB">المراجع الثاني</legend><label for="bReviewed" id="bReviewedLabel">تمت مراجعتها</label><input id="bReviewed" type="number" min="0" max="999"><label for="bUseful" id="bUsefulLabel">مفيدة وتحافظ على المعنى</label><input id="bUseful" type="number" min="0" max="999"><label for="bRisk" id="bRiskLabel">تعديلات خطرة على الحقائق</label><input id="bRisk" type="number" min="0" max="999"></fieldset>
+  </div>
+  <p class="validation" id="sampleValidation" role="status"></p>
+  <div class="buttons"><button type="button" id="previousSample">العينة السابقة</button><button type="button" id="nextSample">العينة التالية</button><button type="button" id="saveSample" class="btnPrimary">حفظ تقييم العينة</button></div>
+ </section>
+ <section id="summaryPanel" class="panel" aria-labelledby="summaryHeading" hidden>
+  <h2 id="summaryHeading">ملخص قرار الاختبار</h2>
+  <p id="summaryText">نجاح الفحوص الآلية لا يكفي لاعتماد الإصدار. نحتاج نتائج حقيقية من الأجهزة والمراجعين البشريين.</p>
+  <div id="summaryContent" role="status" aria-live="polite"></div>
+  <p class="warning" id="releaseWarning">لا يؤدي نجاح جميع الاختبارات هنا إلى دمج أو نشر تلقائي. القرار النهائي يحتاج موافقة جديدة وصريحة.</p>
+ </section>
+ <footer><a href="../?v11preview=1" id="footerPreview">العودة إلى معاينة V11</a><span>Text Integrity Studio · QA-only · No server submission</span></footer>
+</main>
+<script src="v11-manual-acceptance.js?v=1"></script>
+</body>
+</html>
