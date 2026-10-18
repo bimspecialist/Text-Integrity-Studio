@@ -11,6 +11,10 @@ async function run(){
   page.on('pageerror',err=>errors.push(err.message));
   page.on('request',request=>{if(new URL(request.url()).hostname!=='127.0.0.1')outside.push(new URL(request.url()).hostname);});
   await page.goto('http://127.0.0.1:'+server.address().port+'/?v10preview=1',{waitUntil:'load'});
+
+  const shotDir=process.env.TIS_SCREENSHOT_DIR;
+  if(shotDir)require('node:fs').mkdirSync(shotDir,{recursive:true});
+  const saveShot=async name=>{if(shotDir)await page.screenshot({path:require('node:path').join(shotDir,name),fullPage:true});};
   assert.equal(await page.$eval('#source',el=>el.getAttribute('dir')),'auto','mixed technical text needs own bidi direction');
   const passage='Measured source sentence with 25 kPa [12] values.';
   const original='The first test summary was recorded.\n'+passage+'\nThe remaining paragraph stays unchanged.';
@@ -25,6 +29,7 @@ async function run(){
   await page.evaluate(()=>window.TISWorkspaceV10.setProgress({stage:'ANALYZING',percent:25,requestId:'test-v10'}));
   assert.equal(await page.$eval('#tisV10Meter',el=>el.getAttribute('aria-valuenow')),'25');
   assert.equal(await page.$eval('#tisV10Meter',el=>Number(el.value)),25);
+  await saveShot('v10-1-desktop-progress-synthetic.png');
   const begin=original.indexOf(passage),end=begin+passage.length;
   await page.evaluate(({revision,begin,end})=>window.TISWorkspaceV10.setAnalysisState({
    status:'RESEARCH_SIGNAL',requestId:'test-v10',revision,
@@ -35,12 +40,14 @@ async function run(){
   assert.equal(await page.$eval('#tisV10ReaderBody',el=>el.textContent),original,'reader must preserve every original character');
   assert.equal(await page.$$eval('#tisV10ReaderBody .tis-v10-highlight',els=>els.length),1);
   assert.match(await page.$eval('#tisV10ResultSummary',el=>el.textContent),/not AI-authorship probability/i);
+  await saveShot('v10-1-desktop-results-synthetic.png');
   await page.click('#language'); // Arabic UI with English source
   assert.equal(await page.$eval('#tisV10ReaderBody',el=>el.getAttribute('dir')),'auto');
   assert.match(await page.$eval('#tisV10ReaderBody',el=>el.getAttribute('aria-label')),/\p{Script=Arabic}/u,'result reader accessible label translated');
   await page.setViewport({width:390,height:844});
   await page.click('#tisV10ReaderBody .tis-v10-highlight');
   assert.equal(await page.$eval('#tisV10InspectorDialog',el=>el.open),true,'mobile passage details use native dialog');
+  await saveShot('v10-1-mobile-inspector-synthetic.png');
   await page.keyboard.press('Escape');
   assert.equal(await page.$eval('#tisV10InspectorDialog',el=>el.open),false);
   assert.equal(await page.evaluate(()=>document.activeElement.classList.contains('tis-v10-highlight')),true,'focus returns to selected window');
