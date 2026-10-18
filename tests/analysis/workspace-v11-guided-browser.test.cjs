@@ -95,7 +95,16 @@ async function run(){
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'input');
 
   await page.click('#language');
-  await page.waitForFunction(()=>document.documentElement.lang==='ar'&&document.getElementById('scanAI').getAttribute('aria-label')==='مراجعة النص');
+  const switched=await page.evaluate(()=>({
+   locale:document.documentElement.lang,
+   visibleButton:document.querySelector('#scanAI .v5-action-title')?.textContent,
+   accessibleName:document.getElementById('scanAI')?.getAttribute('aria-label'),
+   view:document.body.dataset.v10Screen,
+   mode:document.body.dataset.tisMode
+  }));
+  console.log('V11 language transition diagnostic',JSON.stringify(switched));
+  await page.waitForFunction(()=>document.documentElement.lang==='ar'&&
+   document.getElementById('scanAI').getAttribute('aria-label')==='مراجعة النص',{timeout:3500});
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   await insert(page,ar);
