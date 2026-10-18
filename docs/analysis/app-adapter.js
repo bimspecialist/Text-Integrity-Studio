@@ -47,7 +47,10 @@
      // A result cannot be accepted when the actual textarea has changed.
      syncSource();
      if(event.op==='RESULT')rawResult={id:event.requestId,raw:event.payload?.result};
-     if(event.op==='PROGRESS')lastProgress=event.payload;
+     if(event.op==='PROGRESS'){
+      lastProgress=event.payload;
+      root.TISWorkspaceV10?.setProgress?.({...event.payload,requestId:event.requestId});
+     }
     }
    }):
    Object.freeze({run:()=>false,cancel:()=>false,subscribe:()=>()=>{},dispose:()=>{}});
@@ -55,6 +58,7 @@
   function showState(state){
    if(disposed)return;
    root.TISWorkspaceV8?.setAnalysisState?.(state);
+   root.TISWorkspaceV10?.setAnalysisState?.(state);
    root.TISWorkspaceV9?.setAnalysisState?.(state.status==='STALE'&&!scanAttempted?
     {...state,status:'READY'}:state);
    if(['WRITING_ONLY','UNSUPPORTED','LOADING','ANALYZING',
