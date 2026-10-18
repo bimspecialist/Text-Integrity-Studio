@@ -32,6 +32,10 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-reader-browser.test.cjs
           node tests/analysis/workspace-v10-reader-browser.test.cjs
+      - name: V10.1 writing editor return navigation and source safety
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-preview-shots
+        run: node tests/analysis/workspace-v10-writing-browser.test.cjs
       - name: Archive preview screenshots if any
         if: always()
         uses: actions/upload-artifact@v4
