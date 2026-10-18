@@ -150,9 +150,14 @@ async function run(){
   await save('v10-2-results-export-desktop.png');
   await visual('RESULTS_DESKTOP');
   await page.click('#language');
+  assert(!/Report saved locally/i.test(await page.$eval('#tisV10ExportStatus',el=>el.textContent)),
+   'Changing to Arabic may not leave stale English download feedback');
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert.equal(await page.$eval('#tisV10ExportReport',el=>!!el.getClientRects().length),true);
+  await page.click('#tisV10ExportReport');
+  assert(/\p{Script=Arabic}/u.test(await page.$eval('#tisV10ExportStatus',el=>el.textContent)),
+   'Arabic report feedback should be localized after user export action');
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,'RTL results/export must not overflow');
   await save('v10-2-results-export-mobile-ar.png');
   await visual('RESULTS_MOBILE_AR');
