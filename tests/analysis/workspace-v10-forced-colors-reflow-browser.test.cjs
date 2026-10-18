@@ -35,6 +35,9 @@ async function run(){
     await page.setViewport({width,height:820});
     await page.goto('http://127.0.0.1:'+server.address().port+'/?v10preview=1',{waitUntil:'load'});
     if(lang==='ar')await page.click('#language');
+    // Simulate keyboard navigation, not pointer/programmatic-only focus.
+    // :focus-visible intentionally does not match after a mouse click.
+    await page.keyboard.press('Tab');
     assert.equal(await page.evaluate(()=>matchMedia('(forced-colors: active)').matches),true);
     assert.equal(await page.evaluate(()=>matchMedia('(prefers-reduced-motion: reduce)').matches),true);
     const marker=lang+'-'+width;
