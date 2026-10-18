@@ -146,3 +146,18 @@ body.tis-v11 .tis-v11-preview-note{
   border-style:dashed!important;
  }
 }
+
+/* Website QA link exists only in the separately activated V11 preview. */
+body.tis-v10.tis-v11 .tis-v11-qa-link{
+ display:inline-flex;align-items:center;min-height:44px;padding:8px 11px;
+ max-width:100%;margin:10px 0 0;color:#3d3b96;
+ border:1px solid #ccd3e7;border-radius:9px;background:#fff;
+ text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:650;
+}
+body.tis-v10.tis-v11 .tis-v11-qa-link:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v10.tis-v11 #tisV11QaResults{margin:0}
+@media(forced-colors:active){
+ body.tis-v10.tis-v11 .tis-v11-qa-link{border-color:CanvasText!important;color:LinkText!important;}
+}
