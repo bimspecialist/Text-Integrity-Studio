@@ -84,14 +84,19 @@ async function run(){
     await screenshot(page,'forced-colors-'+marker);
 
     // Stress important text with 200% author-size enlargement, NOT actual browser zoom.
-    await page.addStyleTag({content:
-      'body.tis-v10 #tisV10ResultHeading,'+
-      'body.tis-v10 #tisV10HighlightLegend,'+
-      'body.tis-v10 #tisV10ExportExplanation,'+
-      'body.tis-v10 #tisV10ExportReport,'+
-      'body.tis-v10 #tisV10Improve,'+
-      'body.tis-v10 #tisV10ReaderBody{font-size:200%!important}'
+    const enlarged=await page.evaluate(()=>{
+      // Browser CSP deliberately blocks injected <style> tags. Change only
+      // CSSOM properties on the QA fixture elements, without weakening CSP.
+      const ids=['tisV10ResultHeading','tisV10HighlightLegend',
+       'tisV10ExportExplanation','tisV10ExportReport','tisV10Improve','tisV10ReaderBody'];
+      return ids.map(id=>{
+       const element=document.getElementById(id);
+       element.style.setProperty('font-size','200%','important');
+       return {id,fontSize:parseFloat(getComputedStyle(element).fontSize)};
+      });
     });
+    assert(enlarged.every(item=>item.fontSize>=30),
+      'Text-stress changes did not take effect under CSP: '+JSON.stringify(enlarged));
     const stress=await page.evaluate(()=>{
       const action=document.getElementById('tisV10ExportReport');
       const title=document.getElementById('tisV10ResultHeading');
