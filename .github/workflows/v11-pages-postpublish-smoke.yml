@@ -1,0 +1,48 @@
+name: V11 opt-in Pages preview postpublish verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/index.html'
+      - 'docs/analysis/workspace-v11-guided.js'
+      - 'docs/quality/v11-manual-acceptance.*'
+      - '.github/workflows/v11-pages-postpublish-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  hosted-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Wait for optional preview assets to appear on the public Pages host
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://bimspecialist.github.io/Text-Integrity-Studio/"
+          found=0
+          for attempt in $(seq 1 24); do
+            if curl -fsSL --max-time 12 "$URL" -o /tmp/tis-public.html &&
+               curl -fsSL --max-time 12 "${URL}quality/v11-manual-acceptance.html" -o /tmp/tis-qa.html &&
+               grep -Fq 'workspace-v11-guided.js' /tmp/tis-public.html &&
+               grep -Fq 'v11-manual-acceptance.js' /tmp/tis-qa.html; then
+              found=1
+              break
+            fi
+            echo "GitHub Pages preview not yet visible, attempt $attempt / 24"
+            sleep 10
+          done
+          if [ "$found" -ne 1 ]; then
+            echo "Public Pages content not verified; no release approval may be claimed" >&2
+            exit 1
+          fi
+      - name: Real hosted Chromium opt-in and QA desk smoke
+        run: |
+          node --check tests/analysis/v11-github-pages-live-smoke.test.cjs
+          node tests/analysis/v11-github-pages-live-smoke.test.cjs

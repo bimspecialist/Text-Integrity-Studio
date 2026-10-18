@@ -1,0 +1,50 @@
+:root{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:#f7f8fb;color:#1e2a43;line-height:1.65;color-scheme:light}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh}button,input,textarea,select{font:inherit}button{cursor:pointer}
+a{color:#3f3a9e;text-underline-offset:3px}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid #5145bd;outline-offset:3px}
+.header{background:white;border-bottom:1px solid #e0e5ee;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:15px max(20px,calc((100vw - 1120px)/2))}
+.brand{display:flex;align-items:center;gap:12px}.brand strong{display:block;font-size:16px}.brand small{display:block;font-size:12px;color:#64708a}.mark{display:grid;place-items:center;min-width:46px;height:44px;background:#5145b8;color:white;border-radius:10px;font-weight:800;letter-spacing:.05em}
+.headerActions,.toolbarButtons,.buttons{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+button,.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #c5ccdc;border-radius:9px;min-height:44px;padding:9px 14px;background:white;color:#333b58;text-decoration:none}
+button.btnPrimary,.btn.btnPrimary{background:#5145b8;color:white;border-color:#5145b8;font-weight:700}
+button[aria-current=page]{background:#eceafe;color:#34308e;border-color:#aaa3e0;font-weight:700}
+button:disabled{color:#5c6680;background:#ebedf2;cursor:default}
+.main{max-width:1160px;margin:0 auto;padding:25px 20px 50px}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:800;color:#5049a1}
+h1{font-size:clamp(24px,3vw,34px);line-height:1.3;margin:7px 0}h2{font-size:21px;margin:0}h3{font-size:18px;margin:0}p{margin:8px 0;color:#596782}
+.notice{margin:21px 0;padding:13px 16px;border:1px solid #cdd3e7;border-inline-start:4px solid #6253b8;border-radius:12px;background:#fff}.notice strong{color:#3f3b93}.notice p{margin:4px 0 0;font-size:13px}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:20px 0}
+.metrics>div{padding:14px 16px;border-radius:12px;background:white;border:1px solid #e1e5ee;display:grid;gap:0}
+.metrics strong{font-size:27px;font-variant-numeric:tabular-nums}.metrics span{font-size:12px;color:#677389}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px;margin-bottom:12px}.tabs button{min-width:130px}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:14px 0}.toolbar p{font-size:12px;flex:1;min-width:200px}
+.panel{padding:22px;border:1px solid #e0e4ed;border-radius:14px;background:white;min-width:0}
+.panel[hidden],.visuallyHidden{display:none!important}
+.panelHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:17px}
+.twoColumns{display:grid;grid-template-columns:minmax(240px,.88fr) minmax(0,1.6fr);gap:20px;align-items:start}
+.caseList{display:grid;gap:7px;max-height:650px;overflow:auto;min-width:0}
+.caseList button{display:flex;justify-content:space-between;text-align:start;gap:10px;align-items:center;line-height:1.5;min-height:46px;font-size:13px}
+.caseList button span{overflow-wrap:anywhere}.caseList .state{font-size:11px;color:#56627b;flex-shrink:0}
+.fields{display:grid;gap:7px;min-width:0}
+label{display:block;font-size:13px;font-weight:650;color:#35415b;margin-top:8px}
+input,textarea,select{width:100%;min-width:0;border:1px solid #bfc7d8;border-radius:9px;padding:10px 12px;background:white;color:#1d2842}
+textarea{resize:vertical;line-height:1.7}
+.steps{margin:8px 0;padding-inline-start:24px;color:#4e5a73;font-size:13px}.steps li{margin-bottom:7px}
+.validation{font-size:12px;min-height:20px;color:#5a438b}
+.validation[data-error=true]{color:#9f2632;font-weight:650}
+.buttons{justify-content:flex-start;margin-top:8px}
+.formGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:14px 0}
+.checkboxLabel{display:flex;align-items:center;gap:10px;margin:15px 0}
+.checkboxLabel input{width:19px;height:19px;flex:0 0 19px}
+.help{font-size:12px;color:#69758d;align-self:end}
+.reviewGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:14px 0}
+fieldset{margin:0;min-width:0;border:1px solid #d6dce7;border-radius:12px;padding:14px}
+legend{padding:0 9px;font-weight:700;color:#464197}
+#summaryContent{line-height:1.85;overflow-wrap:anywhere}
+#summaryContent dl{display:grid;grid-template-columns:1fr auto;gap:5px 16px;margin:15px 0}
+#summaryContent dt,#summaryContent dd{margin:0;padding:8px;border-bottom:1px solid #edf0f5}
+.warning{border:1px solid #d2b6bf;background:#fffafa;border-radius:9px;padding:13px;color:#7f273d}
+footer{margin-top:25px;padding-top:15px;border-top:1px solid #dee4ef;display:flex;gap:15px;justify-content:space-between;flex-wrap:wrap;font-size:12px;color:#677389}
+@media(max-width:770px){.twoColumns{grid-template-columns:1fr}.caseList{max-height:205px;overflow:auto}.header{padding:12px 18px}.main{padding:16px 14px 40px}.panel{padding:15px}}
+@media(max-width:520px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.formGrid,.reviewGrid{grid-template-columns:1fr}.headerActions{width:100%;justify-content:space-between}.headerActions .btn{flex:1}.toolbarButtons{width:100%}.toolbarButtons button{flex:1}.tabs button{flex:1;min-width:0}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+@media(forced-colors:active){.mark{border:2px solid CanvasText}.notice,.panel,.caseList button,.btn,.metrics>div{border-color:CanvasText!important}.warning{border-color:CanvasText}}

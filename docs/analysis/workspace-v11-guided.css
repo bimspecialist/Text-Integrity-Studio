@@ -1,0 +1,163 @@
+/* V11 M1 preview — visible only when ?v11preview=1.
+ * Reuses V10 light tokens; leaves V10 (?v10preview=1) and default V9 alone. */
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] .workspace,
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] #v5Toolbox{
+ display:none!important;
+}
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] .tis-v10-flow{
+ display:block!important;
+}
+body.tis-v10.tis-v11 #tisV11GuidedReview[hidden]{display:none!important}
+body.tis-v10.tis-v11 #tisV11GuidedReview{
+ display:block;max-width:900px;padding:clamp(18px,3vw,32px);
+}
+/* A moved keyboard focus marks the new results heading without the thick
+ * browser-default black rectangle that obscured the reviewed screenshot. */
+body.tis-v11 #tisV11Heading:focus-visible{
+ outline:3px solid var(--v10-focus);outline-offset:3px;border-radius:5px;
+}
+body.tis-v11 .tis-v11-count{
+ font-weight:700;color:var(--v10-text);font-size:17px;margin:0 0 8px;
+}
+body.tis-v11 .tis-v11-disclaimer{
+ color:var(--v10-muted);font-size:13px;line-height:1.8;
+ margin:8px 0 18px;border-inline-start:3px solid var(--v10-border);
+ padding-inline-start:12px;
+}
+body.tis-v11 .tis-v11-suggestions{
+ list-style:none;padding:0;margin:0;display:grid;gap:12px;
+}
+body.tis-v11 .tis-v11-suggestion,
+body.tis-v11 .tis-v11-empty{
+ border:1px solid var(--v10-border);border-radius:12px;padding:16px;
+ background:#fff;overflow-wrap:anywhere;
+}
+body.tis-v11 .tis-v11-suggestion-top{
+ display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;
+}
+body.tis-v11 .tis-v11-suggestion-top strong{
+ font-size:15px;color:var(--v10-text);
+}
+body.tis-v11 .tis-v11-suggestion-top small{
+ color:var(--v10-muted);font-size:12px;
+}
+body.tis-v11 .tis-v11-reason{
+ margin:9px 0;color:var(--v10-text);font-size:14px;line-height:1.7;
+}
+body.tis-v11 .tis-v11-original,
+body.tis-v11 .tis-v11-proposed{
+ margin:6px 0 0;font-size:13px;color:var(--v10-muted);
+ overflow-wrap:anywhere;white-space:pre-wrap;
+}
+body.tis-v11 .tis-v11-proposed{color:#26624d}
+body.tis-v11 .tis-v11-actions{
+ margin-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+}
+body.tis-v11 .tis-v11-actions button{
+ margin:0!important;min-height:44px;max-width:100%;
+}
+body.tis-v11 .tis-v11-status{
+ font-size:13px;color:var(--v10-muted);margin:11px 0 0;
+}
+body.tis-v11 .tis-v11-status:empty{display:none}
+body.tis-v11 #inputPanel #tisV11Research{
+ margin:18px 0 0;border:1px solid var(--v10-border);border-radius:10px;
+ background:#fafbff;padding:12px 15px;color:var(--v10-muted);
+}
+body.tis-v11 #tisV11Research summary{
+ cursor:pointer;font-size:13px;line-height:1.6;font-weight:600;
+ color:#444a88;min-height:28px;
+}
+body.tis-v11 #tisV11Research p{
+ color:var(--v10-muted);font-size:12px;line-height:1.8;margin:10px 0;
+}
+body.tis-v11 #tisV11Research button{
+ min-height:44px;padding:10px 14px;border-radius:9px;
+ margin:4px 0 0;background:#f7f8fc;color:#343a71;
+ border:1px solid #c7d0e4;font-size:13px;cursor:pointer;
+}
+body.tis-v11 #tisV11Research button:focus-visible,
+body.tis-v11 .tis-v11-actions button:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v11[data-v10-screen="writing"] #tisV11Research{display:none!important}
+@media (max-width:540px){
+ body.tis-v11 .tis-v11-suggestion{padding:13px}
+ body.tis-v11 .tis-v11-actions{flex-direction:column;align-items:stretch}
+ body.tis-v11 .tis-v11-actions button{width:100%}
+}
+@media(forced-colors:active){
+ body.tis-v11 .tis-v11-suggestion,
+ body.tis-v11 #tisV11Research{border:1px solid CanvasText!important;}
+ body.tis-v11 .tis-v11-proposed{color:CanvasText!important;text-decoration:underline!important}
+}
+
+/* V11 M2 reversible, explicit suggestion review. No styling outside V11. */
+body.tis-v11 .tis-v11-suggestion-actions{
+ display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;
+}
+body.tis-v11 .tis-v11-suggestion-actions button{
+ min-height:44px;max-width:100%;padding:9px 14px;
+ border:1px solid #c7d0e4;border-radius:9px;background:#f7f8fc;
+ color:#343a71;font-size:13px;font-weight:600;cursor:pointer;
+}
+body.tis-v11 .tis-v11-suggestion-actions button.tis-v11-apply:not(:disabled){
+ background:#4c43bb;color:#fff;border-color:#4c43bb;
+}
+body.tis-v11 .tis-v11-suggestion-actions button:disabled,
+body.tis-v11 #tisV11Undo:disabled{
+ background:#edf0f6;color:#4d5a73;border-color:#c9d0de;
+ opacity:1;cursor:not-allowed;
+}
+body.tis-v11 .tis-v11-suggestion-actions button:focus-visible,
+body.tis-v11 #tisV11Undo:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v11 .tis-v11-preview[hidden]{display:none!important}
+body.tis-v11 .tis-v11-preview{
+ margin:13px 0 4px;padding:14px 16px;
+ border:1px solid var(--v10-border);border-radius:10px;background:#f7f8fc;
+ display:grid;gap:7px;
+}
+body.tis-v11 .tis-v11-preview strong{color:var(--v10-text);font-size:13px}
+body.tis-v11 .tis-v11-preview .tis-v11-excerpt{
+ margin:0;padding:11px 13px;white-space:pre-wrap;overflow-wrap:anywhere;
+ background:#fff;border-inline-start:3px solid #c7d0e4;
+ border-radius:5px;line-height:1.75;color:var(--v10-text);font-size:14px;
+}
+body.tis-v11 .tis-v11-preview .tis-v11-after{
+ border-inline-start-color:#287254;
+}
+body.tis-v11 .tis-v11-preview-note{
+ margin:0;font-size:13px;line-height:1.7;color:var(--v10-muted);
+}
+@media(max-width:540px){
+ body.tis-v11 .tis-v11-suggestion-actions{
+  flex-direction:column;align-items:stretch;
+ }
+ body.tis-v11 .tis-v11-suggestion-actions button{width:100%}
+}
+@media(forced-colors:active){
+ body.tis-v11 .tis-v11-preview,
+ body.tis-v11 .tis-v11-preview .tis-v11-excerpt{
+  border-color:CanvasText!important;color:CanvasText!important;
+ }
+ body.tis-v11 .tis-v11-suggestion-actions button:disabled{
+  border-style:dashed!important;
+ }
+}
+
+/* Website QA link exists only in the separately activated V11 preview. */
+body.tis-v10.tis-v11 .tis-v11-qa-link{
+ display:inline-flex;align-items:center;min-height:44px;padding:8px 11px;
+ max-width:100%;margin:10px 0 0;color:#3d3b96;
+ border:1px solid #ccd3e7;border-radius:9px;background:#fff;
+ text-decoration:underline;text-underline-offset:3px;font-size:13px;font-weight:650;
+}
+body.tis-v10.tis-v11 .tis-v11-qa-link:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v10.tis-v11 #tisV11QaResults{margin:0}
+@media(forced-colors:active){
+ body.tis-v10.tis-v11 .tis-v11-qa-link{border-color:CanvasText!important;color:LinkText!important;}
+}

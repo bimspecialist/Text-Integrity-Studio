@@ -1,0 +1,57 @@
+name: V11 website opt-in QA and Pages preview safeguards
+on:
+  push:
+    branches: [feature/v11-web-preview-github-pages]
+  pull_request:
+    paths:
+      - 'docs/quality/v11-manual-acceptance.*'
+      - 'docs/analysis/workspace-v10.*'
+      - 'docs/analysis/workspace-v11-guided.*'
+      - 'docs/index.html'
+      - 'docs/studio-insights-ui.js'
+      - 'docs/analysis/app-adapter.js'
+      - 'tests/analysis/v11-online-preview-browser.test.cjs'
+      - '.github/workflows/v11-website-qa-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned first-party Chromium QA tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: Syntax and static CSP guards
+        run: |
+          node --check docs/quality/v11-manual-acceptance.js
+          node --check docs/analysis/workspace-v10.js
+          node --check docs/analysis/workspace-v11-guided.js
+          node --check tests/analysis/v11-online-preview-browser.test.cjs
+          grep -F "script-src 'self'" docs/quality/v11-manual-acceptance.html
+          grep -F "connect-src 'none'" docs/quality/v11-manual-acceptance.html
+          ! grep -F 'unsafe-inline' docs/quality/v11-manual-acceptance.html
+      - name: Real Chromium opt-in preview and evidence desk
+        env:
+          TIS_SITE_PREVIEW_SHOTS: /tmp/tis-v11-website-preview
+        run: node tests/analysis/v11-online-preview-browser.test.cjs
+      - name: Confirm real EN/AR local review and no unapproved model downloads
+        run: node tests/analysis/workspace-v11-guided-browser.test.cjs
+      - name: Preserve DOCX and PDF review
+        run: node tests/analysis/workspace-v11-file-review-browser.test.cjs
+      - name: Preserve reviewed editing, undo, stale and manual-only safeguards
+        run: node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+      - name: Axe automated EN/AR review and writing states
+        run: node tests/analysis/workspace-v11-axe-browser.test.cjs
+      - name: Archive preview evidence screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-website-qa-chromium
+          path: /tmp/tis-v11-website-preview/*.png
+          retention-days: 3
+          if-no-files-found: ignore
