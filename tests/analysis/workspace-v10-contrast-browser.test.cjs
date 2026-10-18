@@ -87,6 +87,17 @@ async function run() {
             element.value = text;
             element.dispatchEvent(new Event('input', {bubbles: true}));
           }, sample);
+          const enabledScan=await page.evaluate(() => {
+            const button=document.getElementById('scanAI');
+            return {disabled:button.disabled,
+              foreground:getComputedStyle(button.querySelector('.v5-action-title')).color,
+              background:getComputedStyle(button).backgroundColor};
+          });
+          assert.equal(enabledScan.disabled,false,'Text input should enable Analyze');
+          const enabledRatio=ratio(enabledScan.foreground,enabledScan.background,1);
+          metrics.push({width,lang,control:'scan-enabled',ratio:Number(enabledRatio.toFixed(2)),
+            foreground:enabledScan.foreground,background:enabledScan.background});
+          assert(enabledRatio>=4.5,'Enabled Analyze contrast below WCAG AA: '+JSON.stringify(metrics.at(-1)));
           const revision = await page.evaluate(() => window.TISAnalysisApp.session.read().revision);
           await page.evaluate(rev => {
             window.TISWorkspaceV10.setAnalysisState({
