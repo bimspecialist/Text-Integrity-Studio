@@ -1,0 +1,216 @@
+/* V10.1 — opt-in light design. Never affects V9 without ?v10preview=1.
+ * Deliberately retain all V9 IDs, scripts, model consent and document tools.
+ */
+body.tis-v10{
+ --v10-page:#f7f8fc;--v10-surface:#fff;--v10-text:#20283c;
+ --v10-muted:#4d5a73;--v10-border:#e0e5ee;
+ --v10-brand:#5952d8;--v10-focus:#5549c8;--v10-highlight:#fff1d6;
+ --v10-radius:19px;
+ background:var(--v10-page)!important;color:var(--v10-text)!important;
+ color-scheme:light;line-height:1.65;
+}
+body.tis-v10 .v5-topbar{
+ background:#fff!important;border-bottom:1px solid var(--v10-border)!important;
+ color:var(--v10-text)!important;box-shadow:none!important;
+ height:72px!important;min-height:72px!important;padding-inline:clamp(16px,4vw,56px)!important;
+}
+body.tis-v10 .v5-brand-icon{background:var(--v10-brand)!important;color:#fff!important;border-radius:12px}
+body.tis-v10 .v5-brand-text strong{color:var(--v10-text)!important;font-size:16px}
+body.tis-v10 .v5-header-privacy{color:#286b52!important}
+body.tis-v10 .v5-language{background:#f2f3fb!important;border:1px solid #ccd2e4!important;color:#26324f!important}
+body.tis-v10 .shell{background:var(--v10-page)!important}
+body.tis-v10 .shell>main{max-width:1100px!important;margin:0 auto!important;
+ padding:clamp(20px,4vw,52px) 18px 56px!important}
+body.tis-v10 .footer{border-color:var(--v10-border)!important;color:var(--v10-muted)!important;
+ background:var(--v10-page)!important}
+body.tis-v10 .footer a{color:#5048ac!important}
+body.tis-v10 #studioWorkspaceTop,
+body.tis-v10 .hero,
+body.tis-v10 .tis-modes,
+body.tis-v10 .tis-v8-context,
+body.tis-v10 .steps{display:none!important}
+body.tis-v10 .workspace{display:block!important;grid-template-columns:none!important;min-width:0!important}
+body.tis-v10 .workspace-main{display:block!important;min-width:0!important}
+body.tis-v10 .workspace-results{display:none!important}
+body.tis-v10 .workspace-main>#cleanupTools,
+body.tis-v10 #studioEvidence,
+body.tis-v10 #editorOptions,
+body.tis-v10 #v5ToolboxItems .studio-top-tools,
+body.tis-v10 .studio-docbar,
+body.tis-v10 .v5-input-tab,
+body.tis-v10 #v5TextTab,
+body.tis-v10 #v5UploadTab,
+body.tis-v10 #tisV8Paste,
+body.tis-v10 #tisV8Shortcut,
+body.tis-v10 #tisV8ActionStatus:empty,
+body.tis-v10 #tisV8FileState:empty{display:none!important}
+body.tis-v10 #inputPanel{
+ width:min(100%,900px)!important;max-width:900px!important;
+ margin:0 auto 22px!important;padding:clamp(18px,3vw,30px)!important;
+ border:1px solid var(--v10-border)!important;background:var(--v10-surface)!important;
+ border-radius:var(--v10-radius)!important;box-shadow:0 16px 48px #2230550a!important;
+ color:var(--v10-text)!important;
+}
+body.tis-v10 #inputPanel .v5-editor-lead{text-align:center;margin:0 0 20px}
+body.tis-v10 #v5Headline{
+ font-size:clamp(23px,3vw,32px)!important;font-weight:800!important;
+ line-height:1.45!important;color:var(--v10-text)!important;margin:0 0 7px!important;
+}
+body.tis-v10 #v5Subtitle{
+ color:var(--v10-muted)!important;font-size:14px!important;line-height:1.75!important;
+ max-width:62ch!important;margin:0 auto!important;
+}
+body.tis-v10 #inputPanel .v5-editor-tabs{
+ display:flex!important;justify-content:flex-end!important;min-height:24px!important;
+ margin:0 0 5px!important;background:transparent!important;border:0!important;
+}
+body.tis-v10 #v5TopCounts{font-size:12px!important;color:var(--v10-muted)!important}
+body.tis-v10 #inputPanel .tis-v8-quick-tools{
+ display:flex!important;gap:10px!important;align-items:center;
+ margin:6px 0 12px!important;min-height:36px!important;
+}
+body.tis-v10 #tisV8Example{
+ display:inline-flex!important;color:#4d469d!important;font-size:13px!important;
+ background:#f3f2ff!important;border:1px solid #d8d6f3!important;
+ border-radius:9px!important;min-height:38px!important;padding:8px 12px!important;
+}
+body.tis-v10 .file-input{
+ display:flex!important;align-items:center!important;padding:14px 16px!important;
+ background:#fafbff!important;border:1px dashed #b9c3dd!important;
+ border-radius:11px!important;min-height:68px!important;margin:0 0 17px!important;
+ color:var(--v10-muted)!important;
+}
+body.tis-v10 .file-input-description strong{color:#343d58!important;font-size:13px!important}
+body.tis-v10 .file-input-description small{color:var(--v10-muted)!important}
+body.tis-v10 .tis-v8-source-heading{margin:8px 0 10px!important}
+body.tis-v10 #inputPanel .source-label{font-size:14px!important;color:var(--v10-text)!important}
+body.tis-v10 #tisSourceLabel{display:none!important}
+body.tis-v10 #source{
+ background:#fff!important;border:1px solid #bfc8dc!important;
+ width:100%!important;min-width:0!important;
+ border-radius:12px!important;min-height:270px!important;height:270px!important;
+ padding:17px 19px!important;color:var(--v10-text)!important;
+ font-size:16px!important;line-height:1.85!important;
+ box-shadow:none!important;resize:vertical!important;
+}
+body.tis-v10 #source:focus-visible,
+body.tis-v10 #tisRevisedText:focus-visible,
+body.tis-v10 .tis-v10-highlight:focus-visible,
+body.tis-v10 button:focus-visible,
+body.tis-v10 label[tabindex="0"]:focus-visible,
+body.tis-v10 summary:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v10 #inputPanel .main-actions{display:block!important;margin:18px 0 0!important}
+body.tis-v10 #scanAI{
+ width:100%!important;display:flex!important;align-items:center!important;
+ justify-content:center!important;min-height:56px!important;
+ border-radius:11px!important;background:var(--v10-brand)!important;
+ color:#fff!important;border:1px solid #4b46c1!important;box-shadow:none!important;
+ font-size:15px!important;
+}
+body.tis-v10 #scanAI .v5-action-title{color:#fff!important;font-size:15px!important}
+body.tis-v10 #scanAI .v5-action-sub{display:none!important}
+body.tis-v10 #scanAI:hover:not(:disabled){background:#4943c2!important}
+body.tis-v10 #scanAI .v5-action-arrow{display:none!important}
+body.tis-v10 #v5ClickNote{font-size:12px!important;line-height:1.7!important;
+ color:var(--v10-muted)!important;margin:12px 0 0!important}
+body.tis-v10 #v5Toolbox{
+ width:min(100%,900px)!important;margin:0 auto!important;
+ background:#fff!important;border:1px solid var(--v10-border)!important;
+ border-radius:12px!important;color:var(--v10-text)!important;
+}
+body.tis-v10 #v5Toolbox>summary{color:var(--v10-muted)!important;min-height:48px!important}
+body.tis-v10 .tis-v10-flow{display:none}
+body.tis-v10[data-v10-screen="progress"] .workspace,
+body.tis-v10[data-v10-screen="eligibility"] .workspace,
+body.tis-v10[data-v10-screen="error"] .workspace,
+body.tis-v10[data-v10-screen="results"] .workspace{display:none!important}
+body.tis-v10[data-v10-screen="progress"] #v5Toolbox,
+body.tis-v10[data-v10-screen="eligibility"] #v5Toolbox,
+body.tis-v10[data-v10-screen="error"] #v5Toolbox,
+body.tis-v10[data-v10-screen="results"] #v5Toolbox{display:none!important}
+body.tis-v10[data-v10-screen="progress"] .tis-v10-flow,
+body.tis-v10[data-v10-screen="eligibility"] .tis-v10-flow,
+body.tis-v10[data-v10-screen="error"] .tis-v10-flow,
+body.tis-v10[data-v10-screen="results"] .tis-v10-flow{display:block!important}
+body.tis-v10 .tis-v10-stage[hidden]{display:none!important}
+body.tis-v10 .tis-v10-stage{
+ max-width:900px;margin:0 auto 24px;
+ background:#fff;border:1px solid var(--v10-border);
+ border-radius:var(--v10-radius);padding:clamp(20px,4vw,35px);
+ box-shadow:0 16px 48px #2230550a;color:var(--v10-text);
+}
+body.tis-v10 .tis-v10-title{font-size:clamp(19px,2vw,27px);font-weight:750;
+ line-height:1.45;margin:0 0 12px}
+body.tis-v10 .tis-v10-meta,body.tis-v10 .tis-v10-status{font-size:13px;line-height:1.8;
+ color:var(--v10-muted);margin:10px 0 20px}
+body.tis-v10 .tis-v10-meter{width:100%;height:13px;accent-color:var(--v10-brand);display:block}
+body.tis-v10 .tis-v10-stage button{
+ min-height:44px;padding:11px 18px;border-radius:10px;font-size:14px;
+ margin-inline-end:10px;margin-top:14px;cursor:pointer;
+}
+body.tis-v10 .tis-v10-primary{background:var(--v10-brand)!important;color:#fff!important;border:1px solid #4d46be!important}
+body.tis-v10 .tis-v10-secondary{background:#f7f8fc!important;color:#3b4770!important;border:1px solid #c7d0e4!important}
+body.tis-v10 #tisV10Results{max-width:1030px}
+body.tis-v10 .tis-v10-results-top{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap}
+body.tis-v10 .tis-v10-reader-grid{display:grid;grid-template-columns:minmax(0,7fr) minmax(230px,3fr);gap:16px;align-items:start}
+body.tis-v10 .tis-v10-reader{border:1px solid var(--v10-border);border-radius:13px;
+ padding:22px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;
+ line-height:2;color:var(--v10-text);min-height:180px}
+body.tis-v10 .tis-v10-inspector{background:#f8f9ff;border:1px solid var(--v10-border);
+ border-radius:13px;padding:19px;max-height:65vh;overflow:auto}
+body.tis-v10 .tis-v10-inspector h3{font-size:14px;margin:0 0 13px;color:var(--v10-text)}
+body.tis-v10 .tis-v10-inspector p{font-size:13px;line-height:1.8;overflow-wrap:anywhere;color:var(--v10-muted)}
+body.tis-v10 .tis-v10-highlight{
+ font:inherit!important;line-height:inherit!important;display:inline!important;
+ background:var(--v10-highlight)!important;color:inherit!important;border:0!important;
+ border-bottom:2px solid #c48f37!important;border-radius:2px!important;
+ padding:1px 2px!important;margin:0!important;white-space:pre-wrap!important;
+ text-align:inherit;cursor:pointer;box-shadow:none!important
+}
+body.tis-v10 .tis-v10-dialog{
+ color:var(--v10-text);background:#fff;border:1px solid var(--v10-border);
+ border-radius:17px;padding:20px;width:min(92vw,540px);
+ max-height:75vh;overflow:auto;
+}
+body.tis-v10 .tis-v10-dialog::backdrop{background:#15213799}
+body.tis-v10 .tis-v10-dialog p{overflow-wrap:anywhere;line-height:1.8;color:var(--v10-muted)}
+body.tis-v10[data-v10-screen="writing"] .workspace{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:17px!important
+}
+body.tis-v10[data-v10-screen="writing"] .workspace-main,
+body.tis-v10[data-v10-screen="writing"] .workspace-results{display:block!important;min-width:0}
+body.tis-v10[data-v10-screen="writing"] #inputPanel{width:100%!important;margin:0!important}
+body.tis-v10[data-v10-screen="writing"] #tisRevisedPane{
+ background:#fff!important;border:1px solid var(--v10-border)!important;
+ border-radius:19px!important;padding:24px!important;color:var(--v10-text)!important
+}
+body.tis-v10[data-v10-screen="writing"] #tisRevisedText{
+ background:#fff!important;color:var(--v10-text)!important;border:1px solid #bfc8dc!important;
+ min-height:270px!important;font-size:16px!important;
+}
+body.tis-v10[data-v10-screen="writing"] #reportPanel{display:none!important}
+body.tis-v10[data-v10-screen="writing"] .tis-v10-flow{display:none!important}
+@media(max-width:770px){
+ body.tis-v10 .tis-v10-reader-grid{display:block}
+ body.tis-v10 .tis-v10-inspector{display:none}
+ body.tis-v10 .tis-v10-stage{border-radius:15px}
+ body.tis-v10[data-v10-screen="writing"] .workspace{display:flex!important;flex-direction:column!important}
+ body.tis-v10[data-v10-screen="writing"] .workspace-main,body.tis-v10[data-v10-screen="writing"] .workspace-results{width:100%!important}
+ body.tis-v10 .shell>main{padding:18px 12px 32px!important}
+}
+@media(max-width:540px){
+ body.tis-v10 .v5-topbar{min-height:65px!important;height:65px!important;padding-inline:13px!important}
+ body.tis-v10 #inputPanel{padding:16px!important;border-radius:14px!important}
+ body.tis-v10 #source{height:245px!important;min-height:245px!important;font-size:16px!important;padding:13px!important}
+ body.tis-v10 #v5Headline{font-size:23px!important}
+ body.tis-v10 #v5Subtitle{font-size:13px!important}
+ body.tis-v10 .tis-v10-stage{padding:17px!important}
+ body.tis-v10 .tis-v10-reader{padding:14px;font-size:14px}
+ body.tis-v10 .tis-v10-dialog{position:fixed;inset:auto 0 0 0;width:100%;max-width:none;margin:0;
+ border-radius:20px 20px 0 0;max-height:74vh;padding:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tis-v10 *,body.tis-v10 *::before,body.tis-v10 *::after{animation:none!important;transition:none!important}
+}
