@@ -5,6 +5,7 @@ on:
     paths:
       - 'docs/**'
       - 'tests/analysis/workspace-v10-preflight-axe.test.cjs'
+      - 'tests/analysis/workspace-v10-contrast-browser.test.cjs'
       - 'tests/analysis/workspace-v10-long-import.test.cjs'
       - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
       - '.github/workflows/v10-release-preflight.yml'
@@ -26,6 +27,10 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-preflight-axe.test.cjs
           node tests/analysis/workspace-v10-preflight-axe.test.cjs
+      - name: Verify computed placeholder contrast at 320-1440px in EN and AR
+        run: |
+          node --check tests/analysis/workspace-v10-contrast-browser.test.cjs
+          node tests/analysis/workspace-v10-contrast-browser.test.cjs
       - name: Verify real Chromium keyboard focus on every scan-state transition
         run: |
           node --check tests/analysis/workspace-v10-keyboard-focus.test.cjs
