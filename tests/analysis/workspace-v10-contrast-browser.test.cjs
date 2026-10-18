@@ -63,6 +63,18 @@ async function run() {
           assert.equal(await page.evaluate(() => document.documentElement.lang), lang);
           assert.equal(await page.evaluate(() => document.body.classList.contains('tis-v10')), true);
 
+          const scanColors = await page.evaluate(() => {
+            const button=document.getElementById('scanAI');
+            const title=button.querySelector('.v5-action-title');
+            return {foreground:getComputedStyle(title).color,
+              background:getComputedStyle(button).backgroundColor,
+              opacity:Number(getComputedStyle(title).opacity)};
+          });
+          const scanRatio=ratio(scanColors.foreground,scanColors.background,scanColors.opacity);
+          metrics.push({width,lang,control:'scan-label',ratio:Number(scanRatio.toFixed(2)),
+            foreground:scanColors.foreground,background:scanColors.background});
+          assert(scanRatio>=4.5,'Primary scan title below WCAG AA: '+JSON.stringify(metrics.at(-1)));
+
           const input = await inspect(page, '#source');
           assert(input.visible, 'Source editor hidden at ' + width + '/' + lang);
           assert(input.placeholder, 'Source placeholder missing at ' + width + '/' + lang);
