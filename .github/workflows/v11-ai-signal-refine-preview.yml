@@ -1,0 +1,53 @@
+name: V11 AI opt-in and Refine writing UI acceptance
+on:
+  push:
+    branches: [feature/v11-ai-signal-refine-ux]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ui-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Chromium and axe for actual UI tests
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: Syntax, raw research signal contract and existing local writing unit tests
+        run: |
+          node --check docs/analysis/workspace-v11-guided.js
+          node --check docs/studio-insights-ui.js
+          node --check tests/analysis/workspace-v11-ai-review-browser.test.cjs
+          node tests/analysis/workspace-v11-signal-presentation.test.cjs
+          node tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/editorial-review.test.js
+          node tests/analysis/analysis-controller.test.js
+      - name: Real Chromium Review Text explicit AI consent and Refine EN AR layout
+        env:
+          TIS_V11_UX_SCREENSHOTS: /tmp/tis-v11-ux-qa
+        run: node tests/analysis/workspace-v11-ai-review-browser.test.cjs
+      - name: Real Chromium research percentage visibility and INCONCLUSIVE withholding
+        run: |
+          node --check tests/analysis/workspace-v11-ai-score-view-browser.test.cjs
+          node tests/analysis/workspace-v11-ai-score-view-browser.test.cjs
+      - name: Ensure default local writing M1 remains unchanged
+        run: |
+          node tests/analysis/workspace-v11-guided-browser.test.cjs
+          node tests/analysis/workspace-v11-file-review-browser.test.cjs
+      - name: Ensure M2 edit-preview-apply, undo, protected facts and drafts
+        run: node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+      - name: EN AR axe-core regression
+        run: node tests/analysis/workspace-v11-axe-browser.test.cjs
+      - name: Preserve public V9 and preview website QA desk
+        run: node tests/analysis/v11-online-preview-browser.test.cjs
+      - name: Archive Chromium screenshots for visual review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-refine-ai-optin-chromium
+          path: /tmp/tis-v11-ux-qa/*.png
+          retention-days: 3
+          if-no-files-found: ignore

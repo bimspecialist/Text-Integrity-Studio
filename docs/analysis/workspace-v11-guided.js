@@ -21,7 +21,23 @@
  const labels=Object.freeze({
   en:Object.freeze({
    heading:'Review your writing',intro:'Paste text or upload a document to get clear, local writing suggestions.',
-   button:'Review text',help:'Writing review runs entirely in this browser. No AI model is started or downloaded by this button.',
+   button:'Review text',help:'Private writing review in this browser. AI research is optional.',
+   combinedButton:'Review text + check AI signal',
+   combinedHelp:'You chose an experimental English AI model scan. It may download about 126 MB of model files. A raw signal is not an AI-written percentage.',
+   optTitle:'Also check AI signal (experimental)',
+   optHint:'Off by default · English only · at least 120 eligible words · downloads model files only after you start.',
+   optReady:'English text eligible for optional model research.',
+   optShort:'The optional English model needs at least 120 eligible words. Writing review is still available.',
+   optUnsupported:'Research model supports English only. Writing review is available in Arabic and other languages.',
+   optedUnsupported:'Writing review complete. This document is not eligible for the experimental English AI model, so no AI percentage is shown.',
+   signalTitle:'Measured AI-model signal',signalLabel:'Raw model signal',signalScope:'Measured word coverage',
+   signalWarning:'Experimental, uncalibrated signal — NOT the percentage written by AI. False alerts have been observed in independent data tests.',
+   withheld:'No reliable document-wide signal can be shown from the available model evidence.',
+   researchResultsReview:'Return to writing suggestions',researchFromReview:'Check AI signal (experimental)',
+   researchFromReviewNote:'English only · 120+ eligible words · optional model download · not proof of who wrote the text.',
+   refineHeading:'Refine your writing',refineIntro:'Compare the original with your editable draft. You decide which changes to apply.',
+   originalHeading:'Original text',originalHint:'Editing the original invalidates earlier review and model results.',
+   refinedHeading:'Your draft',
    research:'Optional AI research (English only)',
    researchHelp:'Experimental English-only classifier: at least 120 eligible words. Selecting the action can download model files. Signals are not calibrated probabilities of authorship.',
    researchButton:'Start optional AI research',
@@ -50,7 +66,23 @@
   }),
   ar:Object.freeze({
    heading:'راجع كتابتك',intro:'الصق النص أو ارفع مستندًا للحصول على ملاحظات واضحة ومحلية لتحسين الكتابة.',
-   button:'مراجعة النص',help:'تتم مراجعة الكتابة داخل متصفحك دون تشغيل أو تنزيل نموذج كشف AI تلقائيًا.',
+   button:'مراجعة النص',help:'مراجعة الكتابة تتم داخل متصفحك، وفحص AI البحثي اختياري.',
+   combinedButton:'مراجعة النص وفحص إشارة AI',
+   combinedHelp:'اخترت فحص النموذج الإنجليزي التجريبي. قد ينزّل ملفات بحجم يقارب 126MB. إشارة النموذج ليست نسبة النص المكتوب بالذكاء الاصطناعي.',
+   optTitle:'إضافة فحص إشارة AI (تجريبي)',
+   optHint:'معطّل افتراضيًا · للإنجليزية فقط · 120 كلمة مؤهلة على الأقل · تُحمّل ملفات النموذج عند بدء الفحص فقط.',
+   optReady:'النص الإنجليزي مؤهل لفحص النموذج البحثي الاختياري.',
+   optShort:'يتطلب النموذج الإنجليزي 120 كلمة مؤهلة على الأقل. لا تزال مراجعة الكتابة متاحة.',
+   optUnsupported:'النموذج البحثي يدعم الإنجليزية فقط. يمكنك مراجعة الكتابة بالعربية واللغات الأخرى.',
+   optedUnsupported:'اكتملت مراجعة الكتابة، لكن النص غير مؤهل للنموذج الإنجليزي التجريبي؛ لذا لن نعرض نسبة AI.',
+   signalTitle:'إشارة نموذج AI المقاسة',signalLabel:'إشارة النموذج الخام',signalScope:'تغطية الكلمات المقاسة',
+   signalWarning:'إشارة تجريبية غير معايرة، وليست نسبة النص المكتوب بالذكاء الاصطناعي. سُجلت إنذارات خاطئة في اختبارات بيانات مستقلة.',
+   withheld:'لا تسمح الأدلة الحالية بعرض إشارة موثوقة للمستند بالكامل.',
+   researchResultsReview:'العودة إلى ملاحظات الكتابة',researchFromReview:'فحص إشارة AI (تجريبي)',
+   researchFromReviewNote:'للإنجليزية فقط · 120 كلمة مؤهلة فأكثر · تنزيل نموذج اختياري · ليس دليلًا على مؤلف النص.',
+   refineHeading:'حسّن كتابتك',refineIntro:'قارن النص الأصلي بالمسودة القابلة للتحرير. أنت من يقرر ما يُطبّق.',
+   originalHeading:'النص الأصلي',originalHint:'تعديل الأصل يُلغي صلاحية نتائج المراجعة والكشف السابقة.',
+   refinedHeading:'مسودتك',
    research:'كشف AI بحثي اختياري (للإنجليزية فقط)',
    researchHelp:'مصنف تجريبي للنصوص الإنجليزية المؤهلة من 120 كلمة فأكثر. قد يؤدي اختيار الفحص إلى تنزيل ملفات نموذج. الإشارات ليست احتمالات معايرة لتحديد المؤلف.',
    researchButton:'بدء الفحص البحثي الاختياري',
@@ -85,6 +117,19 @@
   const category=typeof item?.category==='string'?item.category:'other';
   return Object.prototype.hasOwnProperty.call(labels.en.categories,category)?category:'other';
  }
+ // Only a contract-validated, same-revision research signal is displayable.
+ // This does not convert a raw classifier signal into authorship probability.
+ function researchDisplay(state,revision){
+  const genuine=state?.status==='RESEARCH_SIGNAL'&&
+   state.evidence?.kind==='RESEARCH_SIGNAL'&&
+   state.revision===revision&&Number.isFinite(state.signal)&&
+   state.signal>=0&&state.signal<=100&&state.evidence.signal===state.signal;
+  if(!genuine)return Object.freeze({measured:false,signal:null,coverage:null});
+  const coverage=state.evidence.documentCoverageWordsPercent;
+  return Object.freeze({measured:true,signal:Number(state.signal.toFixed(1)),
+   coverage:Number.isFinite(coverage)&&coverage>=0&&coverage<=100?
+    Number(coverage.toFixed(1)):null});
+ }
  function mount({doc,win,app}={}){
   if(!doc||!win||!app?.reviewWritingOnly||!app?.session?.read||
      !app?.review?.getSuggestions||!app?.controller?.getState||
@@ -98,6 +143,21 @@
    const n=doc.createElement(tag);if(id)n.id=id;if(className)n.className=className;
    parent.append(n);return n;
   };
+  // The primary Review Text action stays local unless the visitor actively
+  // selects the experimental classifier. One intentional click can then
+  // run the same existing AnalysisController, never a second inference path.
+  const scanChoice=make(inputPanel,'div','tisV11ScanChoice','tis-v11-scan-choice');
+  const scanLabel=make(scanChoice,'label',null,'tis-v11-scan-label');
+  const includeAI=make(scanLabel,'input','tisV11IncludeAI',null);
+  includeAI.type='checkbox';includeAI.checked=false;
+  const labelCopy=make(scanLabel,'span',null,'tis-v11-scan-label-copy');
+  const choiceTitle=make(labelCopy,'strong','tisV11ScanTitle',null);
+  const choiceHint=make(labelCopy,'small','tisV11ScanHint',null);
+  const choiceStatus=make(scanChoice,'p','tisV11ScanEligibility','tis-v11-eligibility');
+  choiceStatus.setAttribute('role','status');choiceStatus.setAttribute('aria-live','polite');
+  const buttonRow=inputPanel.querySelector('.main-actions');
+  if(!buttonRow)throw Error('V11_REQUIRES_MAIN_REVIEW_ACTION');
+  inputPanel.insertBefore(scanChoice,buttonRow);
   const stage=make(flow,'section','tisV11GuidedReview','tis-v10-stage tis-v11-stage');
   stage.hidden=true;
   const heading=make(stage,'h2','tisV11Heading','tis-v10-title');heading.tabIndex=-1;
@@ -112,6 +172,37 @@
   const qaFromResults=make(actions,'a','tisV11QaResults','tis-v11-qa-link');
   qaFromResults.href='quality/v11-manual-acceptance.html';qaFromResults.rel='noopener';
   const undoButton=make(actions,'button','tisV11Undo','tis-v10-secondary');undoButton.type='button';undoButton.disabled=true;
+  const researchFromReview=make(stage,'div','tisV11ResearchFromReview','tis-v11-research-from-review');
+  const researchFromReviewButton=make(researchFromReview,'button','tisV11ResearchFromReviewButton','tis-v10-secondary');
+  researchFromReviewButton.type='button';
+  const researchFromReviewNote=make(researchFromReview,'p','tisV11ResearchFromReviewNote','tis-v11-disclaimer');
+  // Research V10 results hide the writing workspace; give validated model
+  // evidence its own legible result panel, without creating any new scores.
+  const modelResults=byId('tisV10Results');
+  const modelSummary=byId('tisV10ResultSummary');
+  if(!modelResults||!modelSummary)throw Error('V11_REQUIRES_CANONICAL_RESEARCH_RESULTS');
+  const signalCard=make(modelResults,'section','tisV11SignalCard','tis-v11-signal-card');
+  signalCard.hidden=true;
+  modelResults.insertBefore(signalCard,modelSummary);
+  const signalTitle=make(signalCard,'h3','tisV11SignalTitle',null);
+  const signalNumbers=make(signalCard,'div',null,'tis-v11-signal-numbers');
+  const signalFigure=make(signalNumbers,'strong','tisV11SignalValue','tis-v11-signal-value');
+  signalFigure.textContent='—';
+  const signalCoverage=make(signalNumbers,'p','tisV11SignalCoverage',null);
+  const signalWarning=make(signalCard,'p','tisV11SignalWarning',null);
+  const modelWritingButton=make(signalCard,'button','tisV11BackToWriting','tis-v10-secondary');
+  modelWritingButton.type='button';
+  // Refine writing keeps the canonical dual-editor and all existing guards.
+  const main=doc.querySelector('.shell>main');
+  const backFromWriting=byId('tisV10BackFromWriting');
+  const writingIntro=make(main,'header','tisV11WritingIntro','tis-v11-writing-intro');
+  main.insertBefore(writingIntro,backFromWriting);
+  const writingTitle=make(writingIntro,'h1','tisV11WritingTitle',null);
+  const writingSubtitle=make(writingIntro,'p','tisV11WritingSubtitle',null);
+  const originalTop=make(inputPanel,'div','tisV11OriginalTop','tis-v11-original-top');
+  inputPanel.insertBefore(originalTop,inputPanel.querySelector('.tis-v8-source-heading'));
+  const originalTitle=make(originalTop,'h2','tisV11OriginalTitle',null);
+  const originalNote=make(originalTop,'p','tisV11OriginalNote',null);
   const status=make(stage,'p','tisV11Status','tis-v11-status');
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const research=make(inputPanel,'details','tisV11Research','tis-v11-research');
@@ -129,6 +220,44 @@
   let reviewRevision=null,reviewedSuggestions=[],disposed=false;
   let ownRevisionChange=false,ownUndoCount=0,openPreviewId=null,lastNotice='status';
   const tr=()=>labels[doc.documentElement.lang==='ar'?'ar':'en'];
+  function eligibility(){
+   const decide=win.TISEligibilityPolicy?.assess;
+   return typeof decide==='function'?decide(source.value,app.session.read().sourceKind):null;
+  }
+  function renderScanChoice(){
+   const t=tr(),allowed=eligibility();
+   choiceStatus.textContent=!includeAI.checked?'':allowed?.eligible?t.optReady:
+    allowed?.reason==='TOO_SHORT'?t.optShort:
+    allowed?.languageClass==='en'&&allowed?.reason==='MIN_WORDS'?t.optShort:
+    allowed?.languageClass==='en'&&allowed?.words<120?t.optShort:t.optUnsupported;
+   const desired=includeAI.checked?t.combinedButton:t.button;
+   const title=action.querySelector('.v5-action-title');
+   // V9 still localizes the shared button for its own mode. Do not edit that
+   // protected release; correct only changed V11 labels without feedback loops.
+   if(title&&title.textContent!==desired)title.textContent=desired;
+   if(action.getAttribute('aria-label')!==desired)action.setAttribute('aria-label',desired);
+   const help=includeAI.checked?t.combinedHelp:t.help;
+   if(note.textContent!==help)note.textContent=help;
+  }
+  function presentModelEvidence(){
+   const state=app.controller.getState(),snapshot=app.session.read(),t=tr();
+   if(doc.body.dataset.v10Screen!=='results'){signalCard.hidden=true;return;}
+   const measured=researchDisplay(state,snapshot.revision);
+   signalCard.hidden=false;
+   signalFigure.textContent=measured.measured?measured.signal.toFixed(1)+'%':'—';
+   signalCoverage.textContent=measured.measured?
+    t.signalLabel+' · '+t.signalScope+': '+
+    (measured.coverage===null?'—':measured.coverage.toFixed(1)+'%'):
+    t.withheld;
+   signalWarning.textContent=t.signalWarning;
+  }
+  function openLocalReview(){
+   if(app.reviewWritingOnly()!==true)return false;
+   const snapshot=app.session.read();
+   reviewRevision=snapshot.revision;openPreviewId=null;
+   reviewedSuggestions=app.review.getSuggestions();
+   notice('status');return showReview();
+  }
   const notice=key=>{lastNotice=key;status.textContent=tr()[key]||tr().applyError;};
   const live=item=>{
    if(!item||reviewRevision===null)return false;
@@ -149,7 +278,16 @@
    const subtitle=action.querySelector('.v5-action-sub');
    if(subtitle)subtitle.textContent='';
    action.setAttribute('aria-label',t.button);
-   action.setAttribute('aria-describedby','v5ClickNote tisV11InputStatus');
+   action.setAttribute('aria-describedby','v5ClickNote tisV11ScanHint tisV11InputStatus');
+   choiceTitle.textContent=t.optTitle;choiceHint.textContent=t.optHint;
+   signalTitle.textContent=t.signalTitle;modelWritingButton.textContent=t.researchResultsReview;
+   researchFromReviewButton.textContent=t.researchFromReview;
+   researchFromReviewNote.textContent=t.researchFromReviewNote;
+   writingTitle.textContent=t.refineHeading;writingSubtitle.textContent=t.refineIntro;
+   originalTitle.textContent=t.originalHeading;originalNote.textContent=t.originalHint;
+   if(doc.body.dataset.v10Screen==='writing')byId('tisRevisedHeading').textContent=t.refinedHeading;
+   renderScanChoice();
+   presentModelEvidence();
    researchTitle.textContent=t.research;
    researchHelp.textContent=t.researchHelp;
    researchAction.textContent=t.researchButton;
@@ -308,6 +446,19 @@
     inputStatus.textContent=tr().empty;source.focus();return;
    }
    inputStatus.textContent='';
+   if(includeAI.checked){
+    const allowed=eligibility();
+    if(allowed?.eligible){
+     inputStatus.textContent='';
+     stage.hidden=true;
+     if(app.analyze()!==true)inputStatus.textContent=tr().notReady;
+     return;
+    }
+    // Ineligible AR/short text still gets the promised local writing review.
+    if(openLocalReview())notice('optedUnsupported');
+    else inputStatus.textContent=tr().notReady;
+    return;
+   }
    if(app.reviewWritingOnly()!==true){
     inputStatus.textContent=tr().notReady;return;
    }
@@ -339,9 +490,15 @@
    if(!source.value.trim()){
     inputStatus.textContent=tr().empty;source.focus();return;
    }
+   const allowed=eligibility();
+   if(!allowed?.eligible){
+    if(openLocalReview())notice('optedUnsupported');
+    else inputStatus.textContent=tr().notReady;
+    return;
+   }
    reviewRevision=null;reviewedSuggestions=[];stage.hidden=true;
    inputStatus.textContent='';
-   app.toggle();
+   app.analyze();
   }
   function exportReview(){
    const target=byId('studioExportReview'),downstream=byId('studioExportStatus');
@@ -363,27 +520,49 @@
   const unsubscribe=app.session.subscribe(onRevision);
   const observer=new win.MutationObserver(()=>win.queueMicrotask(copy));
   observer.observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
-  const backFromWriting=byId('tisV10BackFromWriting');
+  const buttonCopyObserver=new win.MutationObserver(()=>{
+   // Restore the selected AI disclosure if the legacy V9 view relabels the
+   // common action following a language or research lifecycle event.
+   if(!disposed)win.queueMicrotask(renderScanChoice);
+  });
+  buttonCopyObserver.observe(action,{
+   attributes:true,attributeFilter:['aria-label'],
+   childList:true,characterData:true,subtree:true
+  });
+  const viewObserver=new win.MutationObserver(()=>{
+   if(doc.body.dataset.v10Screen==='writing')byId('tisRevisedHeading').textContent=tr().refinedHeading;
+   presentModelEvidence();
+  });
+  viewObserver.observe(doc.body,{attributes:true,attributeFilter:['data-v10-screen']});
   action.addEventListener('click',startReview,true);
   edit.addEventListener('click',openInput);
   improve.addEventListener('click',enterWriting);
   exportButton.addEventListener('click',exportReview);
   undoButton.addEventListener('click',undoSuggestion);
   researchAction.addEventListener('click',optionalResearch);
+  researchFromReviewButton.addEventListener('click',optionalResearch);
+  modelWritingButton.addEventListener('click',openLocalReview);
+  includeAI.addEventListener('change',renderScanChoice);
+  source.addEventListener('input',renderScanChoice);
   backFromWriting?.addEventListener('click',returnFromWriting,true);
   doc.body.classList.add('tis-v11');
   copy();
   function dispose(){
    if(disposed)return;disposed=true;
-   observer.disconnect();unsubscribe();
+   observer.disconnect();buttonCopyObserver.disconnect();viewObserver.disconnect();unsubscribe();
    action.removeEventListener('click',startReview,true);
    edit.removeEventListener('click',openInput);
    improve.removeEventListener('click',enterWriting);
    exportButton.removeEventListener('click',exportReview);
    undoButton.removeEventListener('click',undoSuggestion);
    researchAction.removeEventListener('click',optionalResearch);
+   researchFromReviewButton.removeEventListener('click',optionalResearch);
+   modelWritingButton.removeEventListener('click',openLocalReview);
+   includeAI.removeEventListener('change',renderScanChoice);
+   source.removeEventListener('input',renderScanChoice);
    backFromWriting?.removeEventListener('click',returnFromWriting,true);
    stage.remove();research.remove();qaFromInput.remove();inputStatus.remove();
+   scanChoice.remove();signalCard.remove();writingIntro.remove();originalTop.remove();
    doc.body.classList.remove('tis-v11');
   }
   return Object.freeze({dispose,showReview,reviewState:()=>Object.freeze({
@@ -392,5 +571,5 @@
    previewOpen:openPreviewId!==null
   })});
  }
- return Object.freeze({mount,categoryFor});
+ return Object.freeze({mount,categoryFor,researchDisplay});
 });

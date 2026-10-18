@@ -28,11 +28,23 @@ async function run(){
   assert.equal(await preview.evaluate(()=>document.body.classList.contains('tis-v11')),true,
    'Hosted V11 query parameter is not serving the published preview yet');
   assert(await preview.$('#tisV11QaInput'));
+  assert.equal(await preview.$eval('#tisV11IncludeAI',e=>e.checked),false,
+   'The public opt-in AI research checkbox must begin disabled');
   await preview.$eval('#source',(e,text)=>{e.value=text;e.dispatchEvent(new Event('input',{bubbles:true}));},sample);
   await preview.click('#scanAI');
   assert.equal(await preview.evaluate(()=>document.body.dataset.v10Screen),'guided-review');
   assert.equal(await preview.$eval('#source',e=>e.value),sample);
   assert(await preview.$('#tisV11QaResults'));
+  await preview.click('#tisV11Improve');
+  assert.equal(await preview.evaluate(()=>document.body.dataset.v10Screen),'writing');
+  assert.match(await preview.$eval('#tisV11WritingTitle',e=>e.textContent),/Refine your writing/);
+  assert.equal(await preview.$eval('#source',e=>e.value),sample);
+  await preview.click('#tisV10BackFromWriting');
+  await preview.click('#tisV11Edit');
+  await preview.click('#tisV11IncludeAI');
+  assert.match(await preview.$eval('#scanAI .v5-action-title',e=>e.textContent),/AI signal/,
+   'Published page must offer combined Review Text and explicit AI research option');
+  assert.match(await preview.$eval('#tisV11ScanEligibility',e=>e.textContent),/120/);
   await preview.close();
   const qa=await browser.newPage();
   qa.on('pageerror',e=>errors.push(e.message));
