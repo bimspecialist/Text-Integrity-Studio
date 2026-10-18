@@ -38,11 +38,13 @@ async function run(){
   }),{revision,begin,end});
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'results');
   assert.equal(await page.$eval('#tisV10ReaderBody',el=>el.textContent),original,'reader must preserve every original character');
-  assert.equal(await page.$$eval('#tisV10ReaderBody .tis-v10-highlight',els=>els.length),1);
+  assert.equal(await page.$eval('#tisV10ReaderBody .tis-v10-highlight',els=>els.length),1);
+  assert.match(await page.$eval('#tisV10HighlightLegend',el=>el.textContent),/highlight.*evaluated|evaluated.*window/i,'legend must say that yellow does not mean proven AI authorship');
   assert.match(await page.$eval('#tisV10ResultSummary',el=>el.textContent),/not AI-authorship probability/i);
   await saveShot('v10-1-desktop-results-synthetic.png');
   await page.click('#language'); // Arabic UI with English source
   assert.equal(await page.$eval('#tisV10ReaderBody',el=>el.getAttribute('dir')),'auto');
+  assert.match(await page.$eval('#tisV10HighlightLegend',el=>el.textContent),/مقاطع|النوافذ/u,'legend must be translated in Arabic');
   assert.match(await page.$eval('#tisV10ReaderBody',el=>el.getAttribute('aria-label')),/\p{Script=Arabic}/u,'result reader accessible label translated');
   await page.setViewport({width:390,height:844});
   await page.click('#tisV10ReaderBody .tis-v10-highlight');
