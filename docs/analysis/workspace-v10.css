@@ -257,3 +257,28 @@ body.tis-v10 #tisV10HighlightLegend{
  border-inline-start:3px solid #c99a4d;padding:7px 12px;
  background:#fffaf0;border-radius:4px;
 }
+
+/* V10 release-preflight: legacy V9 rules had higher CSS specificity than the
+ * new button/background, producing white text on a pale purple surface.
+ * These scoped overrides leave the published/default V9 untouched. */
+body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI{
+ background:#4c43bb!important;border-color:#4c43bb!important;
+ color:#fff!important;opacity:1!important;
+}
+body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI:hover:not(:disabled){
+ background:#3b328f!important;border-color:#3b328f!important;
+}
+body.tis-v9.tis-v10 #inputPanel .main-actions #scanAI .v5-action-title{
+ color:#fff!important;
+}
+body.tis-v9.tis-v10 #quickFileHint{color:#34415b!important;opacity:1!important}
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisRevisedHeading,
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisRevisedLabel{
+ color:#20283c!important;
+}
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisDraftIntro,
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisDraftStatus,
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisV8SaveHelp,
+body.tis-v9.tis-v10[data-v10-screen="writing"] #tisRevisedPane #tisGeneratorNotice{
+ color:#34415b!important;opacity:1!important;
+}
