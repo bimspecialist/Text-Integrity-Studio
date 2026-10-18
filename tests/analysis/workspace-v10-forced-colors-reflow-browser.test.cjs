@@ -83,6 +83,8 @@ async function run(){
     assert(measured.outline!=='none'&&measured.outlineWidth>=2,'Highlighted focus outline missing '+marker);
     assert(measured.border==='solid'&&measured.borderWidth>=2,
      'Highlights need a non-background-color indicator in forced colors '+marker);
+    assert(measured.decoration.split(' ').includes('underline'),
+     'Forced-colors mode must preserve a visible text underline after yellow highlight disappears '+marker);
     assert(measured.overflow<=8,'Results overflow under forced colors '+marker);
     await screenshot(page,'forced-colors-'+marker);
 
