@@ -1,0 +1,41 @@
+name: V10.1 release preflight axe and imported files
+on:
+  push:
+    branches: [feature/v10-1-centered-flow]
+    paths:
+      - 'docs/**'
+      - 'tests/analysis/workspace-v10-preflight-axe.test.cjs'
+      - 'tests/analysis/workspace-v10-long-import.test.cjs'
+      - '.github/workflows/v10-release-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  axe-accessibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned axe-core and Chromium harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact axe-core@4.10.3 puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Test EN AR input progress eligibility results and writing at 320-1440px
+        run: |
+          node --check tests/analysis/workspace-v10-preflight-axe.test.cjs
+          node tests/analysis/workspace-v10-preflight-axe.test.cjs
+  long-document-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium harness for DOCX and PDF
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Import genuine long Word and PDF with EN AR reflow
+        run: |
+          node --check tests/analysis/workspace-v10-long-import.test.cjs
+          node tests/analysis/workspace-v10-long-import.test.cjs
