@@ -240,3 +240,12 @@ body.tis-v10 #inputPanel label.file-input:focus-within{
 }
 body.tis-v10 #inputPanel label.file-input strong{color:var(--v10-text)!important}
 body.tis-v10 #inputPanel label.file-input #file{min-width:0!important;color:var(--v10-muted)!important}
+
+/* The optional writing workspace must never trap the user behind hidden tabs. */
+body.tis-v10 #tisV10BackFromWriting{
+ display:none!important;min-height:44px;border:1px solid #c7d0e4!important;
+ background:#fff!important;color:#4542a6!important;padding:10px 16px!important;
+ border-radius:10px!important;font-size:13px!important;
+ margin:0 0 17px!important;cursor:pointer;
+}
+body.tis-v10[data-v10-screen="writing"] #tisV10BackFromWriting{display:inline-flex!important;align-items:center!important}
