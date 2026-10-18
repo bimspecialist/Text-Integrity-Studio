@@ -36,6 +36,12 @@ async function run(){
     assert.equal(await p.$eval('#tisV11IncludeAI',e=>e.checked),true);
     const primary=await p.$eval('#scanAI .v5-action-title',e=>e.textContent);
     assert(primary.includes('AI'),primary);
+    await p.click('#language');
+    await p.waitForFunction(expected=>document.querySelector('#scanAI .v5-action-title')?.textContent===expected,
+     {timeout:3000},lang==='ar'?'Review text + check AI signal':'مراجعة النص وفحص إشارة AI');
+    await p.click('#language');
+    await p.waitForFunction(expected=>document.querySelector('#scanAI .v5-action-title')?.textContent===expected,
+     {timeout:3000},primary);
     await p.click('#scanAI');
     assert.equal(await p.evaluate(()=>document.body.dataset.v10Screen),'guided-review',
      'Ineligible opted-in document still gets local editorial results');
@@ -95,6 +101,8 @@ async function run(){
    assert.equal(await p.$eval('#tisV10Meter',e=>e.hasAttribute('value')),false,'No fake model progress');
    await p.click('#tisV10Cancel');
    assert.equal(await p.evaluate(()=>window.TISAnalysisApp.controller.getState().status),'CANCELLED');
+   await p.waitForFunction(()=>document.querySelector('#scanAI .v5-action-title')?.textContent==='Review text + check AI signal',
+     {timeout:3000});
    assert.equal(await p.$eval('#source',e=>e.value),longText);
    console.log('PASS V11 opted-in English Review text enters canonical model progress, cancel and source preservation');
   }finally{await p.close()}
