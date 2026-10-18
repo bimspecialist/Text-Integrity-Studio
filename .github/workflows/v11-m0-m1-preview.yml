@@ -21,6 +21,7 @@ jobs:
           node --check docs/analysis/workspace-v10.js
           node --check docs/analysis/workspace-v11-guided.js
           node --check tests/analysis/workspace-v11-guided-browser.test.cjs
+          node --check tests/analysis/workspace-v11-file-review-browser.test.cjs
           node --check tests/analysis/workspace-v11-axe-browser.test.cjs
           node tests/analysis/analysis-controller.test.js
           node tests/analysis/natural-writing-advisor.test.js
@@ -30,6 +31,8 @@ jobs:
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-v11-m1-preview
         run: node tests/analysis/workspace-v11-guided-browser.test.cjs
+      - name: M1 real DOCX and PDF local writing review integration
+        run: node tests/analysis/workspace-v11-file-review-browser.test.cjs
       - name: M0 V10 preview browser regression stays unchanged
         run: |
           node tests/analysis/workspace-v10-flow-browser.test.cjs
