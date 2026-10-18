@@ -1,0 +1,60 @@
+name: V11 M0-M1 isolated local writing review checks
+on:
+  push:
+    branches: [feature/v11-m0-m1-guided-writing]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  local-writing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated Chromium and axe harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: Syntax and M0 pure regression tests
+        run: |
+          node --check docs/analysis/workspace-v10.js
+          node --check docs/analysis/workspace-v11-guided.js
+          node --check tests/analysis/workspace-v11-guided-browser.test.cjs
+          node --check tests/analysis/workspace-v11-axe-browser.test.cjs
+          node tests/analysis/analysis-controller.test.js
+          node tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/editorial-review.test.js
+          node tests/analysis/workspace-v10-flow.test.cjs
+      - name: Real M1 Chromium one-click EN and AR local review
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v11-m1-preview
+        run: node tests/analysis/workspace-v11-guided-browser.test.cjs
+      - name: M0 V10 preview browser regression stays unchanged
+        run: |
+          node tests/analysis/workspace-v10-flow-browser.test.cjs
+          node tests/analysis/workspace-v10-writing-browser.test.cjs
+      - name: V11 M1 bilingual axe-core accessibility review
+        run: node tests/analysis/workspace-v11-axe-browser.test.cjs
+      - name: V10 existing bilingual axe baseline
+        run: node tests/analysis/workspace-v10-preflight-axe.test.cjs
+      - name: Archive M1 screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-m1-local-review-chromium
+          path: /tmp/tis-v11-m1-preview/*.png
+          retention-days: 3
+          if-no-files-found: ignore
+  long-document-preservation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install document Chromium harness
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 @xmldom/xmldom@0.9.12
+      - name: Retain V10 large DOCX PDF and phone layouts
+        run: node tests/analysis/workspace-v10-long-import.test.cjs
