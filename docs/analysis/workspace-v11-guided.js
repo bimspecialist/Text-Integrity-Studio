@@ -201,7 +201,7 @@
     preview.type='button';preview.textContent=detail.hidden?t.previewAction:t.closePreview;
     preview.setAttribute('aria-controls',detail.id);
     preview.setAttribute('aria-expanded',String(!detail.hidden));
-    preview.setAttribute('aria-label',t.previewAction+' — '+t.categories[categoryFor(item)]+' '+(index+1));
+    preview.setAttribute('aria-label',(detail.hidden?t.previewAction:t.closePreview)+' — '+t.categories[categoryFor(item)]+' '+(index+1));
     preview.addEventListener('click',()=>{
      if(!live(item)||!app.review.preview(item.id)){notice('stale');return;}
      openPreviewId=openPreviewId===item.id?null:item.id;
@@ -304,6 +304,11 @@
    if(app.reviewWritingOnly()!==true){
     inputStatus.textContent=tr().notReady;return;
    }
+   // The shared legacy '#scan' also displays a generic "Analysis updated"
+   // toast. V11 provides an accurate local-writing live status instead.
+   // Suppress only that transient toast; do not change V9/V10 events.
+   const legacyToast=byId('toast');
+   if(legacyToast)legacyToast.style.display='none';
    const snapshot=app.session.read();
    reviewRevision=snapshot.revision;openPreviewId=null;
    reviewedSuggestions=app.review.getSuggestions();
