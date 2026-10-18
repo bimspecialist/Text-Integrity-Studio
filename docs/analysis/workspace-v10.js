@@ -143,6 +143,8 @@
   const results=attach(flow,'section','tisV10Results','tis-v10-stage');results.hidden=true;
   const resultsTop=attach(results,'div',null,'tis-v10-results-top');
   const resultsHeading=attach(resultsTop,'h2','tisV10ResultHeading','tis-v10-title');
+  // Headings receive focus only after a visible screen transition; they stay out of Tab order.
+  for(const heading of [progressHeading,eligibilityHeading,errorHeading,resultsHeading])heading.tabIndex=-1;
   const edit=attach(resultsTop,'button','tisV10Edit','tis-v10-secondary');edit.type='button';
   const resultSummary=attach(results,'p','tisV10ResultSummary','tis-v10-meta');
   const highlightLegend=attach(results,'p','tisV10HighlightLegend','tis-v10-legend');
@@ -166,10 +168,18 @@
   const t=()=>words[locale()];
   function show(screen){
    if(disposed)return;
+   const previous=doc.body.dataset.v10Screen;
    doc.body.dataset.v10Screen=screen;
    for(const n of [progress,eligibility,error,results])n.hidden=
     !(screen==='progress'&&n===progress||screen==='eligibility'&&n===eligibility||
       screen==='error'&&n===error||screen==='results'&&n===results);
+   if(previous===screen)return;
+   // Never leave keyboard focus on a control in the now-hidden editor.
+   // The heading announces the new screen to keyboard/AT users.
+   const heading={progress:progressHeading,eligibility:eligibilityHeading,
+    error:errorHeading,results:resultsHeading}[screen];
+   if(heading)heading.focus();
+   else if(screen==='input')source.focus();
   }
   function resetToSource(){
    doc.getElementById('tisTabDetection')?.click();
