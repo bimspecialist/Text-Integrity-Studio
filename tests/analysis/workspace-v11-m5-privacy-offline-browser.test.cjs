@@ -57,7 +57,13 @@ async function run(){
     if(!['GET','HEAD'].includes(req.method()))posts.push({language,method:req.method(),url:url.origin});
     if(/ai-runtime\.html|onnx|huggingface|model\.json|tokenizer\.json/i.test(url.href))modelRequests.push(url.href);
    });
-   page.on('requestfailed',req=>failures.push({language,url:req.url()}));
+   page.on('requestfailed',req=>{
+    const url=new URL(req.url());
+    // Chromium may request the decorative favicon after DOM load. It is
+    // not a review dependency and may fail during the intentional offline
+    // phase; keep other first-party asset failures as a hard stop.
+    if(url.pathname!=='/favicon.svg')failures.push({language,url:req.url()});
+   });
    try{
     const cdp=await page.createCDPSession();
     await cdp.send('Page.setDownloadBehavior',{behavior:'allow',downloadPath:folder});
