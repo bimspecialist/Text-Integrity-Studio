@@ -1,0 +1,56 @@
+name: V11 M5 advisory release candidate preflight
+on:
+  push:
+    branches: [feature/v11-m5-advisory-release-gates]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  advisory-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated pinned browser QA packages
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: Verify syntax and authoritative editorial engines
+        run: |
+          node --check docs/analysis/workspace-v11-guided.js
+          node --check tests/analysis/workspace-v11-m5-privacy-offline-browser.test.cjs
+          node --check tests/analysis/workspace-v11-m5-reflow-focus-browser.test.cjs
+          node tests/analysis/editorial-review.test.js
+          node tests/analysis/natural-writing-advisor.test.js
+          node tests/analysis/analysis-controller.test.js
+      - name: Privacy regression offline-after-load report and source lifetime
+        run: node tests/analysis/workspace-v11-m5-privacy-offline-browser.test.cjs
+      - name: Keyboard RTL forced-colors and 200pct text enlargement
+        env:
+          TIS_M5_SCREENSHOTS: /tmp/tis-v11-m5-review
+        run: node tests/analysis/workspace-v11-m5-reflow-focus-browser.test.cjs
+      - name: Retain M2 reviewed preview/confirm/undo/dismiss and source-safety gates
+        run: |
+          node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+          node tests/analysis/workspace-v11-m2-axe-browser.test.cjs
+      - name: Retain M1 one-click EN AR and actual DOCX/PDF local writing review
+        run: |
+          node tests/analysis/workspace-v11-guided-browser.test.cjs
+          node tests/analysis/workspace-v11-file-review-browser.test.cjs
+          node tests/analysis/workspace-v11-axe-browser.test.cjs
+      - name: Preserve V10 baseline and long DOCX/PDF import
+        run: |
+          node tests/analysis/workspace-v10-flow-browser.test.cjs
+          node tests/analysis/workspace-v10-writing-browser.test.cjs
+          node tests/analysis/workspace-v10-long-import.test.cjs
+      - name: Privacy negative test for untrusted text and forged research events
+        run: node tests/analysis/privacy-network.test.cjs
+      - name: Archive short-lived automated screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v11-m5-advisory-browser-qa
+          path: /tmp/tis-v11-m5-review/*.png
+          retention-days: 3
+          if-no-files-found: ignore
