@@ -270,7 +270,10 @@
   // The opt-in guided preview owns the meaning of its primary button;
   // never overwrite local-review copy with research-detector labels.
   if(document.body.classList.contains('tis-v11')){
-   first.textContent=arabic?'مراجعة النص':'Review text';
+   const withResearch=document.getElementById('tisV11IncludeAI')?.checked===true;
+   first.textContent=arabic?
+    (withResearch?'مراجعة النص وفحص إشارة AI':'مراجعة النص'):
+    (withResearch?'Review text + check AI signal':'Review text');
    second.textContent='';
    button.setAttribute('aria-label',first.textContent);
    return;
