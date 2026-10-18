@@ -27,6 +27,8 @@ jobs:
           node --check tests/analysis/workspace-v10-flow-browser.test.cjs
           node tests/analysis/workspace-v10-flow-browser.test.cjs
       - name: Authentic progress, range highlights and mobile inspector regression
+        env:
+          TIS_SCREENSHOT_DIR: /tmp/tis-v10-preview-shots
         run: |
           node --check tests/analysis/workspace-v10-reader-browser.test.cjs
           node tests/analysis/workspace-v10-reader-browser.test.cjs
