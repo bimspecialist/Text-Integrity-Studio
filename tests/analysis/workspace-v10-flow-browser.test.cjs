@@ -12,6 +12,11 @@ async function run(){
   page.on('request',r=>{if(new URL(r.url()).hostname!=='127.0.0.1')remote.push(new URL(r.url()).hostname);});
   await page.setViewport({width:1440,height:900});
   await page.goto('http://127.0.0.1:'+server.address().port+'/?v10preview=1',{waitUntil:'load'});
+
+  const shotDir=process.env.TIS_SCREENSHOT_DIR;
+  if(shotDir)require('node:fs').mkdirSync(shotDir,{recursive:true});
+  const saveShot=async name=>{if(shotDir)await page.screenshot({path:require('node:path').join(shotDir,name),fullPage:true});};
+  await saveShot('v10-1-desktop-input.png');
   assert.equal(await page.evaluate(()=>document.body.classList.contains('tis-v10')),true,'V10.1 activates only with the preview flag');
   const frame=await page.evaluate(()=>{
     const r=document.getElementById('inputPanel').getBoundingClientRect();
@@ -41,6 +46,7 @@ async function run(){
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,'RTL phone must not overflow');
+  await saveShot('v10-1-mobile-eligibility-ar.png');
   assert.deepEqual(remote,[],'unsupported scan must not request external model files');
   assert.deepEqual(errors,[],'no browser JavaScript exceptions');
   console.log('PASS V10.1 browser: centered light input, source preservation, Arabic abstention, RTL and no egress');
