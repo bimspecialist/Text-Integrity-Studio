@@ -267,6 +267,14 @@
   const button=$('scanAI'),first=button?.querySelector('.v5-action-title'),second=button?.querySelector('.v5-action-sub');
   if(!first||!second){set('scanAI',state.aiRunning?t().cancelScan:t().mainScan);return;}
   const arabic=document.documentElement.lang==='ar';
+  // The opt-in guided preview owns the meaning of its primary button;
+  // never overwrite local-review copy with research-detector labels.
+  if(document.body.classList.contains('tis-v11')){
+   first.textContent=arabic?'مراجعة النص':'Review text';
+   second.textContent='';
+   button.setAttribute('aria-label',first.textContent);
+   return;
+  }
   const writing=document.body.dataset.tisMode==='humanize'||document.body.dataset.tisMode==='editor';
   first.textContent=state.aiRunning?(arabic?'إلغاء التحليل':'Cancel analysis'):
    writing?(arabic?'مراجعة الكتابة':'Review writing'):
