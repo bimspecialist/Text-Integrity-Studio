@@ -1,0 +1,88 @@
+/* V11 M1 preview — visible only when ?v11preview=1.
+ * Reuses V10 light tokens; leaves V10 (?v10preview=1) and default V9 alone. */
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] .workspace,
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] #v5Toolbox{
+ display:none!important;
+}
+body.tis-v10.tis-v11[data-v10-screen="guided-review"] .tis-v10-flow{
+ display:block!important;
+}
+body.tis-v10.tis-v11 #tisV11GuidedReview[hidden]{display:none!important}
+body.tis-v10.tis-v11 #tisV11GuidedReview{
+ display:block;max-width:900px;padding:clamp(18px,3vw,32px);
+}
+body.tis-v11 .tis-v11-count{
+ font-weight:700;color:var(--v10-text);font-size:17px;margin:0 0 8px;
+}
+body.tis-v11 .tis-v11-disclaimer{
+ color:var(--v10-muted);font-size:13px;line-height:1.8;
+ margin:8px 0 18px;border-inline-start:3px solid var(--v10-border);
+ padding-inline-start:12px;
+}
+body.tis-v11 .tis-v11-suggestions{
+ list-style:none;padding:0;margin:0;display:grid;gap:12px;
+}
+body.tis-v11 .tis-v11-suggestion,
+body.tis-v11 .tis-v11-empty{
+ border:1px solid var(--v10-border);border-radius:12px;padding:16px;
+ background:#fff;overflow-wrap:anywhere;
+}
+body.tis-v11 .tis-v11-suggestion-top{
+ display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:8px;
+}
+body.tis-v11 .tis-v11-suggestion-top strong{
+ font-size:15px;color:var(--v10-text);
+}
+body.tis-v11 .tis-v11-suggestion-top small{
+ color:var(--v10-muted);font-size:12px;
+}
+body.tis-v11 .tis-v11-reason{
+ margin:9px 0;color:var(--v10-text);font-size:14px;line-height:1.7;
+}
+body.tis-v11 .tis-v11-original,
+body.tis-v11 .tis-v11-proposed{
+ margin:6px 0 0;font-size:13px;color:var(--v10-muted);
+ overflow-wrap:anywhere;white-space:pre-wrap;
+}
+body.tis-v11 .tis-v11-proposed{color:#26624d}
+body.tis-v11 .tis-v11-actions{
+ margin-top:18px;display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+}
+body.tis-v11 .tis-v11-actions button{
+ margin:0!important;min-height:44px;max-width:100%;
+}
+body.tis-v11 .tis-v11-status{
+ font-size:13px;color:var(--v10-muted);margin:11px 0 0;
+}
+body.tis-v11 .tis-v11-status:empty{display:none}
+body.tis-v11 #inputPanel #tisV11Research{
+ margin:18px 0 0;border:1px solid var(--v10-border);border-radius:10px;
+ background:#fafbff;padding:12px 15px;color:var(--v10-muted);
+}
+body.tis-v11 #tisV11Research summary{
+ cursor:pointer;font-size:13px;line-height:1.6;font-weight:600;
+ color:#444a88;min-height:28px;
+}
+body.tis-v11 #tisV11Research p{
+ color:var(--v10-muted);font-size:12px;line-height:1.8;margin:10px 0;
+}
+body.tis-v11 #tisV11Research button{
+ min-height:44px;padding:10px 14px;border-radius:9px;
+ margin:4px 0 0;background:#f7f8fc;color:#343a71;
+ border:1px solid #c7d0e4;font-size:13px;cursor:pointer;
+}
+body.tis-v11 #tisV11Research button:focus-visible,
+body.tis-v11 .tis-v11-actions button:focus-visible{
+ outline:3px solid var(--v10-focus)!important;outline-offset:3px!important;
+}
+body.tis-v11[data-v10-screen="writing"] #tisV11Research{display:none!important}
+@media (max-width:540px){
+ body.tis-v11 .tis-v11-suggestion{padding:13px}
+ body.tis-v11 .tis-v11-actions{flex-direction:column;align-items:stretch}
+ body.tis-v11 .tis-v11-actions button{width:100%}
+}
+@media(forced-colors:active){
+ body.tis-v11 .tis-v11-suggestion,
+ body.tis-v11 #tisV11Research{border:1px solid CanvasText!important;}
+ body.tis-v11 .tis-v11-proposed{color:CanvasText!important;text-decoration:underline!important}
+}
