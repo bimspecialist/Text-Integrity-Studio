@@ -41,6 +41,7 @@
    details:'Passage explanation',detailsDefault:'Select a highlighted passage to inspect its measured range.',
    detailsExplain:'This span was evaluated as one research-model window. The signal does not prove who wrote these words.',
    close:'Close passage details',edit:'Edit original text',preserve:'Original text preserved',improve:'Improve writing',backResult:'Back to results',
+   exportReport:'Download writing report (JSON)',exportExplanation:'Local writing-quality summary. The original document text is not included and this is not an AI-authorship verdict.',exportUnavailable:'A report is not ready for download. Review the text and try again.',
    modalTitle:'Measured passage',cancelled:'The scan was cancelled; your text is unchanged.'
   },
   ar:{
@@ -59,6 +60,7 @@
    details:'تفاصيل المقطع',detailsDefault:'اختر مقطعًا مميزًا لرؤية حدود قياسه وتفسيره.',
    detailsExplain:'تم تقييم هذا النطاق بوصفه نافذة واحدة من النموذج البحثي، ولا تثبت الإشارة من كتب هذه الكلمات.',
    close:'إغلاق تفاصيل المقطع',edit:'تعديل النص الأصلي',preserve:'حُفظ النص الأصلي',improve:'تحسين الكتابة',backResult:'العودة إلى النتائج',
+   exportReport:'تنزيل تقرير الكتابة (JSON)',exportExplanation:'ملخص محلي لملاحظات الكتابة، دون إرفاق النص الأصلي أو إثبات أن الذكاء الاصطناعي كتبه.',exportUnavailable:'التقرير غير جاهز للتنزيل. راجع النص ثم حاول مجددًا.',
    modalTitle:'المقطع المقاس',cancelled:'أُلغي الفحص ولم يتغير النص الأصلي.'
   }
  };
@@ -162,7 +164,12 @@
   const inspectorHeading=attach(inspector,'h3','tisV10InspectorTitle',null);
   const inspectorText=attach(inspector,'p','tisV10InspectorText',null);
   const inspectorNotice=attach(inspector,'p','tisV10InspectorNotice','tis-v10-meta');
-  const improve=attach(results,'button','tisV10Improve','tis-v10-primary');improve.type='button';
+  const actions=attach(results,'div',null,'tis-v10-result-actions');
+  const improve=attach(actions,'button','tisV10Improve','tis-v10-primary');improve.type='button';
+  const exportReport=attach(actions,'button','tisV10ExportReport','tis-v10-secondary');exportReport.type='button';
+  const exportExplanation=attach(results,'p','tisV10ExportExplanation','tis-v10-meta');
+  const exportStatus=attach(results,'p','tisV10ExportStatus','tis-v10-meta');
+  exportStatus.setAttribute('role','status');exportStatus.setAttribute('aria-live','polite');
   const dialog=attach(doc.body,'dialog','tisV10InspectorDialog','tis-v10-dialog');
   const dialogTitle=attach(dialog,'h3','tisV10DialogTitle',null);
   const dialogText=attach(dialog,'p','tisV10DialogText',null);
@@ -219,6 +226,8 @@
    set('tisV10Cancel',strings.cancel);set('tisV10BackToInput',strings.back);
    set('tisV10ReviewInstead',strings.writing);set('tisV10ErrorBack',strings.retry);
    set('tisV10Edit',strings.edit);set('tisV10Improve',strings.improve);
+   set('tisV10ExportReport',strings.exportReport);
+   exportExplanation.textContent=strings.exportExplanation;
    returnFromWriting.textContent=strings.backResult;
    if(!selected){inspectorText.textContent=strings.detailsDefault;dialogText.textContent=strings.detailsDefault;}
    else {inspectorText.textContent=selected.text;dialogText.textContent=selected.text;}
@@ -298,6 +307,7 @@
     textBody.replaceChildren();selected=null;
     inspectorText.textContent=t().detailsDefault;
    }
+   if(screen!=='results'||prior!==last.requestId)exportStatus.textContent='';
    show(screen);
    if(screen==='progress')renderProgress();
    if(screen==='eligibility')renderEligibility();
@@ -323,6 +333,16 @@
   errorBack.addEventListener('click',clickBack);
   review.addEventListener('click',switchToWriting);
   improve.addEventListener('click',switchToWriting);
+  exportReport.addEventListener('click',()=>{
+   // Reuse the privacy-safe exporter; the hidden V9 report surface has
+   // no reachable export controls while V10 is showing results.
+   const trigger=doc.getElementById('studioExportReview');
+   const downstream=doc.getElementById('studioExportStatus');
+   if(!trigger||!downstream){exportStatus.textContent=t().exportUnavailable;return;}
+   downstream.textContent='';
+   trigger.click();
+   exportStatus.textContent=downstream.textContent.trim()||t().exportUnavailable;
+  });
   returnFromWriting.addEventListener('click',()=>{
    doc.getElementById('tisTabDetection')?.click();
    if(app.session.read().revision===last.revision&&
