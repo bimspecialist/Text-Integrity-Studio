@@ -298,3 +298,19 @@ body.tis-v10 #tisRevisedPane #tisRevisedText::placeholder{
  color:var(--v10-placeholder)!important;
  opacity:1!important;
 }
+
+/* V10.2 compact first viewport: the default V8 textarea height and its
+ * content-box padding pushed the only Analyze action below 900px desktop.
+ * Limit only the unscanned single-input screen, not the dual writing editor. */
+body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel #source{
+ box-sizing:border-box!important;height:250px!important;min-height:220px!important;
+}
+@media(min-width:771px){
+ body.tis-v9.tis-v10[data-v10-screen="input"] .shell>main{padding-top:32px!important}
+ body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel{padding:24px!important}
+}
+@media(max-width:540px){
+ body.tis-v9.tis-v10[data-v10-screen="input"] #inputPanel #source{
+  height:230px!important;min-height:210px!important;
+ }
+}
