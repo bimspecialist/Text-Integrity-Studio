@@ -17,6 +17,20 @@ async function run(){
   if(shotDir)require('node:fs').mkdirSync(shotDir,{recursive:true});
   const saveShot=async name=>{if(shotDir)await page.screenshot({path:require('node:path').join(shotDir,name),fullPage:true});};
   await saveShot('v10-1-desktop-input.png');
+  const upload=await page.evaluate(()=>{
+   const el=document.querySelector('label.file-input');
+   const strong=el?.querySelector('strong');
+   const rect=el?.getBoundingClientRect();
+   return {found:!!el,labelVisible:!!el?.getClientRects().length,
+    labelWidth:rect?.width||0,labelHeight:rect?.height||0,
+    headingVisible:!!strong?.getClientRects().length,
+    parent:el?.parentElement?.id||el?.parentElement?.className||'none',
+    heading:strong?.textContent||''};
+  });
+  console.log('V10 upload affordance',JSON.stringify(upload));
+  assert(upload.found&&upload.labelVisible&&upload.headingVisible&&upload.labelHeight>=45,
+   'main screen must visibly support file upload, not only text paste');
+
   assert.equal(await page.evaluate(()=>document.body.classList.contains('tis-v10')),true,'V10.1 activates only with the preview flag');
   const frame=await page.evaluate(()=>{
     const r=document.getElementById('inputPanel').getBoundingClientRect();
@@ -40,13 +54,14 @@ async function run(){
   assert.equal(unsupported.model,0,'no iframe/model request for Arabic input');
   assert.equal(unsupported.progress,true);
   assert(!/100% AI|AI-authored|AI-written: [0-9]/i.test(unsupported.text));
+  await saveShot('v10-1-eligibility-arabic.png');
   await page.click('#tisV10BackToInput');
   assert.equal(await page.$eval('#source',e=>e.value),'مراجعة عربية محلية فقط دون نموذج إنجليزي.');
   await page.click('#language');
   await page.setViewport({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.dir),'rtl');
   assert((await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth))<=8,'RTL phone must not overflow');
-  await saveShot('v10-1-mobile-eligibility-ar.png');
+  await saveShot('v10-1-mobile-input-ar.png');
   assert.deepEqual(remote,[],'unsupported scan must not request external model files');
   assert.deepEqual(errors,[],'no browser JavaScript exceptions');
   console.log('PASS V10.1 browser: centered light input, source preservation, Arabic abstention, RTL and no egress');
