@@ -117,6 +117,19 @@
   const category=typeof item?.category==='string'?item.category:'other';
   return Object.prototype.hasOwnProperty.call(labels.en.categories,category)?category:'other';
  }
+ // Only a contract-validated, same-revision research signal is displayable.
+ // This does not convert a raw classifier signal into authorship probability.
+ function researchDisplay(state,revision){
+  const genuine=state?.status==='RESEARCH_SIGNAL'&&
+   state.evidence?.kind==='RESEARCH_SIGNAL'&&
+   state.revision===revision&&Number.isFinite(state.signal)&&
+   state.signal>=0&&state.signal<=100&&state.evidence.signal===state.signal;
+  if(!genuine)return Object.freeze({measured:false,signal:null,coverage:null});
+  const coverage=state.evidence.documentCoverageWordsPercent;
+  return Object.freeze({measured:true,signal:Number(state.signal.toFixed(1)),
+   coverage:Number.isFinite(coverage)&&coverage>=0&&coverage<=100?
+    Number(coverage.toFixed(1)):null});
+ }
  function mount({doc,win,app}={}){
   if(!doc||!win||!app?.reviewWritingOnly||!app?.session?.read||
      !app?.review?.getSuggestions||!app?.controller?.getState||
@@ -225,15 +238,12 @@
   function presentModelEvidence(){
    const state=app.controller.getState(),snapshot=app.session.read(),t=tr();
    if(doc.body.dataset.v10Screen!=='results'){signalCard.hidden=true;return;}
-   const valid=state.status==='RESEARCH_SIGNAL'&&state.evidence?.kind==='RESEARCH_SIGNAL'&&
-    state.revision===snapshot.revision&&Number.isFinite(state.signal)&&
-    state.signal>=0&&state.signal<=100&&state.evidence.signal===state.signal;
+   const measured=researchDisplay(state,snapshot.revision);
    signalCard.hidden=false;
-   signalFigure.textContent=valid?state.signal.toFixed(1)+'%':'—';
-   const coverage=valid&&Number.isFinite(state.evidence?.documentCoverageWordsPercent)?
-    state.evidence.documentCoverageWordsPercent:null;
-   signalCoverage.textContent=valid?
-    t.signalLabel+' · '+t.signalScope+': '+(coverage===null?'—':coverage.toFixed(1)+'%'):
+   signalFigure.textContent=measured.measured?measured.signal.toFixed(1)+'%':'—';
+   signalCoverage.textContent=measured.measured?
+    t.signalLabel+' · '+t.signalScope+': '+
+    (measured.coverage===null?'—':measured.coverage.toFixed(1)+'%'):
     t.withheld;
    signalWarning.textContent=t.signalWarning;
   }
@@ -548,5 +558,5 @@
    previewOpen:openPreviewId!==null
   })});
  }
- return Object.freeze({mount,categoryFor});
+ return Object.freeze({mount,categoryFor,researchDisplay});
 });
