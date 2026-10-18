@@ -35,7 +35,7 @@
    missing:'Add text or import a document to continue.',eligibility:'Writing review remains available locally, without an AI authorship claim.',
    back:'Back to text',writing:'Improve writing',
    error:'Analysis could not finish. Your original text has not changed.',retry:'Edit text and try again',
-   results:'Your document review',coverage:'Measured word coverage',signal:'Experimental research signal — not AI-authorship probability',
+   results:'Your document review',highlightLegend:'Highlighted passages are evaluated model windows, not detected AI sentences or proof of authorship.',coverage:'Measured word coverage',signal:'Experimental research signal — not AI-authorship probability',
    inconclusive:'The detector cannot draw a document-wide conclusion from this evidence.',
    none:'No eligible highlighted windows are available. Unhighlighted text is not a human-authorship determination.',
    details:'Passage explanation',detailsDefault:'Select a highlighted passage to inspect its measured range.',
@@ -53,7 +53,7 @@
    missing:'أضف نصًا أو ارفع مستندًا للمتابعة.',eligibility:'يمكنك مراجعة الكتابة محليًا دون إصدار حكم على هوية الكاتب.',
    back:'العودة إلى النص',writing:'تحسين الكتابة',
    error:'تعذّر إكمال التحليل. بقي النص الأصلي دون تغيير.',retry:'عدّل النص وأعد المحاولة',
-   results:'نتيجة مراجعة النص',coverage:'تغطية الكلمات المقاسة',signal:'إشارة بحثية تجريبية وليست احتمالًا لمعرفة مؤلف النص',
+   results:'نتيجة مراجعة النص',highlightLegend:'التمييز يشير إلى مقاطع قيّمها النموذج فقط، ولا يثبت أنها جمل كتبها الذكاء الاصطناعي.',coverage:'تغطية الكلمات المقاسة',signal:'إشارة بحثية تجريبية وليست احتمالًا لمعرفة مؤلف النص',
    inconclusive:'الأدلة الحالية لا تكفي لإصدار نتيجة على مستوى المستند.',
    none:'لا توجد نوافذ موثوقة لتمييزها. النص غير المميز ليس حكمًا بأنه من كتابة إنسان.',
    details:'تفاصيل المقطع',detailsDefault:'اختر مقطعًا مميزًا لرؤية حدود قياسه وتفسيره.',
@@ -145,6 +145,7 @@
   const resultsHeading=attach(resultsTop,'h2','tisV10ResultHeading','tis-v10-title');
   const edit=attach(resultsTop,'button','tisV10Edit','tis-v10-secondary');edit.type='button';
   const resultSummary=attach(results,'p','tisV10ResultSummary','tis-v10-meta');
+  const highlightLegend=attach(results,'p','tisV10HighlightLegend','tis-v10-legend');
   const resultGrid=attach(results,'div',null,'tis-v10-reader-grid');
   const textBody=attach(resultGrid,'article','tisV10ReaderBody','tis-v10-reader');
   textBody.setAttribute('aria-label','Measured passage review of original text');
@@ -192,6 +193,7 @@
    set('tisV10EligibilityHeading',strings.unsupported);
    set('tisV10ErrorHeading',strings.error);
    set('tisV10ResultHeading',strings.results);
+   highlightLegend.textContent=strings.highlightLegend;
    textBody.setAttribute('aria-label',strings.details+' — '+strings.signal);
    set('tisV10InspectorTitle',strings.details);
    set('tisV10InspectorNotice',strings.detailsExplain);
