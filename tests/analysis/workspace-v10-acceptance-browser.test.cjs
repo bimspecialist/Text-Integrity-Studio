@@ -41,6 +41,13 @@ async function run(){
   await page.goto('http://127.0.0.1:'+server.address().port+'/?v10preview=1',{waitUntil:'load'});
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'input');
   await visual('INPUT_DESKTOP');
+  const firstFold=await page.evaluate(()=>{
+   const button=document.getElementById('scanAI').getBoundingClientRect();
+   return {top:button.top,bottom:button.bottom,height:innerHeight};
+  });
+  console.log('V10 desktop primary action geometry '+JSON.stringify(firstFold));
+  assert(firstFold.bottom<=firstFold.height-8,
+   'At 1440x900 the single primary Analyze button must be visible without scrolling');
 
   // The native file picker must be reachable by keyboard, without a mouse.
   await page.focus('#file');
@@ -119,6 +126,14 @@ async function run(){
    });
   });
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'results');
+  const resultsGeometry=await page.evaluate(()=>{
+   const actions=document.querySelector('.tis-v10-result-actions').getBoundingClientRect();
+   const reader=document.querySelector('.tis-v10-reader-grid').getBoundingClientRect();
+   return {actionsBottom:actions.bottom,readerTop:reader.top};
+  });
+  console.log('V10 result actions geometry '+JSON.stringify(resultsGeometry));
+  assert(resultsGeometry.actionsBottom<=resultsGeometry.readerTop,
+   'Review and export actions must precede the long measured passage reader');
   const exportButton=await page.$('#tisV10ExportReport');
   assert(exportButton,'Results view must expose a direct report export; hidden legacy panel is not accessible');
   assert.equal(await page.$eval('#tisV10ExportReport',el=>!!el.getClientRects().length),true);
