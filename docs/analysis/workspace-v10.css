@@ -214,3 +214,9 @@ body.tis-v10[data-v10-screen="writing"] .tis-v10-flow{display:none!important}
 @media(prefers-reduced-motion:reduce){
  body.tis-v10 *,body.tis-v10 *::before,body.tis-v10 *::after{animation:none!important;transition:none!important}
 }
+
+/* Hide the inactive result surfaces themselves, not only their ancestor. */
+body.tis-v10[data-v10-screen="input"] #reportPanel,
+body.tis-v10[data-v10-screen="input"] #tisRevisedPane,
+body.tis-v10[data-v10-screen="eligibility"] #reportPanel,
+body.tis-v10[data-v10-screen="progress"] #reportPanel{display:none!important}
