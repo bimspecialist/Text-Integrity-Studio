@@ -104,6 +104,12 @@
    throw new TypeError('V10_1_MISSING_CANONICAL_APP_DEPENDENCIES');
   // Original text direction is independent of the interface language.
   source.setAttribute('dir','auto');
+  // V9 had accessible names on generic containers. In the V10 preview,
+  // provide group semantics where useful, or expose the existing visible text.
+  doc.querySelector('.v5-brand')?.removeAttribute('aria-label');
+  doc.querySelector('.v5-editor-tabs')?.setAttribute('role','group');
+  doc.querySelector('.tis-v8-writing-actions')?.setAttribute('role','group');
+  doc.getElementById('tisV8WordComparison')?.removeAttribute('aria-label');
   const make=(tag,id,cls,content)=>{
    const n=doc.createElement(tag);
    if(id)n.id=id;if(cls)n.className=cls;if(content!==undefined)n.textContent=content;
