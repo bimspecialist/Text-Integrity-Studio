@@ -9,6 +9,7 @@ on:
       - 'tests/analysis/workspace-v10-long-import.test.cjs'
       - 'tests/analysis/workspace-v10-keyboard-focus.test.cjs'
       - 'tests/analysis/workspace-v10-ax-semantics-browser.test.cjs'
+      - 'tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs'
       - 'tests/analysis/workspace-v10-acceptance-browser.test.cjs'
       - 'tests/analysis/workspace-v10-transport-retry-browser.test.cjs'
       - '.github/workflows/v10-release-preflight.yml'
@@ -42,6 +43,12 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
           node tests/analysis/workspace-v10-ax-semantics-browser.test.cjs
+      - name: Check simulated Windows forced colors and text enlargement
+        env:
+          TIS_FORCED_COLOR_SHOTS: /tmp/tis-v10-forced-colors
+        run: |
+          node --check tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs
+          node tests/analysis/workspace-v10-forced-colors-reflow-browser.test.cjs
       - name: Test V10 keyboard file import, cancel, errors and visible report export
         env:
           TIS_SCREENSHOT_DIR: /tmp/tis-v10-acceptance-shots
@@ -54,6 +61,14 @@ jobs:
         run: |
           node --check tests/analysis/workspace-v10-transport-retry-browser.test.cjs
           node tests/analysis/workspace-v10-transport-retry-browser.test.cjs
+      - name: Archive adaptive-color test screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v10-forced-colors-screenshots
+          path: /tmp/tis-v10-forced-colors/*.png
+          retention-days: 3
+          if-no-files-found: ignore
       - name: Archive V10 acceptance screenshots
         if: always()
         uses: actions/upload-artifact@v4
