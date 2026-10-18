@@ -106,6 +106,9 @@
    throw new TypeError('V10_1_MISSING_CANONICAL_APP_DEPENDENCIES');
   // Original text direction is independent of the interface language.
   source.setAttribute('dir','auto');
+  // Let the existing associated <label for="source"> provide the name.
+  // V8's fixed English aria-label overrode that translated label in V10.
+  source.removeAttribute('aria-label');
   // V9 had accessible names on generic containers. In the V10 preview,
   // provide group semantics where useful, or expose the existing visible text.
   doc.querySelector('.v5-brand')?.removeAttribute('aria-label');
