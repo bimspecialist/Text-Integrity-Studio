@@ -28,7 +28,7 @@ async function run(){
     heading:strong?.textContent||''};
   });
   console.log('V10 upload affordance',JSON.stringify(upload));
-  assert(upload.found&&upload.labelVisible&&upload.headingVisible&&upload.labelHeight>=45,
+  assert(upload.found&&upload.labelVisible&&upload.headingVisible&&upload.labelHeight>=45&&upload.labelWidth>=400,
    'main screen must visibly support file upload, not only text paste');
 
   assert.equal(await page.evaluate(()=>document.body.classList.contains('tis-v10')),true,'V10.1 activates only with the preview flag');
