@@ -55,9 +55,9 @@ async function main(){
      return {violations:out.violations.map(x=>({
       rule:x.id,impact:x.impact,count:x.nodes.length,
       selectors:x.nodes.slice(0,8).map(n=>n.target.join(' > '))
-     })),incomplete:out.incomplete.map(x=>({rule:x.id,count:x.nodes.length}))};
+     })),incomplete:out.incomplete.map(x=>({rule:x.id,count:x.nodes.length,selectors:x.nodes.slice(0,6).map(n=>n.target.join(' > '))}))};
     },tags);
-    metrics.push({name,violations:checks.violations.length,incomplete:checks.incomplete.length});
+    metrics.push({name,violations:checks.violations.length,incomplete:checks.incomplete});
     if(checks.violations.length||errors.length)failures.push({name,...checks,errors:errors.slice(0,5)});
    }finally{await page.close();}
   }
