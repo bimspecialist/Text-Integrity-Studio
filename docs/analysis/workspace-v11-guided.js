@@ -1,4 +1,4 @@
-/* V11 M1 — opt-in guided local writing review.
+/* V11 M1–M2 — guided local writing review with reversible, reviewed edits.
  * Presentation adapter only. DocumentSession and existing advisory engines remain
  * authoritative. No automatic model downloads, remote inference or text mutation.
  * Enabled exclusively with ?v11preview=1 on the development branch.
@@ -34,6 +34,17 @@
    saved:'Writing report saved locally.',notReady:'The writing report is not ready. Try reviewing the text again.',
    docx:'Imported Word text is read-only for automatic changes. Keep the original file safe and review suggestions manually.',
    status:'Writing review complete. Your original text is unchanged.',
+   previewAction:'Preview',closePreview:'Close preview',applyAction:'Apply correction',dismissAction:'Dismiss',
+   undoAction:'Undo last correction',previewTitle:'Exact before/after review',before:'Before',after:'After',
+   manualPreview:'This observation needs your own wording. No automatic replacement is available.',
+   readOnlyPreview:'Imported Word text is read-only here. Review the suggestion in the Word editor instead.',
+   previewFirst:'Preview the exact correction before applying it.',
+   applied:'Reviewed correction applied. You can undo it.',undone:'The previous correction was restored.',
+   dismissed:'Suggestion dismissed for this document revision. No text was changed.',
+   stale:'The document changed. Review the current version before using older suggestions.',
+   blocked:'Protected facts or an unverified personal claim could change. Nothing was applied.',
+   applyError:'This correction could not be safely applied.',
+   undoError:'Undo is no longer available after other changes.',
    categories:Object.freeze({clarity:'Clarity',grammar:'Grammar',repetition:'Repetition',rhythm:'Sentence rhythm',
     style:'Style',spelling:'Spelling',other:'Writing tip'})
   }),
@@ -52,6 +63,19 @@
    saved:'حُفظ تقرير الكتابة على جهازك.',notReady:'التقرير غير جاهز. أعد مراجعة النص أولًا.',
    docx:'النص المستورد من Word للقراءة فقط عند التعديل التلقائي. احتفظ بالملف الأصلي وراجع الاقتراحات يدويًا.',
    status:'اكتملت مراجعة الكتابة. النص الأصلي لم يتغير.',
+   previewAction:'معاينة',closePreview:'إغلاق المعاينة',applyAction:'تطبيق التصحيح',dismissAction:'تجاهل',
+   undoAction:'التراجع عن آخر تصحيح',previewTitle:'مراجعة النص قبل التعديل وبعده',
+   before:'قبل',after:'بعد',
+   manualPreview:'تتطلب هذه الملاحظة صياغة منك. لا يوجد تصحيح آلي موثوق لتطبيقه.',
+   readOnlyPreview:'النص المستورد من Word للقراءة فقط هنا. راجع الملاحظة داخل محرر Word.',
+   previewFirst:'راجع معاينة التصحيح المحدد قبل تطبيقه.',
+   applied:'طُبّق التصحيح بعد مراجعتك. يمكنك التراجع عنه.',
+   undone:'استُعيد النص السابق قبل التصحيح.',
+   dismissed:'تم تجاهل المقترح لهذه النسخة دون تغيير النص.',
+   stale:'تغير المستند. راجع النسخة الحالية قبل تطبيق أي مقترح قديم.',
+   blocked:'قد يؤدي التعديل إلى تغيير رقم أو مرجع أو ادعاء شخصي غير موثق. لم يُطبّق شيء.',
+   applyError:'تعذّر تطبيق التصحيح بأمان.',
+   undoError:'لم يعد التراجع متاحًا بعد تغييرات أخرى.',
    categories:Object.freeze({clarity:'الوضوح',grammar:'القواعد',repetition:'التكرار',rhythm:'إيقاع الجمل',
     style:'الأسلوب',spelling:'الإملاء',other:'ملاحظة كتابية'})
   })
@@ -85,6 +109,7 @@
   const edit=make(actions,'button','tisV11Edit','tis-v10-secondary');edit.type='button';
   const improve=make(actions,'button','tisV11Improve','tis-v10-primary');improve.type='button';
   const exportButton=make(actions,'button','tisV11Export','tis-v10-secondary');exportButton.type='button';
+  const undoButton=make(actions,'button','tisV11Undo','tis-v10-secondary');undoButton.type='button';undoButton.disabled=true;
   const status=make(stage,'p','tisV11Status','tis-v11-status');
   status.setAttribute('role','status');status.setAttribute('aria-live','polite');
   const research=make(inputPanel,'details','tisV11Research','tis-v11-research');
@@ -97,7 +122,17 @@
   inputStatus.setAttribute('role','status');inputStatus.setAttribute('aria-live','polite');
   inputPanel.insertBefore(inputStatus,research);
   let reviewRevision=null,reviewedSuggestions=[],disposed=false;
+  let ownRevisionChange=false,ownUndoCount=0,openPreviewId=null,lastNotice='status';
   const tr=()=>labels[doc.documentElement.lang==='ar'?'ar':'en'];
+  const notice=key=>{lastNotice=key;status.textContent=tr()[key]||tr().applyError;};
+  const live=item=>{
+   if(!item||reviewRevision===null)return false;
+   const snapshot=app.session.read();
+   return snapshot.revision===reviewRevision&&item.revision===snapshot.revision&&
+    Number.isSafeInteger(item.start)&&Number.isSafeInteger(item.end)&&
+    item.start>=0&&item.end<=snapshot.text.length&&item.start<item.end&&
+    snapshot.text.slice(item.start,item.end)===item.original;
+  };
   function copy(){
    if(disposed)return;
    const t=tr();
@@ -116,38 +151,131 @@
    heading.textContent=t.reviewTitle;
    disclaimer.textContent=t.reviewLimit;
    edit.textContent=t.edit;improve.textContent=t.improve;exportButton.textContent=t.export;
+   undoButton.textContent=t.undoAction;undoButton.disabled=ownUndoCount===0;
    docxNote.textContent=t.docx;
-   if(reviewRevision!==null)renderSuggestions();
+   if(reviewRevision!==null){renderSuggestions();status.textContent=t[lastNotice]||t.status;}
   }
   function renderSuggestions(){
-   const t=tr();
+   const t=tr(),readonly=app.session.read().sourceKind==='docx';
    count.textContent=t.reviewCount(reviewedSuggestions.length);
+   undoButton.disabled=ownUndoCount===0;
    cards.replaceChildren();
    if(!reviewedSuggestions.length){
-    const empty=make(cards,'li',null,'tis-v11-empty');
-    empty.textContent=t.noSuggestions;return;
+    make(cards,'li',null,'tis-v11-empty').textContent=t.noSuggestions;
+    return;
    }
-   for(const suggestion of reviewedSuggestions){
+   reviewedSuggestions.forEach((item,index)=>{
     const li=make(cards,'li',null,'tis-v11-suggestion');
+    li.dataset.reviewIndex=String(index);li.dataset.suggestionId=item.id;
     const top=make(li,'div',null,'tis-v11-suggestion-top');
-    make(top,'strong',null,null).textContent=t.categories[categoryFor(suggestion)];
+    make(top,'strong',null,null).textContent=t.categories[categoryFor(item)];
     make(top,'small',null,null).textContent=
-     suggestion.risk==='low'&&suggestion.proposedReplacement!==null?t.low:t.manual;
-    const why=make(li,'p',null,'tis-v11-reason');
-    why.textContent=safeText(suggestion.reason,360)||t.manual;
+     item.risk==='low'&&item.proposedReplacement!==null?t.low:t.manual;
+    make(li,'p',null,'tis-v11-reason').textContent=safeText(item.reason,360)||t.manual;
     const original=make(li,'p',null,'tis-v11-original');
-    const originalLabel=make(original,'strong',null,null);
-    originalLabel.textContent=t.original+': ';
-    original.append(doc.createTextNode(safeText(suggestion.original,160)));
-    if(typeof suggestion.proposedReplacement==='string'&&suggestion.proposedReplacement!==suggestion.original){
+    make(original,'strong',null,null).textContent=t.original+': ';
+    original.append(doc.createTextNode(safeText(item.original,160)));
+    if(typeof item.proposedReplacement==='string'&&item.proposedReplacement!==item.original){
      const proposed=make(li,'p',null,'tis-v11-proposed');
      make(proposed,'strong',null,null).textContent=t.proposed+': ';
-     proposed.append(doc.createTextNode(safeText(suggestion.proposedReplacement,160)));
+     proposed.append(doc.createTextNode(safeText(item.proposedReplacement,160)));
     }
+    const detail=make(li,'div','tisV11Preview'+index,'tis-v11-preview');
+    detail.setAttribute('role','region');
+    detail.setAttribute('aria-label',t.previewTitle+' — '+t.categories[categoryFor(item)]);
+    detail.hidden=openPreviewId!==item.id;
+    make(detail,'strong',null,null).textContent=t.before;
+    const before=make(detail,'blockquote',null,'tis-v11-excerpt');
+    before.textContent=item.original;before.dir='auto';
+    const canApply=item.risk==='low'&&typeof item.proposedReplacement==='string';
+    if(canApply){
+     make(detail,'strong',null,null).textContent=t.after;
+     const after=make(detail,'blockquote',null,'tis-v11-excerpt tis-v11-after');
+     after.textContent=item.proposedReplacement;after.dir='auto';
+    }else{
+     make(detail,'p',null,'tis-v11-preview-note').textContent=readonly?t.readOnlyPreview:t.manualPreview;
+    }
+    if(readonly&&canApply)make(detail,'p',null,'tis-v11-preview-note').textContent=t.readOnlyPreview;
+    const controls=make(li,'div',null,'tis-v11-suggestion-actions');
+    const preview=make(controls,'button',null,'tis-v11-preview-toggle');
+    preview.type='button';preview.textContent=detail.hidden?t.previewAction:t.closePreview;
+    preview.setAttribute('aria-controls',detail.id);
+    preview.setAttribute('aria-expanded',String(!detail.hidden));
+    preview.setAttribute('aria-label',t.previewAction+' — '+t.categories[categoryFor(item)]+' '+(index+1));
+    preview.addEventListener('click',()=>{
+     if(!live(item)||!app.review.preview(item.id)){notice('stale');return;}
+     openPreviewId=openPreviewId===item.id?null:item.id;
+     renderSuggestions();
+     cards.querySelector('[data-review-index="'+index+'"] .tis-v11-preview-toggle')?.focus();
+    });
+    const apply=make(controls,'button',null,'tis-v11-apply');
+    apply.type='button';apply.textContent=t.applyAction;
+    apply.disabled=!canApply||readonly||openPreviewId!==item.id;
+    apply.setAttribute('aria-describedby',detail.id);
+    apply.title=readonly?t.readOnlyPreview:!canApply?t.manualPreview:
+     openPreviewId!==item.id?t.previewFirst:'';
+    apply.addEventListener('click',()=>applySuggestion(item));
+    const dismiss=make(controls,'button',null,'tis-v11-dismiss');
+    dismiss.type='button';dismiss.textContent=t.dismissAction;
+    dismiss.addEventListener('click',()=>dismissSuggestion(item));
+   });
+  }
+  function refreshAfterOwnedChange(snapshot){
+   // An approved change emits a session revision and invalidates model
+   // evidence. Restore the guided result after the canonical editor is synced.
+   source.value=snapshot.text;
+   source.dispatchEvent(new win.Event('input',{bubbles:true}));
+   reviewRevision=snapshot.revision;openPreviewId=null;
+   reviewedSuggestions=app.review.getSuggestions();
+   showReview();
+  }
+  function applySuggestion(item){
+   if(!live(item)){notice('stale');return false;}
+   if(openPreviewId!==item.id){notice('previewFirst');return false;}
+   const preview=app.review.preview(item.id),before=app.session.read();
+   if(!preview||preview.revision!==before.revision){notice('stale');return false;}
+   if(before.sourceKind==='docx'){notice('readOnlyPreview');return false;}
+   if(preview.risk!=='low'||typeof preview.after!=='string'){notice('applyError');return false;}
+   // Repeat conservative protected-fact screening at the last moment.
+   const integrity=win.TISRewriteIntegrityCheck;
+   if(typeof integrity?.compareRewrite!=='function'){notice('applyError');return false;}
+   const candidate=before.text.slice(0,item.start)+preview.after+before.text.slice(item.end);
+   const flags=integrity.compareRewrite(before.text,candidate,{
+    locale:/\p{Script=Arabic}/u.test(before.text)?'ar':'en'
+   }).flags;
+   if(flags.includes('PROTECTED_FACT_CHANGED')||flags.includes('UNVERIFIED_PERSONAL_CLAIM')){
+    notice('blocked');return false;
    }
+   ownRevisionChange=true;
+   let result;
+   try{result=app.review.apply(item.id);}finally{ownRevisionChange=false;}
+   if(!result?.applied){notice(result?.reason==='STALE_REVISION'?'stale':'applyError');return false;}
+   ownUndoCount++;
+   refreshAfterOwnedChange(result.snapshot);
+   notice('applied');undoButton.focus();return true;
+  }
+  function dismissSuggestion(item){
+   if(!live(item)){notice('stale');return false;}
+   app.review.dismiss(item.id);
+   reviewedSuggestions=app.review.getSuggestions();openPreviewId=null;
+   renderSuggestions();notice('dismissed');
+   (cards.querySelector('.tis-v11-preview-toggle')||edit).focus();
+   return true;
+  }
+  function undoSuggestion(){
+   if(ownUndoCount<1){notice('undoError');return false;}
+   ownRevisionChange=true;
+   let result;
+   try{result=app.review.undo();}finally{ownRevisionChange=false;}
+   if(!result?.restored){ownUndoCount=0;undoButton.disabled=true;notice('undoError');return false;}
+   ownUndoCount--;
+   refreshAfterOwnedChange(result.snapshot);
+   notice('undone');
+   if(ownUndoCount)undoButton.focus();else heading.focus();
+   return true;
   }
   function openInput(){
-   reviewRevision=null;reviewedSuggestions=[];stage.hidden=true;
+   reviewRevision=null;reviewedSuggestions=[];openPreviewId=null;stage.hidden=true;
    doc.body.dataset.v10Screen='input';
    byId('tisTabDetection')?.click();
    copy();
@@ -177,9 +305,9 @@
     inputStatus.textContent=tr().notReady;return;
    }
    const snapshot=app.session.read();
-   reviewRevision=snapshot.revision;
+   reviewRevision=snapshot.revision;openPreviewId=null;
    reviewedSuggestions=app.review.getSuggestions();
-   status.textContent=tr().status;
+   notice('status');
    showReview();
   }
   function enterWriting(){
@@ -211,9 +339,13 @@
    status.textContent=downstream.textContent.trim()||tr().notReady;
   }
   const onRevision=snapshot=>{
+   if(ownRevisionChange)return;
+   ownUndoCount=0;undoButton.disabled=true;openPreviewId=null;
    if(reviewRevision!==null&&snapshot.revision!==reviewRevision){
     reviewRevision=null;reviewedSuggestions=[];stage.hidden=true;
-    if(doc.body.dataset.v10Screen==='guided-review')doc.body.dataset.v10Screen='input';
+    if(doc.body.dataset.v10Screen==='guided-review'){
+     doc.body.dataset.v10Screen='input';source.focus();
+    }
    }
   };
   const unsubscribe=app.session.subscribe(onRevision);
@@ -224,6 +356,7 @@
   edit.addEventListener('click',openInput);
   improve.addEventListener('click',enterWriting);
   exportButton.addEventListener('click',exportReview);
+  undoButton.addEventListener('click',undoSuggestion);
   researchAction.addEventListener('click',optionalResearch);
   backFromWriting?.addEventListener('click',returnFromWriting,true);
   doc.body.classList.add('tis-v11');
@@ -235,13 +368,15 @@
    edit.removeEventListener('click',openInput);
    improve.removeEventListener('click',enterWriting);
    exportButton.removeEventListener('click',exportReview);
+   undoButton.removeEventListener('click',undoSuggestion);
    researchAction.removeEventListener('click',optionalResearch);
    backFromWriting?.removeEventListener('click',returnFromWriting,true);
    stage.remove();research.remove();inputStatus.remove();doc.body.classList.remove('tis-v11');
   }
   return Object.freeze({dispose,showReview,reviewState:()=>Object.freeze({
    revision:reviewRevision,visible:doc.body.dataset.v10Screen==='guided-review',
-   suggestions:reviewedSuggestions.length
+   suggestions:reviewedSuggestions.length,undoAvailable:ownUndoCount>0,
+   previewOpen:openPreviewId!==null
   })});
  }
  return Object.freeze({mount,categoryFor});
