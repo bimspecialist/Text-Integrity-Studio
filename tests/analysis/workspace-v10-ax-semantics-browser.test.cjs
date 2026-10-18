@@ -39,11 +39,13 @@ async function run(){
      if(lang==='ar')await page.click('#language');
      assert.equal(await page.evaluate(()=>document.documentElement.lang),lang);
      const source=extract(await ax(page,'#source'));
-     const expected=lang==='ar'?'النص المراد فحصه':'Text to review';
+     const expected=await page.$eval('label[for="source"]',e=>e.textContent.trim());
      assert.equal(source.name,expected,
-      'Source accessible name should follow the visible localized label '+lang+' '+width+': '+JSON.stringify(source));
+      'Source accessible name must equal the visible associated label '+lang+' '+width+': '+JSON.stringify(source));
+     if(lang==='ar')assert(/\p{Script=Arabic}/u.test(source.name),'Arabic source must have an Arabic screen-reader name');
      const upload=extract(await ax(page,'#file'));
      assert(upload.name.trim().length>5,'File chooser must have a non-empty accessible name');
+     if(lang==='ar')assert(/\p{Script=Arabic}/u.test(upload.name),'Arabic file chooser must expose an Arabic accessible name');
      const motion=await page.$eval('#scanAI',el=>getComputedStyle(el).transitionDuration);
      assert(motion.split(',').every(x=>parseFloat(x)===0),
       'Reduce motion must disable transitions: '+motion);
