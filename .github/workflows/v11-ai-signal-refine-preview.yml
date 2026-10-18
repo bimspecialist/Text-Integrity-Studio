@@ -29,6 +29,10 @@ jobs:
         env:
           TIS_V11_UX_SCREENSHOTS: /tmp/tis-v11-ux-qa
         run: node tests/analysis/workspace-v11-ai-review-browser.test.cjs
+      - name: Real Chromium research percentage visibility and INCONCLUSIVE withholding
+        run: |
+          node --check tests/analysis/workspace-v11-ai-score-view-browser.test.cjs
+          node tests/analysis/workspace-v11-ai-score-view-browser.test.cjs
       - name: Ensure default local writing M1 remains unchanged
         run: |
           node tests/analysis/workspace-v11-guided-browser.test.cjs
