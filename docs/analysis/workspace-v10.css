@@ -220,3 +220,23 @@ body.tis-v10[data-v10-screen="input"] #reportPanel,
 body.tis-v10[data-v10-screen="input"] #tisRevisedPane,
 body.tis-v10[data-v10-screen="eligibility"] #reportPanel,
 body.tis-v10[data-v10-screen="progress"] #reportPanel{display:none!important}
+
+/* V5/V8 visually clipped the old upload label to 1px because upload lived
+ * elsewhere. V10 uses this ORIGINAL label and file control as the visible
+ * full-width dropzone, so restore its actual box and keyboard focus. */
+body.tis-v9.tis-v10 #inputPanel label.file-input{
+ position:relative!important;inset:auto!important;
+ width:100%!important;max-width:none!important;min-width:0!important;
+ height:auto!important;min-height:70px!important;
+ clip:auto!important;clip-path:none!important;
+ overflow:visible!important;opacity:1!important;
+ padding:14px 16px!important;margin:0 0 17px!important;
+ border:1px dashed #b7c1dc!important;background:#fafbff!important;
+ display:flex!important;gap:12px!important;align-items:center!important;
+}
+body.tis-v10 #inputPanel label.file-input:hover,
+body.tis-v10 #inputPanel label.file-input:focus-within{
+ border-color:var(--v10-focus)!important;background:#f4f3ff!important;
+}
+body.tis-v10 #inputPanel label.file-input strong{color:var(--v10-text)!important}
+body.tis-v10 #inputPanel label.file-input #file{min-width:0!important;color:var(--v10-muted)!important}
