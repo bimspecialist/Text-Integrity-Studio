@@ -40,6 +40,8 @@ async function run(){
   await setText(page,en);
   await page.click('#scanAI');
   assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'guided-review');
+  assert.equal(await page.$eval('#toast',e=>getComputedStyle(e).display),'none',
+   'Guided local review must not show misleading legacy Analysis updated toast');
   const rev=await page.evaluate(()=>window.TISAnalysisApp.session.read().revision);
   let index=await indexOf(page,'teh');
   assert(index!==null,'Local advisor should expose the exact typo source');
@@ -86,6 +88,29 @@ async function run(){
   assert.equal(await page.$eval('#tisV11Undo',e=>e.disabled),true);
   assert.equal(await page.evaluate(()=>window.TISWorkspaceV11.reviewState().undoAvailable),false);
   console.log('PASS V11 M2 EN preview-first, exact revisioned apply, recomputation, two undos and fact preservation');
+
+  // An unsaved draft stays intact when a user applies and undoes an
+  // independent, explicitly previewed source correction.
+  await page.click('#tisV11Improve');
+  const unsaved='My private, unfinished revised draft; do not overwrite.';
+  await page.$eval('#tisRevisedText',(el,t)=>{
+   el.value=t;el.dispatchEvent(new Event('input',{bubbles:true}));
+  },unsaved);
+  await page.click('#tisV10BackFromWriting');
+  let draftIndex=await indexOf(page,'teh');assert(draftIndex!==null);
+  await openPreview(page,draftIndex);
+  await page.click(sel(draftIndex,'apply'));
+  assert.match(await page.$eval('#source',e=>e.value),/^the report was recieved/);
+  assert.equal(await page.$eval('#tisRevisedText',e=>e.value),unsaved,
+   'Applying a correction must not discard an independent handwritten draft');
+  assert.equal(await page.evaluate(()=>window.TISAnalysisApp.dualEditor.getState().stale),true,
+   'Handwritten draft must be protected from applying against a later source revision');
+  await page.click('#tisV11Undo');
+  assert.equal(await page.$eval('#source',e=>e.value),en);
+  assert.equal(await page.$eval('#tisRevisedText',e=>e.value),unsaved);
+  await page.click('#tisV11Edit');
+  await page.click('#scanAI');
+  console.log('PASS V11 M2 unsaved dual-pane draft retained across apply/undo with stale protection');
 
   // Dismissing must never edit the source, and must only affect this revision.
   index=await indexOf(page,'teh');
