@@ -58,7 +58,9 @@ async function main(){
      })),incomplete:out.incomplete.map(x=>({rule:x.id,count:x.nodes.length,selectors:x.nodes.slice(0,6).map(n=>n.target.join(' > '))}))};
     },tags);
     metrics.push({name,violations:checks.violations.length,incomplete:checks.incomplete});
-    if(checks.violations.length||errors.length)failures.push({name,...checks,errors:errors.slice(0,5)});
+    const unresolvedAria=checks.incomplete.filter(x=>x.rule==='aria-prohibited-attr');
+    if(checks.violations.length||unresolvedAria.length||errors.length)
+     failures.push({name,...checks,unresolvedAria,errors:errors.slice(0,5)});
    }finally{await page.close();}
   }
   console.log('V10 automated axe metrics '+JSON.stringify(metrics));
