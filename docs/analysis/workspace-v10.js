@@ -40,7 +40,7 @@
    none:'No eligible highlighted windows are available. Unhighlighted text is not a human-authorship determination.',
    details:'Passage explanation',detailsDefault:'Select a highlighted passage to inspect its measured range.',
    detailsExplain:'This span was evaluated as one research-model window. The signal does not prove who wrote these words.',
-   close:'Close passage details',edit:'Edit original text',preserve:'Original text preserved',improve:'Improve writing',
+   close:'Close passage details',edit:'Edit original text',preserve:'Original text preserved',improve:'Improve writing',backResult:'Back to results',
    modalTitle:'Measured passage',cancelled:'The scan was cancelled; your text is unchanged.'
   },
   ar:{
@@ -58,7 +58,7 @@
    none:'لا توجد نوافذ موثوقة لتمييزها. النص غير المميز ليس حكمًا بأنه من كتابة إنسان.',
    details:'تفاصيل المقطع',detailsDefault:'اختر مقطعًا مميزًا لرؤية حدود قياسه وتفسيره.',
    detailsExplain:'تم تقييم هذا النطاق بوصفه نافذة واحدة من النموذج البحثي، ولا تثبت الإشارة من كتب هذه الكلمات.',
-   close:'إغلاق تفاصيل المقطع',edit:'تعديل النص الأصلي',preserve:'حُفظ النص الأصلي',improve:'تحسين الكتابة',
+   close:'إغلاق تفاصيل المقطع',edit:'تعديل النص الأصلي',preserve:'حُفظ النص الأصلي',improve:'تحسين الكتابة',backResult:'العودة إلى النتائج',
    modalTitle:'المقطع المقاس',cancelled:'أُلغي الفحص ولم يتغير النص الأصلي.'
   }
  };
@@ -112,6 +112,10 @@
   const attach=(parent,tag,id,cls,content)=>{const n=make(tag,id,cls,content);parent.append(n);return n;};
   const flow=attach(main,'section','tisV10Flow','tis-v10-flow');
   main.insertBefore(flow,workspace);
+  const returnFromWriting=make('button','tisV10BackFromWriting','tis-v10-secondary');
+  returnFromWriting.type='button';
+  returnFromWriting.setAttribute('aria-controls','tisV10Results');
+  main.insertBefore(returnFromWriting,workspace);
   const progress=attach(flow,'section','tisV10Progress','tis-v10-stage');
   progress.hidden=true;
   const progressHeading=attach(progress,'h2','tisV10ProgressHeading','tis-v10-title');
@@ -197,6 +201,7 @@
    set('tisV10Cancel',strings.cancel);set('tisV10BackToInput',strings.back);
    set('tisV10ReviewInstead',strings.writing);set('tisV10ErrorBack',strings.retry);
    set('tisV10Edit',strings.edit);set('tisV10Improve',strings.improve);
+   returnFromWriting.textContent=strings.backResult;
    if(!selected){inspectorText.textContent=strings.detailsDefault;dialogText.textContent=strings.detailsDefault;}
    else {inspectorText.textContent=selected.text;dialogText.textContent=selected.text;}
    renderProgress();
@@ -300,6 +305,14 @@
   errorBack.addEventListener('click',clickBack);
   review.addEventListener('click',switchToWriting);
   improve.addEventListener('click',switchToWriting);
+  returnFromWriting.addEventListener('click',()=>{
+   doc.getElementById('tisTabDetection')?.click();
+   if(app.session.read().revision===last.revision&&
+    ['RESEARCH_SIGNAL','INCONCLUSIVE'].includes(last.status)){
+    show('results');renderResult();return;
+   }
+   resetToSource();
+  });
   cancel.addEventListener('click',()=>app.cancel());
   closeDialog.addEventListener('click',()=>dialog.close());
   const sourceInput=()=>{if(doc.body.dataset.v10Screen==='results')show('input');};
@@ -315,6 +328,7 @@
    source.removeEventListener('input',sourceInput);
    if(dialog.open)dialog.close();
    dialog.remove();
+   returnFromWriting.remove();
    flow.remove();
    doc.body.classList.remove('tis-v10');
   }
