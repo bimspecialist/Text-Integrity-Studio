@@ -142,7 +142,8 @@ async function run(){
   await page.click('#tisV11ResearchTitle');
   assert.equal(await page.$eval('#tisV11Research',e=>e.open),true);
   assert.equal(await page.$eval('#tisV11ResearchRun',e=>e.getClientRects().length>0),true);
-  assert(/غير معايرة/.test(await page.$eval('#tisV11ResearchHelp',e=>e.textContent)));
+  assert(/ليست احتمالات معايرة|غير معايرة/u.test(await page.$eval('#tisV11ResearchHelp',e=>e.textContent)),
+   'Optional research disclosure must clearly say scores are not calibrated authorship probabilities');
   assert.deepEqual(unexpectedRequests,[]);
 
   // The older V10 view must remain unchanged behind its original flag.
