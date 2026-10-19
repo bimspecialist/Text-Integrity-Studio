@@ -10,7 +10,7 @@
  if(!root?.document)return;
  root.TISWorkspaceV11=api;
  const setup=()=>{
-  if(new URL(root.location.href).searchParams.get('v11preview')!=='1')return;
+  if(!['v11preview','v12preview'].some(flag=>new URL(root.location.href).searchParams.get(flag)==='1'))return;
   const view=api.mount({doc:root.document,win:root,app:root.TISAnalysisApp});
   root.TISWorkspaceV11=Object.freeze({...api,...view});
  };

@@ -1,0 +1,406 @@
+/* Text Integrity Studio V12 — opt-in unified, desktop/mobile bilingual.
+ * No global selectors: V9 public, V10 and V11 preview remain unchanged.
+ */
+body.tis-v12{
+ --v12-ink:#212b45;--v12-muted:#526078;--v12-subtle:#68758b;
+ --v12-stroke:#dfe4ee;--v12-brand:#5048be;--v12-hover:#4339a6;
+ --v12-surface:#fff;--v12-bg:#f8f9fd;--v12-focus:#4b3eb2;
+ --v12-help:#f4f3ff;
+ background:var(--v12-bg)!important;color:var(--v12-ink)!important;
+}
+body.tis-v12 .v5-topbar{
+ background:#fff!important;border-bottom:1px solid var(--v12-stroke)!important;
+ box-shadow:none!important;
+}
+body.tis-v12 .shell{background:var(--v12-bg)!important}
+body.tis-v12 .shell>main{max-width:1190px!important;padding:27px 20px 50px!important}
+body.tis-v12 .v5-brand-icon{background:var(--v12-brand)!important}
+body.tis-v12 .v5-brand-text strong{font-weight:790!important;color:var(--v12-ink)!important}
+body.tis-v12 button:focus-visible,
+body.tis-v12 textarea:focus-visible,
+body.tis-v12 a:focus-visible{
+ outline:3px solid var(--v12-focus)!important;outline-offset:3px!important;
+}
+body.tis-v12 .footer{background:var(--v12-bg)!important}
+/* A compact, real task header. No redundant landing-page sections. */
+body.tis-v12 #tisV12Hero{
+ display:grid;justify-items:center;text-align:center;
+ gap:5px;max-width:860px;margin:8px auto 21px;padding:0 8px;
+}
+body.tis-v12 .tis-v12-eyebrow{
+ margin:0!important;color:#5047a4!important;
+ font-size:11px!important;letter-spacing:.07em;font-weight:750!important;
+}
+body.tis-v12 #tisV12Headline{
+ color:var(--v12-ink)!important;font-size:clamp(26px,3.8vw,39px)!important;
+ font-weight:800!important;letter-spacing:-.025em;line-height:1.25!important;
+ margin:4px 0!important;max-width:26ch;
+}
+body.tis-v12 #tisV12Intro{
+ color:var(--v12-muted)!important;font-size:14px!important;
+ line-height:1.75!important;max-width:70ch;margin:0 auto!important;
+}
+body.tis-v12 #tisV12Status{
+ color:#4c5680!important;font-size:12px;line-height:1.6;margin:7px auto 0;
+}
+body.tis-v12 #tisV12Status:empty{display:none}
+/* Preserve canonical editor and file upload; remove redundant V8/V9 chrome. */
+body.tis-v12[data-v10-screen="input"] #inputPanel{
+ max-width:880px!important;border:1px solid #e1e5ef!important;
+ padding:25px 28px!important;background:#fff!important;
+ border-radius:16px!important;box-shadow:0 12px 36px #24295609!important;
+}
+body.tis-v12[data-v10-screen="input"] #inputPanel .v5-editor-lead,
+body.tis-v12[data-v10-screen="input"] #inputPanel .v5-editor-tabs,
+body.tis-v12[data-v10-screen="input"] #inputPanel .studio-docbar,
+body.tis-v12[data-v10-screen="input"] #inputPanel #tisV11Research,
+body.tis-v12[data-v10-screen="input"] #inputPanel #tisV11QaInput,
+body.tis-v12[data-v10-screen="input"] #inputPanel #tisV11ScanChoice,
+body.tis-v12[data-v10-screen="input"] #inputPanel .main-actions,
+body.tis-v12[data-v10-screen="input"] #inputPanel #v5ClickNote,
+body.tis-v12[data-v10-screen="input"] #inputPanel #tisV11InputStatus,
+body.tis-v12[data-v10-screen="input"] #inputPanel #editorOptions{
+ display:none!important;
+}
+body.tis-v12[data-v10-screen="input"] #inputPanel .tis-v8-quick-tools{
+ display:flex!important;min-height:28px!important;margin:0 0 10px!important;
+}
+body.tis-v12[data-v10-screen="input"] #tisV8Example{
+ display:inline-flex!important;background:var(--v12-help)!important;
+ color:#443c95!important;border:1px solid #d9d4f4!important;
+ border-radius:9px!important;font-size:12px!important;
+ padding:7px 11px!important;min-height:38px!important;
+}
+body.tis-v12[data-v10-screen="input"] #tisV8FileState{
+ color:var(--v12-muted)!important;font-size:12px!important;
+}
+body.tis-v9.tis-v10.tis-v11.tis-v12[data-v10-screen="input"] #inputPanel label.file-input{
+ position:relative!important;inset:auto!important;
+ display:flex!important;align-items:center!important;gap:12px!important;
+ width:100%!important;height:auto!important;max-width:none!important;
+ padding:13px 16px!important;margin:0 0 15px!important;
+ background:#fbfbff!important;border:1px dashed #b9c3d9!important;
+ border-radius:10px!important;min-height:60px!important;
+ clip:auto!important;clip-path:none!important;overflow:visible!important;
+ opacity:1!important;
+}
+body.tis-v12[data-v10-screen="input"] label.file-input:focus-within,
+body.tis-v12[data-v10-screen="input"] label.file-input:hover{
+ border-color:var(--v12-brand)!important;background:var(--v12-help)!important;
+}
+body.tis-v12[data-v10-screen="input"] #sourceLabel{
+ color:#303d58!important;font-size:13px!important;font-weight:750!important;
+}
+body.tis-v12[data-v10-screen="input"] #source{
+ height:225px!important;min-height:225px!important;width:100%!important;
+ padding:14px 17px!important;border:1px solid #bfc9d9!important;
+ border-radius:11px!important;background:#fff!important;color:var(--v12-ink)!important;
+ font-size:15px!important;line-height:1.85!important;resize:vertical!important;
+}
+body.tis-v12[data-v10-screen="input"] #quickInputState{
+ color:var(--v12-subtle)!important;font-size:12px!important;
+ margin:8px 0 11px!important;
+}
+body.tis-v12 #tisV12Actions{
+ display:flex;gap:11px;align-items:stretch;flex-wrap:wrap;
+ margin:11px 0 8px;
+}
+body.tis-v12 #tisV12Scan,
+body.tis-v12 #tisV12Write{
+ min-height:49px!important;margin:0!important;border-radius:9px!important;
+ padding:12px 19px!important;font-size:14px!important;font-weight:760!important;
+ box-shadow:none!important;line-height:1.4;
+}
+body.tis-v12 #tisV12Scan{
+ flex:1 1 240px;white-space:normal;background:var(--v12-brand)!important;
+ color:#fff!important;border:1px solid var(--v12-brand)!important;
+}
+body.tis-v12 #tisV12Scan:hover:not(:disabled){
+ background:var(--v12-hover)!important;border-color:var(--v12-hover)!important;
+}
+body.tis-v12 #tisV12Write{
+ flex:0 1 220px;white-space:normal;
+ background:#fff!important;color:#37397a!important;
+ border:1px solid #c8c8e5!important;
+}
+body.tis-v12 #tisV12Write:hover:not(:disabled){background:var(--v12-help)!important}
+body.tis-v12 #tisV12Scan:disabled,
+body.tis-v12 #tisV12Write:disabled{
+ background:#edf0f6!important;color:#5f6d83!important;
+ border-color:#cad1de!important;opacity:1!important;cursor:not-allowed!important;
+}
+body.tis-v12 .tis-v12-fineprint{
+ color:#485773!important;font-size:12px!important;line-height:1.65!important;
+ margin:10px 0 2px!important;
+}
+body.tis-v12 .tis-v12-caution{
+ color:#58647a!important;line-height:1.65!important;font-size:12px!important;
+ margin:2px 0!important;
+}
+body.tis-v12 .tis-v12-eligibility{
+ color:#48417e!important;line-height:1.7!important;font-size:12px!important;
+ margin:8px 0 0!important;
+ border-inline-start:3px solid #aaa2e1!important;padding-inline-start:10px!important;
+}
+body.tis-v12[data-v10-screen="input"] #v5Toolbox{display:none!important}
+/* Progress and fail states are real V10 controller screens. */
+body.tis-v12[data-v10-screen="input"] .tis-v10-flow{display:none!important}
+body.tis-v12:not([data-v10-screen="input"]) #tisV12Hero{display:none!important}
+body.tis-v12 #tisV10Progress,
+body.tis-v12 #tisV10Eligibility,
+body.tis-v12 #tisV10Error{
+ max-width:900px!important;box-shadow:none!important;
+ border:1px solid var(--v12-stroke)!important;
+}
+/* Actual model result: one understandable score, transparent coverage, clickable windows. */
+body.tis-v12 #tisV10Results{
+ max-width:1100px!important;border:1px solid var(--v12-stroke)!important;
+ border-radius:16px!important;padding:24px!important;box-shadow:none!important;
+}
+body.tis-v12 #tisV12ResultNav,
+body.tis-v12 #tisV12ReviewNav{
+ display:flex;justify-content:space-between;align-items:center;
+ flex-wrap:wrap;gap:12px;border-bottom:1px solid var(--v12-stroke);
+ padding:0 0 15px;margin:0 0 18px;
+}
+body.tis-v12 .tis-v12-pill{
+ display:inline-flex;min-height:30px;align-items:center;
+ border-radius:8px;padding:4px 11px;color:#494192;
+ font-size:12px;font-weight:750;background:#f2f1ff;
+}
+body.tis-v12 #tisV12Tips,
+body.tis-v12 #tisV12BackToModel{
+ margin:0!important;min-height:44px!important;
+ font-size:13px!important;font-weight:700!important;
+ border-radius:9px!important;padding:10px 14px!important;
+ background:#fff!important;border:1px solid #c9cbe6!important;color:#3c3d81!important;
+}
+body.tis-v12 #tisV12Tips:hover,
+body.tis-v12 #tisV12BackToModel:hover{background:var(--v12-help)!important}
+body.tis-v12 #tisV11SignalCard{
+ grid-template-columns:minmax(0,1fr) auto;
+ margin:6px 0 16px;padding:21px 24px!important;border-radius:12px!important;
+ border:1px solid #d8dced!important;background:#f7f7ff!important;
+}
+body.tis-v12 #tisV11SignalTitle{color:var(--v12-ink)!important}
+body.tis-v12 #tisV11SignalValue{color:#433aae!important}
+body.tis-v12 #tisV11SignalWarning{color:#475570!important}
+body.tis-v12 #tisV10HighlightLegend{
+ border-inline-start-color:#b08a3a!important;font-size:12px!important;
+}
+body.tis-v12 .tis-v10-reader{
+ border:1px solid #dbe0ea!important;border-radius:11px!important;
+ padding:22px!important;background:#fff!important;
+}
+body.tis-v12 .tis-v10-inspector{
+ border-color:#dbe0ec!important;border-radius:11px!important;
+ background:#f8f9ff!important;
+}
+body.tis-v12 #tisV10Improve{display:none!important}
+body.tis-v12 .tis-v12-result-note{
+ font-size:12px!important;color:#54647d!important;line-height:1.75!important;
+ margin:18px 0 0!important;
+}
+/* Writing observations use their actual verified source ranges and safe undo. */
+body.tis-v12[data-v10-screen="guided-review"] #tisV11GuidedReview{
+ max-width:1100px!important;width:100%!important;padding:24px!important;
+ border-color:var(--v12-stroke)!important;border-radius:16px!important;
+ box-shadow:none!important;
+}
+body.tis-v12[data-v10-screen="guided-review"] #tisV11Heading{
+ color:var(--v12-ink)!important;font-size:23px!important;
+}
+body.tis-v12 .tis-v11-suggestion{border-color:#e2e6ef!important}
+body.tis-v12 .tis-v11-suggestion-actions button{min-height:44px!important}
+body.tis-v12 .tis-v12-review-note{
+ font-size:12px;color:var(--v12-muted);line-height:1.65;
+ margin:6px 0 18px!important;
+}
+/* The old writing editor remains the actual editor; move suggestion DOM nodes
+ * beside it instead of recreating their Apply/Undo event handlers. */
+body.tis-v12 #tisV12EditLayout{display:none}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(280px,350px);
+ gap:18px;align-items:start;max-width:100%;
+}
+body.tis-v12[data-v10-screen="writing"] .shell>main{
+ max-width:1490px!important;padding-inline:26px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV11WritingIntro{
+ max-width:1270px!important;margin:0 0 12px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout .workspace{
+ display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;
+ gap:13px!important;min-width:0!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout .workspace-main,
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout .workspace-results{
+ display:block!important;min-width:0!important;width:100%!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #inputPanel,
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #tisRevisedPane{
+ width:100%!important;max-width:none!important;min-width:0!important;
+ padding:18px!important;border:1px solid #dce1ed!important;
+ border-radius:13px!important;box-shadow:none!important;margin:0!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #source,
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #tisRevisedText{
+ height:385px!important;min-height:300px!important;resize:vertical!important;
+ padding:13px!important;font-size:14px!important;line-height:1.8!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout .tis-draft-actions button{
+ min-height:43px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock{
+ min-width:0;border:1px solid #dce1ed;border-radius:13px;
+ padding:16px 13px;background:#fff;max-height:690px;overflow:auto;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11GuidedReview{
+ display:block!important;max-width:none!important;
+ border:0!important;padding:0!important;margin:0!important;box-shadow:none!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Heading{
+ font-size:17px!important;line-height:1.4!important;
+ margin:0 0 5px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-count{
+ font-size:12px!important;color:#4b5570!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-disclaimer,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-research-from-review,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v12-review-nav,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV12ReviewNote{
+ display:none!important;
+}
+/* Preserve the canonical reviewed-edit Undo command within the integrated
+ * editor. V12 hides only navigation/export clutter; it must never hide the
+ * available rollback control or clone its business logic. */
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-actions{
+ display:flex!important;justify-content:flex-start!important;
+ align-items:center!important;gap:8px!important;
+ padding:6px 0 12px!important;margin:0!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Edit,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Improve,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Export,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11QaResults{
+ display:none!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Undo{
+ min-height:44px!important;margin:0!important;
+ border-radius:9px!important;padding:9px 14px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Undo:disabled{
+ display:none!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestions{
+ gap:10px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestion{
+ padding:12px!important;border:1px solid #e0e5ef!important;
+ border-radius:10px!important;background:#fbfcff!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-reason,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-original,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-proposed{
+ font-size:12px!important;line-height:1.65!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestion-actions{
+ gap:6px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestion-actions button{
+ min-height:42px!important;padding:7px 10px!important;font-size:12px!important;
+}
+/* Exactly one column below 1180px: two editors remain side by side until 820. */
+@media(max-width:1180px){
+ body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout{
+  grid-template-columns:1fr;
+ }
+ body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock{max-height:none}
+}
+@media(max-width:820px){
+ body.tis-v12 .shell>main{padding:17px 12px 34px!important}
+ body.tis-v12 #tisV12Hero{margin:5px auto 17px}
+ body.tis-v12[data-v10-screen="input"] #inputPanel{padding:17px!important}
+ body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout .workspace{
+  display:flex!important;flex-direction:column!important;
+ }
+ body.tis-v12[data-v10-screen="writing"] .shell>main{padding-inline:12px!important}
+ body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #source,
+ body.tis-v12[data-v10-screen="writing"] #tisV12EditLayout #tisRevisedText{
+  height:310px!important;
+ }
+ body.tis-v12 #tisV11SignalCard{grid-template-columns:1fr!important}
+}
+@media(max-width:540px){
+ body.tis-v12 #tisV12Actions{flex-direction:column}
+ body.tis-v12 #tisV12Scan,body.tis-v12 #tisV12Write{width:100%;flex:1 1 auto}
+ body.tis-v12[data-v10-screen="input"] #source{height:245px!important}
+ body.tis-v12 #tisV10Results,body.tis-v12[data-v10-screen="guided-review"] #tisV11GuidedReview{
+  padding:16px!important;border-radius:13px!important;
+ }
+ body.tis-v12 #tisV12ResultNav,body.tis-v12 #tisV12ReviewNav{
+  flex-direction:column;align-items:stretch;
+ }
+ body.tis-v12 .tis-v12-pill{align-self:start}
+ body.tis-v12 #tisV12Tips,body.tis-v12 #tisV12BackToModel{width:100%}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tis-v12 *,body.tis-v12 *::before,body.tis-v12 *::after{
+  animation:none!important;transition:none!important;
+ }
+}
+@media(forced-colors:active){
+ body.tis-v12 #inputPanel,
+ body.tis-v12 #tisV10Results,
+ body.tis-v12 #tisV12TipsDock,
+ body.tis-v12 .tis-v11-suggestion,
+ body.tis-v12 .tis-v12-pill,
+ body.tis-v12 #tisV12Scan,
+ body.tis-v12 #tisV12Write{
+  border-color:CanvasText!important;
+ }
+ body.tis-v12 .tis-v12-pill{color:CanvasText!important}
+}
+
+/* V12 analysis actions belong exclusively to the initial composer. */
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Actions,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12ScanHint,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Caution,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Eligibility{
+ display:none!important;
+}
+
+
+/* Visual QA: app.css had a global fixed 84px <header> rule that clipped
+ * the new two-line hero and overlapped the editor. Restore content sizing. */
+body.tis-v12 header#tisV12Hero{
+ display:grid!important;height:auto!important;min-height:0!important;
+ border:0!important;background:transparent!important;
+ align-content:start!important;align-items:initial!important;
+ justify-content:initial!important;gap:8px!important;
+ padding:0 8px!important;overflow:visible!important;
+}
+body.tis-v12[data-v10-screen="writing"] header#tisV11WritingIntro{
+ display:block!important;height:auto!important;min-height:0!important;
+ border:0!important;background:transparent!important;
+ padding:0!important;overflow:visible!important;
+}
+/* Keep native file chooser keyboard- and screen-reader-accessible, but hide
+ * its browser-specific duplicate button inside the descriptive dropzone. */
+body.tis-v9.tis-v10.tis-v11.tis-v12[data-v10-screen="input"] #inputPanel label.file-input #file{
+ position:absolute!important;width:1px!important;height:1px!important;
+ min-width:1px!important;max-width:1px!important;padding:0!important;
+ margin:0!important;clip-path:inset(50%)!important;overflow:hidden!important;
+ opacity:0!important;border:0!important;
+}
+body.tis-v12[data-v10-screen="input"] #inputPanel label.file-input:focus-within{
+ outline:3px solid var(--v12-focus)!important;outline-offset:3px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV8FileState,
+body.tis-v12[data-v10-screen="writing"] #v5Toolbox{display:none!important}
+
+/* The existing V11 Refine heading is visible only while actively editing. */
+body.tis-v12:not([data-v10-screen="writing"]) header#tisV11WritingIntro{
+ display:none!important;
+}

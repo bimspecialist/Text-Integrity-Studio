@@ -36,13 +36,18 @@
     session.replaceText(source.value,kind||current.sourceKind);
    }
   }
+  // V12 reparents its workspace on entering/leaving Refine. Keep the
+  // optional runtime outside that moving subtree so its document and
+  // loaded model survive navigation. Other routes retain their host.
+  const runtimeContainer=new URLSearchParams(location.search).get('v12preview')==='1'?
+   document.body:resultsRoot;
   const sameOriginAvailable=/^https?:\/\//u.test(location.origin);
   // The editor and Word tools also run from file:// previews. Never crash
   // those offline pages or try to create a model iframe at opaque origins.
   const bridge=sameOriginAvailable?
    root.TISInferenceBridge.createInferenceBridge({
     documentObject:document,origin:location.origin,
-    container:resultsRoot,src:'ai-runtime.html',
+    container:runtimeContainer,src:'ai-runtime.html',
     onEvent:event=>{
      // A result cannot be accepted when the actual textarea has changed.
      syncSource();
