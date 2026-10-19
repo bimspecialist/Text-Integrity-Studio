@@ -54,14 +54,12 @@ jobs:
           path: /tmp/tis-v12-qa/*.png
           retention-days: 4
           if-no-files-found: ignore
-      - name: Package isolated offline test inputs (temporary audit step)
-        if: github.ref == 'refs/heads/fix/v12-audit-acceptance'
-        run: tar -czf "$RUNNER_TEMP/v12-offline-test-inputs.tgz" docs tests tools .github node_modules
-      - name: Export offline test inputs (no Git credentials or environment files)
-        if: github.ref == 'refs/heads/fix/v12-audit-acceptance'
-        uses: actions/upload-artifact@v4
-        with:
-          name: v12-offline-test-inputs
-          path: ${{ runner.temp }}/v12-offline-test-inputs.tgz
-          retention-days: 1
-          if-no-files-found: error
+      - name: V12 completed synthetic result and navigation regression
+        if: always()
+        run: node tests/analysis/workspace-v12-results-browser.test.cjs
+      - name: V12 writing runtime guard negative control
+        if: always()
+        run: node tests/analysis/workspace-v12-network-guard.test.cjs
+      - name: V12 workflow path and test selection regression
+        if: always()
+        run: node tests/analysis/workspace-v12-workflow-paths.test.cjs

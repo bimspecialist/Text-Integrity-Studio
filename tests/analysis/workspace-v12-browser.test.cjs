@@ -104,7 +104,18 @@ async function run(){
     await page.click('#tisV10BackFromWriting');
     await page.waitForFunction(()=>document.getElementById('tisV11GuidedReview')?.parentNode?.id==='tisV10Flow',{timeout:3500});
     assert.equal(await page.$eval('#source',e=>e.value),lang==='ar'?sampleAr:sampleEn);
-    assert.deepEqual(models,[]);
+    // Test-only negative control: a real same-origin iframe request is
+    // intercepted before any model asset or inference can run.
+    if(process.env.TIS_V12_TEST_FORBIDDEN_RUNTIME==='1'&&lang==='en'&&width===320){
+     await page.setRequestInterception(true);
+     page.on('request',req=>new URL(req.url()).pathname.endsWith('/ai-runtime.html')?
+      req.respond({status:200,contentType:'text/html',body:'<!doctype html><title>Inert negative control</title>'}):req.continue());
+     const arrived=page.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/ai-runtime.html'));
+     await page.evaluate(()=>{const frame=document.createElement('iframe');frame.hidden=true;
+      frame.src='ai-runtime.html?test-only-negative-control=1';document.body.append(frame)});
+     await arrived;
+    }
+    assert.deepEqual(models,[],'NO_IMPLICIT_MODEL_RUNTIME: writing must never initialize a model');
     console.log('PASS V12 '+lang+' '+width+'px: input, review, suggestions beside safe editable draft');
     await page.close();
    }
