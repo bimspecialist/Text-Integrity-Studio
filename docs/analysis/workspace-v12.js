@@ -124,6 +124,7 @@
   const localStatus=build(hero,'p','tisV12Status','tis-v12-status');
   localStatus.setAttribute('role','status');localStatus.setAttribute('aria-live','polite');
   let disposed=false,renderQueued=false,ranResearch=false;
+  let pendingReviewedEditRevision=null;
   let sourceParent=workspace.parentNode,stageParent=stage.parentNode;
   function t(){return text[localLang(doc)];}
   function eligibility(){
@@ -191,13 +192,7 @@
    if(disposed||doc.body.dataset.v10Screen!=='writing')return;
    const target=event.target?.closest?.('.tis-v11-apply, #tisV11Undo');
    if(!target)return;
-   const beforeRevision=app.session.read().revision;
-   win.queueMicrotask(()=>{
-    if(disposed||app.session.read().revision===beforeRevision)return;
-    if(doc.body.dataset.v10Screen==='guided-review'){
-     id('tisV11Improve')?.click();
-    }
-   });
+   pendingReviewedEditRevision=app.session.read().revision;
   }
   function backToAI(){
    const state=app.controller.getState(),revision=app.session.read().revision;
@@ -209,6 +204,17 @@
   function syncDock(){
    if(disposed)return;
    const mode=doc.body.dataset.v10Screen;
+   // The V10/V11 controller can pass through STALE/input and guided-review
+   // during one reviewed edit. Re-enter only after its final visible state is
+   // known, not inside a racing click-handler microtask.
+   if(pendingReviewedEditRevision!==null&&mode!=='writing'){
+    const committed=app.session.read().revision!==pendingReviewedEditRevision;
+    pendingReviewedEditRevision=null;
+    if(committed&&mode==='guided-review'){
+     id('tisV11Improve')?.click();
+     return;
+    }
+   }
    if(mode==='writing'){
     if(workspace.parentNode!==editLayout)editLayout.insertBefore(workspace,tipsDock);
     if(stage.parentNode!==tipsDock)tipsDock.append(stage);
