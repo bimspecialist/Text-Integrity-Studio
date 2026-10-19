@@ -342,3 +342,11 @@ body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestion-acti
  }
  body.tis-v12 .tis-v12-pill{color:CanvasText!important}
 }
+
+/* V12 analysis actions belong exclusively to the initial composer. */
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Actions,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12ScanHint,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Caution,
+body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Eligibility{
+ display:none!important;
+}
