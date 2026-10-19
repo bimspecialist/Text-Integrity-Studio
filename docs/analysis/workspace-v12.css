@@ -350,3 +350,32 @@ body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Caution,
 body.tis-v12[data-v10-screen="writing"] #inputPanel #tisV12Eligibility{
  display:none!important;
 }
+
+
+/* Visual QA: app.css had a global fixed 84px <header> rule that clipped
+ * the new two-line hero and overlapped the editor. Restore content sizing. */
+body.tis-v12 header#tisV12Hero{
+ display:grid!important;height:auto!important;min-height:0!important;
+ border:0!important;background:transparent!important;
+ align-content:start!important;align-items:initial!important;
+ justify-content:initial!important;gap:8px!important;
+ padding:0 8px!important;overflow:visible!important;
+}
+body.tis-v12 header#tisV11WritingIntro{
+ display:block!important;height:auto!important;min-height:0!important;
+ border:0!important;background:transparent!important;
+ padding:0!important;overflow:visible!important;
+}
+/* Keep native file chooser keyboard- and screen-reader-accessible, but hide
+ * its browser-specific duplicate button inside the descriptive dropzone. */
+body.tis-v9.tis-v10.tis-v11.tis-v12[data-v10-screen="input"] #inputPanel label.file-input #file{
+ position:absolute!important;width:1px!important;height:1px!important;
+ min-width:1px!important;max-width:1px!important;padding:0!important;
+ margin:0!important;clip-path:inset(50%)!important;overflow:hidden!important;
+ opacity:0!important;border:0!important;
+}
+body.tis-v12[data-v10-screen="input"] #inputPanel label.file-input:focus-within{
+ outline:3px solid var(--v12-focus)!important;outline-offset:3px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV8FileState,
+body.tis-v12[data-v10-screen="writing"] #v5Toolbox{display:none!important}
