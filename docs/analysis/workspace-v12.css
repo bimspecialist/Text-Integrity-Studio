@@ -361,7 +361,7 @@ body.tis-v12 header#tisV12Hero{
  justify-content:initial!important;gap:8px!important;
  padding:0 8px!important;overflow:visible!important;
 }
-body.tis-v12 header#tisV11WritingIntro{
+body.tis-v12[data-v10-screen="writing"] header#tisV11WritingIntro{
  display:block!important;height:auto!important;min-height:0!important;
  border:0!important;background:transparent!important;
  padding:0!important;overflow:visible!important;
@@ -379,3 +379,8 @@ body.tis-v12[data-v10-screen="input"] #inputPanel label.file-input:focus-within{
 }
 body.tis-v12[data-v10-screen="writing"] #tisV8FileState,
 body.tis-v12[data-v10-screen="writing"] #v5Toolbox{display:none!important}
+
+/* The existing V11 Refine heading is visible only while actively editing. */
+body.tis-v12:not([data-v10-screen="writing"]) header#tisV11WritingIntro{
+ display:none!important;
+}
