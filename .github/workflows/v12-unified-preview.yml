@@ -6,6 +6,7 @@ on:
     paths:
       - 'docs/analysis/workspace-v12.*'
       - 'docs/analysis/workspace-v10.js'
+      - 'docs/analysis/app-adapter.js'
       - 'docs/analysis/workspace-v11-guided.js'
       - 'docs/index.html'
       - 'tests/analysis/workspace-v12-*.test.cjs'
