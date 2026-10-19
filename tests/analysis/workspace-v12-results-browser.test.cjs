@@ -47,6 +47,7 @@ async function run(){
  const base='http://127.0.0.1:'+server.address().port+'/',failures=[];
  async function check(name,body){
   const p=await browser.newPage(),errors=[],external=[];let starts=0;
+  p.setDefaultTimeout(10000);
   p.on('pageerror',e=>errors.push(e.message));
   await p.setRequestInterception(true);
   p.on('request',r=>{
@@ -115,11 +116,19 @@ async function run(){
     await p.click('#tisV12Tips');
     await p.click('#tisV11Improve');
     await p.waitForFunction(()=>!!document.querySelector('#tisV12TipsDock #tisV11GuidedReview'));
-    assert.equal(await backState(p),false,'Current result remains reachable inside Refine');
+    assert.equal(await p.$eval('#tisV12ReviewNav',el=>getComputedStyle(el).display),'none',
+     'Refine intentionally uses its separate visible return action');
+    await p.$eval('#tisRevisedText',el=>{el.value+=' Reviewed draft.';el.dispatchEvent(new Event('input',{bubbles:true}));});
+    const draft=await p.$eval('#tisRevisedText',el=>el.value);
+    await p.click('#tisV10BackFromWriting');
+    await p.waitForFunction(()=>document.body.dataset.v10Screen==='guided-review');
+    assert.equal(await backState(p),false,'Current result is reachable after leaving Refine');
     await p.focus('#tisV12BackToModel');await p.keyboard.press('Enter');
     await p.waitForFunction(()=>document.body.dataset.v10Screen==='results');
     assert.equal(await p.evaluate(()=>document.activeElement.id),'tisV10ResultHeading');
     assert.equal(starts(),1,'Returning from Refine cannot rerun the model');
+    assert.equal(await p.$eval('#tisRevisedText',el=>el.value),draft,'Navigation preserves an unsaved draft');
+    assert.equal(await p.$eval('#source',el=>el.value),EN,'Navigation preserves the original');
     await p.click('#tisV12Tips');
     const prior=await p.evaluate(()=>window.TISAnalysisApp.session.read().revision);
     await insert(p,EN.replace('measured','recorded'));

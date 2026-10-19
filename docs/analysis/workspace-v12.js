@@ -212,9 +212,6 @@
    const state=currentModelResult();
    syncResultNavigation();
    if(!state)return;
-   // V10 intentionally ignores result updates while Refine is open. Leave
-   // it through the existing V11 return control before showing the result.
-   if(doc.body.dataset.v10Screen==='writing')back?.click();
    win.TISWorkspaceV10?.setAnalysisState(state);
    scrollToTop(results);
   }
