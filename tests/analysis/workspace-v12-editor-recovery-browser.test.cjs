@@ -42,10 +42,10 @@ async function run(){
    await p.click(css+' .tis-v11-apply');
    const changed=await p.$eval('#source',el=>el.value);
    assert.notEqual(changed,ORIGINAL,'A safe reviewed edit should update the source');
-   if(await p.evaluate(()=>document.body.dataset.v10Screen)!=='writing'){
-    // Returning to writing must still expose the same undo history.
-    await p.click('#tisV11Improve');
-   }
+   // V12 is an integrated editor, so a reviewed edit must not eject the
+   // user into the separate V11 suggestions screen. This is a V12-only
+   // expectation and does not change the public V11 interaction contract.
+   await p.waitForFunction(()=>document.body.dataset.v10Screen==='writing',{timeout:2000});
    const state=await p.evaluate(()=>{
     const undo=document.getElementById('tisV11Undo');
     const rect=undo.getBoundingClientRect();
@@ -57,6 +57,7 @@ async function run(){
    assert.equal(state.disabled,false,'Real reviewed edit should be undoable');
    assert.equal(state.visible,true,'A V12 editor must not conceal available Undo: '+JSON.stringify(state));
    await p.click('#tisV11Undo');
+   await p.waitForFunction(()=>document.body.dataset.v10Screen==='writing',{timeout:2000});
    assert.equal(await p.$eval('#source',el=>el.value),ORIGINAL,'Undo restores original source exactly');
    console.log('PASS V12 recovery: reviewed change can be undone visibly from the editor');
   }catch(e){issues.push({case:'VISIBLE_UNDO',detail:e.stack||String(e)});}
