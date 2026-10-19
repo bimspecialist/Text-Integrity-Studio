@@ -1,14 +1,15 @@
 name: V12 unified preview — real Chromium and safety gates
 on:
   push:
-    branches: [feature/v12-unified-review-workspace]
+    branches: [feature/v12-unified-review-workspace, fix/v12-audit-acceptance]
   pull_request:
     paths:
       - 'docs/analysis/workspace-v12.*'
       - 'docs/analysis/workspace-v10.js'
+      - 'docs/analysis/app-adapter.js'
       - 'docs/analysis/workspace-v11-guided.js'
       - 'docs/index.html'
-      - 'tests/analysis/workspace-v12-browser.test.cjs'
+      - 'tests/analysis/workspace-v12-*.test.cjs'
       - '.github/workflows/v12-unified-preview.yml'
   workflow_dispatch:
 permissions:
@@ -54,3 +55,9 @@ jobs:
           path: /tmp/tis-v12-qa/*.png
           retention-days: 4
           if-no-files-found: ignore
+      - name: V12 completed synthetic result and navigation regression
+        run: node tests/analysis/workspace-v12-results-browser.test.cjs
+      - name: V12 writing runtime guard negative control
+        run: node tests/analysis/workspace-v12-network-guard.test.cjs
+      - name: V12 workflow path and test selection regression
+        run: node tests/analysis/workspace-v12-workflow-paths.test.cjs

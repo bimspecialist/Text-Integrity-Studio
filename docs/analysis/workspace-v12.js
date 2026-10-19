@@ -31,6 +31,7 @@
    eligible:'English text is eligible for the optional on-device research scan.',
    ready:'Ready to review locally. No model will load until you select Check AI signal.',
    tips:'View writing suggestions',tabs:'After your scan',back:'Back to AI scan',
+   noResult:'No current model result is available for this text.',
    tipsHint:'Review real source-linked suggestions; preview before applying any correction.',
    resultNote:'Highlights mark model-evaluated windows, not confirmed AI-written sentences.',
    helper:'Original text preserved · No automatic rewrite · EN model only',
@@ -52,6 +53,7 @@
    eligible:'النص الإنجليزي مؤهل للفحص البحثي المحلي الاختياري.',
    ready:'يمكنك تحسين النص محليًا. لا يبدأ النموذج حتى تختار فحص إشارة AI.',
    tips:'عرض اقتراحات الكتابة',tabs:'بعد الفحص',back:'العودة إلى نتيجة AI',
+   noResult:'\u0644\u0627 \u062a\u0648\u062c\u062f \u0646\u062a\u064a\u062c\u0629 \u0641\u062d\u0635 \u0635\u0627\u0644\u062d\u0629 \u0644\u0644\u0646\u0635 \u0627\u0644\u062d\u0627\u0644\u064a.',
    tipsHint:'راجع الملاحظات المرتبطة بالنص الأصلي، واعرض المعاينة قبل أي تصحيح.',
    resultNote:'المقاطع المميزة هي نوافذ قياس للنموذج، وليست جملًا ثبت أن AI كتبها.',
    helper:'النص الأصلي محفوظ · لا إعادة كتابة تلقائية · النموذج للإنجليزية فقط',
@@ -75,7 +77,7 @@
   const src=id('source'),legacyAction=id('scanAI'),toggle=id('tisV11IncludeAI');
   const back=id('tisV10BackFromWriting');
   if(!main||!workspace||!flow||!stage||!results||!src||!legacyAction||!toggle||
-    !app?.controller?.getState||!app?.session?.read||!id('tisV11BackToWriting'))
+    !app?.controller?.getState||!app?.session?.read||!app?.session?.subscribe||!id('tisV11BackToWriting'))
     throw new TypeError('V12_REQUIRES_CANONICAL_V11_ANALYSIS_AND_EDITOR');
   const build=(parent,tag,elementId,cls)=>{
    const node=doc.createElement(tag);
@@ -114,7 +116,7 @@
   stage.insertBefore(reviewNav,stage.firstChild);
   const reviewCaption=build(reviewNav,'span','tisV12ReviewCaption','tis-v12-pill');
   const backToModel=build(reviewNav,'button','tisV12BackToModel','tis-v12-secondary');
-  backToModel.type='button';
+  backToModel.type='button';backToModel.disabled=true;
   const reviewNote=build(stage,'p','tisV12ReviewNote','tis-v12-review-note');
   stage.insertBefore(reviewNote,stage.children[2]||null);
   const editLayout=build(main,'div','tisV12EditLayout','tis-v12-editor-layout');
@@ -154,7 +156,7 @@
    reviewCaption.textContent=w.tips;backToModel.textContent=w.back;
    reviewNote.textContent=w.tipsHint;
    tipsDock.setAttribute('aria-label',w.tips);
-   updateInput();
+   updateInput();syncResultNavigation();
   }
   function scrollToTop(node){
    node?.scrollIntoView?.({behavior:'auto',block:'start'});
@@ -194,15 +196,28 @@
    if(!target)return;
    pendingReviewedEditRevision=app.session.read().revision;
   }
-  function backToAI(){
+  // Rendering and activation share the same authoritative validity check.
+  // Never infer a result from a past click or a retained visual card.
+  function currentModelResult(){
    const state=app.controller.getState(),revision=app.session.read().revision;
-   if(['RESEARCH_SIGNAL','INCONCLUSIVE'].includes(state.status)&&state.revision===revision){
-    win.TISWorkspaceV10?.setAnalysisState(state);
-    scrollToTop(results);
-   }
+   return ['RESEARCH_SIGNAL','INCONCLUSIVE'].includes(state.status)&&state.revision===revision?state:null;
+  }
+  function syncResultNavigation(){
+   if(disposed)return;
+   backToModel.disabled=currentModelResult()===null;
+   backToModel.title=backToModel.disabled?t().noResult:'';
+  }
+  function backToAI(){
+   if(disposed)return;
+   const state=currentModelResult();
+   syncResultNavigation();
+   if(!state)return;
+   win.TISWorkspaceV10?.setAnalysisState(state);
+   scrollToTop(results);
   }
   function syncDock(){
    if(disposed)return;
+   syncResultNavigation();
    const mode=doc.body.dataset.v10Screen;
    // The V10/V11 controller can pass through STALE/input and guided-review
    // during one reviewed edit. Re-enter only after its final visible state is
@@ -238,8 +253,10 @@
   modeObserver.observe(doc.body,{attributes:true,attributeFilter:['data-v10-screen']});
   const localeObserver=new win.MutationObserver(localize);
   localeObserver.observe(doc.documentElement,{attributes:true,attributeFilter:['lang']});
-  const onInput=()=>{notify('');updateInput();};
+  const unsubscribeSession=app.session.subscribe(syncResultNavigation);
+  const onInput=()=>{notify('');updateInput();syncResultNavigation();};
   const onProgress=e=>{
+   syncResultNavigation();
    if(!ranResearch)return;
    const stage=e.detail?.stage;
    if(stage==='CANCELLED')notify(t().cancelled);
@@ -256,7 +273,7 @@
   localize();syncDock();
   function dispose(){
    if(disposed)return;disposed=true;
-   modeObserver.disconnect();localeObserver.disconnect();
+   modeObserver.disconnect();localeObserver.disconnect();unsubscribeSession();
    scan.removeEventListener('click',research);
    write.removeEventListener('click',writing);
    tipAction.removeEventListener('click',openTipsFromResult);

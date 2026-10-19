@@ -40,7 +40,16 @@ async function run(){
    for(const width of [320,390,768,1440]){
     const page=await browser.newPage(),models=[];
     page.on('pageerror',e=>errors.push(e.message));
-    page.on('request',r=>{const u=new URL(r.url());if(u.hostname!=='127.0.0.1')external.push(u.origin)});
+    const runtimeURL=url=>{try{return new URL(url).pathname.endsWith('/ai-runtime.html')}catch{return false}};
+    page.on('request',r=>{
+     const u=new URL(r.url());
+     if(u.origin!==new URL(base).origin)external.push(u.origin);
+     if(runtimeURL(r.url()))models.push({event:'request',path:u.pathname});
+    });
+    // Frame navigation catches a cached same-origin runtime as well.
+    page.on('framenavigated',frame=>{
+     if(runtimeURL(frame.url()))models.push({event:'frame',path:new URL(frame.url()).pathname});
+    });
     await page.setViewport({width,height:900});
     await page.goto(base+'?v12preview=1',{waitUntil:'load'});
     if(lang==='ar')await page.click('#language');
@@ -104,7 +113,18 @@ async function run(){
     await page.click('#tisV10BackFromWriting');
     await page.waitForFunction(()=>document.getElementById('tisV11GuidedReview')?.parentNode?.id==='tisV10Flow',{timeout:3500});
     assert.equal(await page.$eval('#source',e=>e.value),lang==='ar'?sampleAr:sampleEn);
-    assert.deepEqual(models,[]);
+    // Test-only negative control: a real same-origin iframe request is
+    // intercepted before any model asset or inference can run.
+    if(process.env.TIS_V12_TEST_FORBIDDEN_RUNTIME==='1'&&lang==='en'&&width===320){
+     await page.setRequestInterception(true);
+     page.on('request',req=>new URL(req.url()).pathname.endsWith('/ai-runtime.html')?
+      req.respond({status:200,contentType:'text/html',body:'<!doctype html><title>Inert negative control</title>'}):req.continue());
+     const arrived=page.waitForResponse(r=>new URL(r.url()).pathname.endsWith('/ai-runtime.html'));
+     await page.evaluate(()=>{const frame=document.createElement('iframe');frame.hidden=true;
+      frame.src='ai-runtime.html?test-only-negative-control=1';document.body.append(frame)});
+     await arrived;
+    }
+    assert.deepEqual(models,[],'NO_IMPLICIT_MODEL_RUNTIME: writing must never initialize a model');
     console.log('PASS V12 '+lang+' '+width+'px: input, review, suggestions beside safe editable draft');
     await page.close();
    }
