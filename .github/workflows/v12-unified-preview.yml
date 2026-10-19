@@ -1,7 +1,7 @@
 name: V12 unified preview — real Chromium and safety gates
 on:
   push:
-    branches: [feature/v12-unified-review-workspace]
+    branches: [feature/v12-unified-review-workspace, fix/v12-audit-acceptance]
   pull_request:
     paths:
       - 'docs/analysis/workspace-v12.*'
@@ -54,3 +54,14 @@ jobs:
           path: /tmp/tis-v12-qa/*.png
           retention-days: 4
           if-no-files-found: ignore
+      - name: Package isolated offline test inputs (temporary audit step)
+        if: github.ref == 'refs/heads/fix/v12-audit-acceptance'
+        run: tar -czf "$RUNNER_TEMP/v12-offline-test-inputs.tgz" docs tests tools .github node_modules
+      - name: Export offline test inputs (no Git credentials or environment files)
+        if: github.ref == 'refs/heads/fix/v12-audit-acceptance'
+        uses: actions/upload-artifact@v4
+        with:
+          name: v12-offline-test-inputs
+          path: ${{ runner.temp }}/v12-offline-test-inputs.tgz
+          retention-days: 1
+          if-no-files-found: error
