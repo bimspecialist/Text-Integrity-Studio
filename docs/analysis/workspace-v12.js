@@ -183,6 +183,22 @@
    id('tisV11BackToWriting')?.click();
    scrollToTop(stage);
   }
+  // V11 intentionally returns to a separate suggestions screen after Apply
+  // or Undo. In V12 those exact same controls live inside Refine, so restore
+  // the integrated editor ONLY when its verified source revision changes.
+  // This does not rerun the detector or bypass V11 integrity checks.
+  function retainEditorAfterReviewedChange(event){
+   if(disposed||doc.body.dataset.v10Screen!=='writing')return;
+   const target=event.target?.closest?.('.tis-v11-apply, #tisV11Undo');
+   if(!target)return;
+   const beforeRevision=app.session.read().revision;
+   win.queueMicrotask(()=>{
+    if(disposed||app.session.read().revision===beforeRevision)return;
+    if(doc.body.dataset.v10Screen==='guided-review'){
+     id('tisV11Improve')?.click();
+    }
+   });
+  }
   function backToAI(){
    const state=app.controller.getState(),revision=app.session.read().revision;
    if(['RESEARCH_SIGNAL','INCONCLUSIVE'].includes(state.status)&&state.revision===revision){
@@ -226,6 +242,7 @@
   scan.addEventListener('click',research);
   write.addEventListener('click',writing);
   tipAction.addEventListener('click',openTipsFromResult);
+  tipsDock.addEventListener('click',retainEditorAfterReviewedChange,true);
   backToModel.addEventListener('click',backToAI);
   src.addEventListener('input',onInput);
   win.addEventListener('tis:ai-progress',onProgress);
@@ -237,6 +254,7 @@
    scan.removeEventListener('click',research);
    write.removeEventListener('click',writing);
    tipAction.removeEventListener('click',openTipsFromResult);
+   tipsDock.removeEventListener('click',retainEditorAfterReviewedChange,true);
    backToModel.removeEventListener('click',backToAI);
    src.removeEventListener('input',onInput);
    win.removeEventListener('tis:ai-progress',onProgress);
