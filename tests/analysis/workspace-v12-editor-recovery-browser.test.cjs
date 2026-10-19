@@ -45,7 +45,20 @@ async function run(){
    // V12 is an integrated editor, so a reviewed edit must not eject the
    // user into the separate V11 suggestions screen. This is a V12-only
    // expectation and does not change the public V11 interaction contract.
-   await p.waitForFunction(()=>document.body.dataset.v10Screen==='writing',{timeout:2000});
+   try{
+    await p.waitForFunction(()=>document.body.dataset.v10Screen==='writing',{timeout:2000});
+   }catch(error){
+    const detail=await p.evaluate(()=>({
+     screen:document.body.dataset.v10Screen,
+     stageParent:document.getElementById('tisV11GuidedReview').parentElement?.id,
+     reviewerEnabled:!document.getElementById('tisV11Improve').disabled,
+     reviewVisible:!document.getElementById('tisV11GuidedReview').hidden,
+     revision:window.TISAnalysisApp.session.read().revision,
+     controllerStatus:window.TISAnalysisApp.controller.getState().status,
+     editLayout:document.getElementById('tisV12EditLayout').children.length
+    }));
+    throw new Error('Editor lost after a valid Apply: '+JSON.stringify(detail)+'; '+error.message);
+   }
    const state=await p.evaluate(()=>{
     const undo=document.getElementById('tisV11Undo');
     const rect=undo.getBoundingClientRect();
