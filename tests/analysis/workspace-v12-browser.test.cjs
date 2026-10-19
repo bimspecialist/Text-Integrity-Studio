@@ -56,9 +56,16 @@ async function run(){
     const initial=await page.evaluate(()=>({
      overflow:document.documentElement.scrollWidth-innerWidth,
      sourceName:document.querySelector('label[for="source"]')?.textContent,
-     title:document.getElementById('tisV12Headline').textContent
+     title:document.getElementById('tisV12Headline').textContent,
+     heroBottom:document.getElementById('tisV12Hero').getBoundingClientRect().bottom,
+     introBottom:document.getElementById('tisV12Intro').getBoundingClientRect().bottom,
+     panelTop:document.getElementById('inputPanel').getBoundingClientRect().top,
+     nativeChooserWidth:document.getElementById('file').getBoundingClientRect().width
     }));
     assert(initial.overflow<=8,'Input horizontal overflow '+lang+' @'+width+': '+JSON.stringify(initial));
+    assert(initial.panelTop>=initial.introBottom+8&&initial.panelTop>=initial.heroBottom+8,
+     'New hero cannot overlap the real input card '+lang+' @'+width+': '+JSON.stringify(initial));
+    assert(initial.nativeChooserWidth<=2,'Visual duplicate native file button must be hidden but keyboard accessible');
     assert(initial.title.length>4);
     await page.click('#tisV12Write');
     assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'guided-review');
