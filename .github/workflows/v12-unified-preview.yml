@@ -8,7 +8,7 @@ on:
       - 'docs/analysis/workspace-v10.js'
       - 'docs/analysis/workspace-v11-guided.js'
       - 'docs/index.html'
-      - 'tests/analysis/workspace-v12-browser.test.cjs'
+      - 'tests/analysis/workspace-v12-*.test.cjs'
       - '.github/workflows/v12-unified-preview.yml'
   workflow_dispatch:
 permissions:
@@ -55,11 +55,8 @@ jobs:
           retention-days: 4
           if-no-files-found: ignore
       - name: V12 completed synthetic result and navigation regression
-        if: always()
         run: node tests/analysis/workspace-v12-results-browser.test.cjs
       - name: V12 writing runtime guard negative control
-        if: always()
         run: node tests/analysis/workspace-v12-network-guard.test.cjs
       - name: V12 workflow path and test selection regression
-        if: always()
         run: node tests/analysis/workspace-v12-workflow-paths.test.cjs

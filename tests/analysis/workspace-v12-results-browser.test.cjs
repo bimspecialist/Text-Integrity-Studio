@@ -113,6 +113,14 @@ async function run(){
     assert.equal(await p.evaluate(()=>document.activeElement.id),'tisV10ResultHeading','Return restores result heading focus');
     assert.equal(starts(),1,'Navigating results must not rerun or redownload the model');
     await p.click('#tisV12Tips');
+    await p.click('#tisV11Improve');
+    await p.waitForFunction(()=>!!document.querySelector('#tisV12TipsDock #tisV11GuidedReview'));
+    assert.equal(await backState(p),false,'Current result remains reachable inside Refine');
+    await p.focus('#tisV12BackToModel');await p.keyboard.press('Enter');
+    await p.waitForFunction(()=>document.body.dataset.v10Screen==='results');
+    assert.equal(await p.evaluate(()=>document.activeElement.id),'tisV10ResultHeading');
+    assert.equal(starts(),1,'Returning from Refine cannot rerun the model');
+    await p.click('#tisV12Tips');
     const prior=await p.evaluate(()=>window.TISAnalysisApp.session.read().revision);
     await insert(p,EN.replace('measured','recorded'));
     assert.equal(EN.length,EN.replace('measured','recorded').length);
@@ -137,7 +145,7 @@ async function run(){
    assert.equal(await backState(p),true);assert.equal(await p.$eval('#source',el=>el.value),EN);
    frame=await start(p);await frame.evaluate(()=>window.completeFixture('signal'));
    await p.waitForFunction(()=>window.TISAnalysisApp.controller.getState().status==='RESEARCH_SIGNAL');
-   assert.equal(starts(),4,'Error/cancel discard failed runtime and allow new explicit scans');
+   assert.equal(starts(),3,'Runtime error and cancellation recreate the iframe; rejected evidence may reuse the authenticated transport');
   });
   if(failures.length)throw Error(failures.join('\n'));
   console.log('PASS V12 result lifecycle: synthetic transport only, NOT classifier accuracy');

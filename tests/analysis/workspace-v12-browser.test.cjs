@@ -40,7 +40,16 @@ async function run(){
    for(const width of [320,390,768,1440]){
     const page=await browser.newPage(),models=[];
     page.on('pageerror',e=>errors.push(e.message));
-    page.on('request',r=>{const u=new URL(r.url());if(u.hostname!=='127.0.0.1')external.push(u.origin)});
+    const runtimeURL=url=>{try{return new URL(url).pathname.endsWith('/ai-runtime.html')}catch{return false}};
+    page.on('request',r=>{
+     const u=new URL(r.url());
+     if(u.origin!==new URL(base).origin)external.push(u.origin);
+     if(runtimeURL(r.url()))models.push({event:'request',path:u.pathname});
+    });
+    // Frame navigation catches a cached same-origin runtime as well.
+    page.on('framenavigated',frame=>{
+     if(runtimeURL(frame.url()))models.push({event:'frame',path:new URL(frame.url()).pathname});
+    });
     await page.setViewport({width,height:900});
     await page.goto(base+'?v12preview=1',{waitUntil:'load'});
     if(lang==='ar')await page.click('#language');
