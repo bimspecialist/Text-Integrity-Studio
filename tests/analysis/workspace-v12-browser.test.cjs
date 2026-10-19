@@ -60,12 +60,14 @@ async function run(){
      heroBottom:document.getElementById('tisV12Hero').getBoundingClientRect().bottom,
      introBottom:document.getElementById('tisV12Intro').getBoundingClientRect().bottom,
      panelTop:document.getElementById('inputPanel').getBoundingClientRect().top,
-     nativeChooserWidth:document.getElementById('file').getBoundingClientRect().width
+     nativeChooserWidth:document.getElementById('file').getBoundingClientRect().width,
+     strayWritingTitle:getComputedStyle(document.getElementById('tisV11WritingIntro')).display!=='none'
     }));
     assert(initial.overflow<=8,'Input horizontal overflow '+lang+' @'+width+': '+JSON.stringify(initial));
     assert(initial.panelTop>=initial.introBottom+8&&initial.panelTop>=initial.heroBottom+8,
      'New hero cannot overlap the real input card '+lang+' @'+width+': '+JSON.stringify(initial));
     assert(initial.nativeChooserWidth<=2,'Visual duplicate native file button must be hidden but keyboard accessible');
+    assert.equal(initial.strayWritingTitle,false,'Refine header cannot appear before entering the writing editor');
     assert(initial.title.length>4);
     await page.click('#tisV12Write');
     assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'guided-review');
