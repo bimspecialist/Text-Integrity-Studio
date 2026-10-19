@@ -1,0 +1,141 @@
+name: V12 actual Pages publication verification
+on:
+  push:
+    branches: [verify/v12-hosted-publication-20261019]
+permissions:
+  contents: read
+jobs:
+  hosted-v12:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TIS_PUBLISHED_SHA: 31744f5f08d2df912d40af8ec7de7eea49c84511
+      TIS_HOSTED_EVIDENCE: /tmp/tis-v12-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned read-only browser verification tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0
+      - name: Verify published bytes and actual hosted EN AR journeys
+        shell: bash
+        run: |
+          node <<'JS'
+          'use strict';
+          /* Read-only verification of the published V12 site. No model responses are
+           * synthesized; no user documents, server writes or classifier claims. */
+          const assert=require('node:assert/strict');
+          const fs=require('node:fs');
+          const path=require('node:path');
+          const {createHash}=require('node:crypto');
+          const {execFileSync}=require('node:child_process');
+          const puppeteer=require('puppeteer-core');
+          const SITE='https://bimspecialist.github.io/Text-Integrity-Studio/';
+          const OUTPUT=process.env.TIS_HOSTED_EVIDENCE||'/tmp/tis-v12-hosted';
+          const files=['index.html','analysis/workspace-v12.js','analysis/workspace-v12.css',
+           'analysis/app-adapter.js','analysis/workspace-v10.js','analysis/workspace-v11-guided.js'];
+          const hash=b=>createHash('sha256').update(b).digest('hex');
+          const samples={en:'teh report was recieved at the site. The concrete strength was 25 MPa [12].',
+           ar:'\u0647\u0627\u0630\u0627 \u0627\u0644\u0646\u0635 \u0644\u0627\u0643\u0646 \u064a\u062d\u062a\u0627\u062c \u0625\u0644\u0649 \u0645\u0631\u0627\u062c\u0639\u0629 \u0645\u0639 \u062d\u0641\u0638 \u0627\u0644\u0623\u0631\u0642\u0627\u0645 25 MPa [12].'};
+          const record={publishedCommit:process.env.TIS_PUBLISHED_SHA,site:SITE,startedAt:new Date().toISOString(),
+           assets:[],journeys:[],classifierAccuracy:'NOT_TESTED',physicalAccessibility:'NOT_TESTED'};
+          async function verifyAssets(){
+           assert.match(record.publishedCommit||'',/^[a-f0-9]{40}$/);
+           assert.equal(execFileSync('git',['rev-parse','HEAD^'],{encoding:'utf8'}).trim(),record.publishedCommit,
+            'Verification branch must be rooted at the published commit');
+           for(let attempt=0;attempt<18;attempt++){
+            const checks=await Promise.all(files.map(async file=>{
+             const expected=hash(fs.readFileSync(path.join('docs',file)));
+             try{
+              const response=await fetch(SITE+(file==='index.html'?'':file)+'?publishCheck='+record.publishedCommit+'&attempt='+attempt,
+               {cache:'no-store',signal:AbortSignal.timeout(15000)});
+              const actual=hash(Buffer.from(await response.arrayBuffer()));
+              return {file,status:response.status,expected,actual,match:response.ok&&actual===expected};
+             }catch(e){return {file,expected,match:false,error:String(e.message)};}
+            }));
+            record.assets=checks;
+            if(checks.every(x=>x.match)){console.log('PASS HOSTED: all six published entry/JS/CSS assets match expected commit bytes');return;}
+            console.log('Pages propagation check '+(attempt+1)+': '+JSON.stringify(checks.filter(x=>!x.match)));
+            if(attempt<17)await new Promise(r=>setTimeout(r,10000));
+           }
+           throw Error('Published assets do not match the intended release');
+          }
+          async function run(){
+           fs.mkdirSync(OUTPUT,{recursive:true});
+           await verifyAssets();
+           const chrome=['/usr/bin/google-chrome','/usr/bin/google-chrome-stable','/usr/bin/chromium'].find(p=>fs.existsSync(p));
+           assert(chrome,'A real browser is required');
+           const browser=await puppeteer.launch({headless:true,executablePath:chrome,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+           try{
+            record.browserVersion=await browser.version();
+            const initial=await browser.newPage();await initial.setCacheEnabled(false);
+            const response=await initial.goto(SITE,{waitUntil:'load',timeout:40000});assert.equal(response.status(),200);
+            assert.equal(await initial.evaluate(()=>document.body.classList.contains('tis-v12')),false);
+            assert.equal(await initial.evaluate(()=>document.body.classList.contains('tis-v9')),true);
+            await initial.close();console.log('PASS HOSTED: unchanged V9 default route');
+            for(const language of ['en','ar'])for(const width of [390,1440]){
+             const page=await browser.newPage(),errors=[],external=[],runtime=[];
+             page.on('pageerror',e=>errors.push(e.message));
+             page.on('request',r=>{const u=new URL(r.url());
+              if(u.protocol==='https:'&&u.origin!==new URL(SITE).origin)external.push(u.origin);
+              if(u.pathname.endsWith('/ai-runtime.html'))runtime.push(u.pathname);
+             });
+             try{
+              await page.setCacheEnabled(false);await page.setViewport({width,height:900});
+              const response=await page.goto(SITE+'?v12preview=1',{waitUntil:'load',timeout:40000});assert.equal(response.status(),200);
+              if(language==='ar')await page.click('#language');
+              assert.equal(await page.evaluate(()=>document.body.classList.contains('tis-v12')),true);
+              assert.equal(await page.evaluate(()=>document.documentElement.lang),language);
+              assert.equal(await page.$eval('#tisV12Scan',n=>n.disabled),true);
+              await page.$eval('#source',(n,v)=>{n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));},samples[language]);
+              assert.equal(await page.$eval('#tisV12Write',n=>n.disabled),false);
+              assert.equal(await page.$eval('#tisV12Scan',n=>n.disabled),true);
+              await page.screenshot({path:path.join(OUTPUT,`hosted-v12-input-${language}-${width}.png`),fullPage:true});
+              await page.click('#tisV12Write');
+              await page.waitForFunction(()=>document.body.dataset.v10Screen==='guided-review',{timeout:7000});
+              assert.equal(await page.$eval('#tisV12BackToModel',n=>n.disabled),true);
+              assert.equal(await page.$eval('#source',n=>n.value),samples[language]);
+              assert((await page.$$('#tisV11SuggestionList>li')).length>0);
+              await page.click('#tisV11Improve');
+              await page.waitForFunction(()=>!!document.querySelector('#tisV12TipsDock #tisV11GuidedReview'),{timeout:7000});
+              assert.equal(await page.evaluate(()=>document.body.dataset.v10Screen),'writing');
+              await page.$eval('#tisRevisedText',n=>{n.value+=' Draft check.';n.dispatchEvent(new Event('input',{bubbles:true}));});
+              const draft=await page.$eval('#tisRevisedText',n=>n.value);
+              assert.equal(await page.$eval('#source',n=>n.value),samples[language]);
+              const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+              assert(overflow<=8,'Hosted editor overflow: '+overflow);
+              await page.screenshot({path:path.join(OUTPUT,`hosted-v12-refine-${language}-${width}.png`),fullPage:true});
+              await page.click('#tisV10BackFromWriting');
+              await page.waitForFunction(()=>document.body.dataset.v10Screen==='guided-review',{timeout:7000});
+              assert.equal(await page.$eval('#tisV12BackToModel',n=>n.disabled),true);
+              assert.equal(await page.$eval('#tisRevisedText',n=>n.value),draft);
+              await page.click('#tisV11Edit');
+              if(language==='en'){
+               const long=Array(20).fill('The engineering team reviewed measurements and recorded the known limitations of the test setup.').join(' ');
+               await page.$eval('#source',(n,v)=>{n.value=v;n.dispatchEvent(new Event('input',{bubbles:true}));},long);
+               assert.equal(await page.$eval('#tisV12Scan',n=>n.disabled),false,'Eligible EN enables scan without starting it');
+              }
+              assert.deepEqual(errors,[]);assert.deepEqual(external,[]);assert.deepEqual(runtime,[]);
+              record.journeys.push({language,width,status:'PASS',sourcePreserved:true,draftPreserved:true,
+               backWithoutEvidenceDisabled:true,implicitModelRequests:0,externalRequests:0,overflow});
+              console.log('PASS HOSTED V12 '+language+' '+width+'px: real input, writing, Refine, safe return, no implicit inference');
+             }finally{await page.close();}
+            }
+            record.status='PASS';record.finishedAt=new Date().toISOString();
+           }finally{await browser.close();fs.writeFileSync(path.join(OUTPUT,'publication-verification.json'),JSON.stringify(record,null,2));}
+          }
+          run().catch(e=>{record.status='FAIL';record.error=e.stack||String(e);fs.mkdirSync(OUTPUT,{recursive:true});
+           fs.writeFileSync(path.join(OUTPUT,'publication-verification.json'),JSON.stringify(record,null,2));console.error(e);process.exitCode=1;});
+          JS
+      - name: Archive real public-site verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v12-hosted-publication-evidence
+          path: /tmp/tis-v12-hosted/
+          retention-days: 14
+          if-no-files-found: error
