@@ -267,10 +267,30 @@ body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-count{
  font-size:12px!important;color:#4b5570!important;
 }
 body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-disclaimer,
-body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-actions,
 body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-research-from-review,
 body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v12-review-nav,
 body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV12ReviewNote{
+ display:none!important;
+}
+/* Preserve the canonical reviewed-edit Undo command within the integrated
+ * editor. V12 hides only navigation/export clutter; it must never hide the
+ * available rollback control or clone its business logic. */
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-actions{
+ display:flex!important;justify-content:flex-start!important;
+ align-items:center!important;gap:8px!important;
+ padding:6px 0 12px!important;margin:0!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Edit,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Improve,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Export,
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11QaResults{
+ display:none!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Undo{
+ min-height:44px!important;margin:0!important;
+ border-radius:9px!important;padding:9px 14px!important;
+}
+body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock #tisV11Undo:disabled{
  display:none!important;
 }
 body.tis-v12[data-v10-screen="writing"] #tisV12TipsDock .tis-v11-suggestions{
