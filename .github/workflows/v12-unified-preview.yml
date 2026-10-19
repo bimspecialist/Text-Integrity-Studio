@@ -1,0 +1,52 @@
+name: V12 unified preview — real Chromium and safety gates
+on:
+  push:
+    branches: [feature/v12-unified-review-workspace]
+  pull_request:
+    paths:
+      - 'docs/analysis/workspace-v12.*'
+      - 'docs/analysis/workspace-v10.js'
+      - 'docs/analysis/workspace-v11-guided.js'
+      - 'docs/index.html'
+      - 'tests/analysis/workspace-v12-browser.test.cjs'
+      - '.github/workflows/v12-unified-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  chromium-preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser QA tools
+        run: npm install --no-save --no-package-lock --ignore-scripts --save-exact puppeteer-core@25.13.0 axe-core@4.10.3 @xmldom/xmldom@0.9.12
+      - name: Validate syntax and existing research score safety
+        run: |
+          node --check docs/analysis/workspace-v12.js
+          node --check tests/analysis/workspace-v12-browser.test.cjs
+          node tests/analysis/workspace-v11-signal-presentation.test.cjs
+          node tests/analysis/analysis-controller.test.js
+      - name: V12 Chrome responsive writing and explicit model entry
+        env:
+          TIS_V12_SCREENSHOTS: /tmp/tis-v12-qa
+        run: node tests/analysis/workspace-v12-browser.test.cjs
+      - name: Retain V11 reviewed edit/undo and long-file coverage
+        run: |
+          node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
+          node tests/analysis/workspace-v11-file-review-browser.test.cjs
+      - name: Keep V9 default and V11 website QA working
+        run: node tests/analysis/v11-online-preview-browser.test.cjs
+      - name: Release marker integrity
+        run: node tests/analysis/public-postdeploy-contract.test.cjs
+      - name: Upload real Chromium visual review evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v12-unified-review-screenshots
+          path: /tmp/tis-v12-qa/*.png
+          retention-days: 4
+          if-no-files-found: ignore
