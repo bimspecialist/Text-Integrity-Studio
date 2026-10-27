@@ -95,6 +95,11 @@ async function run(){
       // A true ratio of 4.499 must not pass the 4.5:1 minimum.
       return (values[0]+.05)/(values[1]+.05);
      }
+     // Negative control: this RGB pair is 4.49898:1 against white.
+     // Rounding to two decimals would incorrectly turn it into 4.50:1.
+     const nearThreshold=contrast([111,121,117],[255,255,255]);
+     if(!(nearThreshold>4.495&&nearThreshold<4.5))
+      throw Error('WCAG_CONTRAST_ROUNDING_NEGATIVE_CONTROL_FAILED');
      function background(el){
       for(let p=el;p;p=p.parentElement){
        const b=getComputedStyle(p).backgroundColor;
