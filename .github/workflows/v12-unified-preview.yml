@@ -29,6 +29,7 @@ jobs:
       - name: Validate syntax and existing research score safety
         run: |
           node --check docs/analysis/workspace-v12.js
+          node --check tests/analysis/workspace-v12-contrast-diagnostic.test.cjs
           node --check tests/analysis/workspace-v12-browser.test.cjs
           node tests/analysis/workspace-v11-signal-presentation.test.cjs
           node tests/analysis/analysis-controller.test.js
