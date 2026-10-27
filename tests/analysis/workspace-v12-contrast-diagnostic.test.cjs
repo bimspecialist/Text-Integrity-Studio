@@ -76,8 +76,12 @@ async function run(){
      ...required.map(selector=>({target:[selector]}))].map(item=>[item.target[0],item])).values()];
     const measured=await page.evaluate(nodes=>{
      function rgb(value){
-      const nums=(value||'').match(/[0-9]+(?:\\.[0-9]+)?/g);
+      if(!/^rgba?\\(/.test(value||''))return null;
+      const nums=value.match(/[0-9]+(?:\\.[0-9]+)?/g);
       if(!nums||nums.length<3)return null;
+      // Fail closed on semitransparent colors; compositing must be inspected
+      // rather than calculating a misleading ratio for an opaque color.
+      if(value.startsWith('rgba(')&&nums.length>=4&&Number(nums[3])<1)return null;
       return nums.slice(0,3).map(Number);
      }
      function luminance(color){
@@ -128,13 +132,14 @@ async function run(){
      assert(item.hits.length>=5,'At least five viewport hit-tests per audited target');
      assert(item.hits.every(hit=>hit.same),
       'Text element is visually obscured in browser hit testing '+JSON.stringify(item));
-     if(item.ratio!==null){
-      // Even the decorative icon is expected to exceed the more conservative
-      // ordinary-text threshold in the audited color palette.
-      assert(item.ratio>=4.5,'Insufficient computed text contrast '+JSON.stringify(item));
-     }
-     if(item.placeholderRatio!==null)
+     // Never silently pass when a future CSS change makes measurement
+     // unsupported (transparent text, custom paint, unknown background).
+     assert(Number.isFinite(item.ratio),'Cannot establish opaque foreground/background contrast '+JSON.stringify(item));
+     assert(item.ratio>=4.5,'Insufficient computed text contrast '+JSON.stringify(item));
+     if(['#source','#tisRevisedText'].includes(item.target[0])){
+      assert(Number.isFinite(item.placeholderRatio),'Cannot establish editor placeholder contrast '+JSON.stringify(item));
       assert(item.placeholderRatio>=4.5,'Insufficient placeholder contrast '+JSON.stringify(item));
+     }
     }
     assert.deepEqual(failures,[],'Confirmed axe contrast violation');
     assert.deepEqual(errors,[],'Unexpected JS runtime errors');
