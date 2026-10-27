@@ -91,7 +91,9 @@ async function run(){
      function contrast(a,b){
       if(!a||!b)return null;
       const values=[luminance(a),luminance(b)].sort((x,y)=>y-x);
-      return Math.round((values[0]+.05)/(values[1]+.05)*100)/100;
+      // WCAG 2.2 SC 1.4.3: compare the exact ratio, never rounded values.
+      // A true ratio of 4.499 must not pass the 4.5:1 minimum.
+      return (values[0]+.05)/(values[1]+.05);
      }
      function background(el){
       for(let p=el;p;p=p.parentElement){
