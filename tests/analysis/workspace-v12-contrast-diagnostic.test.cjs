@@ -1,0 +1,76 @@
+'use strict';
+/* Read-only WCAG contrast diagnostic for the six existing V12 Chromium states.
+ * Prints the exact axe incomplete nodes plus computed text and ancestor styles.
+ * These results are diagnostic evidence, NOT proof of WCAG conformance.
+ */
+const assert=require('node:assert/strict');
+const puppeteer=require('puppeteer-core');
+const axe=require('axe-core');
+const {serve,chrome}=require('../pdf-browser.test.js');
+const cases=[
+ {language:'en',width:1440,screen:'input'},
+ {language:'ar',width:390,screen:'input'},
+ {language:'en',width:1440,screen:'guided-review'},
+ {language:'ar',width:390,screen:'guided-review'},
+ {language:'en',width:1440,screen:'writing'},
+ {language:'ar',width:390,screen:'writing'}
+];
+async function run(){
+ const server=serve();await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
+ const browser=await puppeteer.launch({headless:true,executablePath:chrome,
+  args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu']});
+ try{
+  for(const c of cases){
+   const page=await browser.newPage(),errors=[];
+   page.on('pageerror',err=>errors.push(err.message));
+   try{
+    await page.setViewport({width:c.width,height:900});
+    await page.goto('http://127.0.0.1:'+server.address().port+'/?v12preview=1',{waitUntil:'load'});
+    if(c.language==='ar')await page.click('#language');
+    if(c.screen!=='input'){
+     const text=c.language==='ar'?'هاذا أسلوب قصدته لاكن العبارة بحاجة لتصحيح مع المحافظة على المرجع [12].':
+      'teh report was recieved at the site. The construction strength was 25 MPa [12].';
+     await page.$eval('#source',(el,value)=>{
+      el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));
+     },text);
+     await page.click('#tisV12Write');
+     if(c.screen==='writing'){
+      await page.click('#tisV11Improve');
+      await page.waitForFunction(()=>!!document.querySelector('#tisV12TipsDock #tisV11GuidedReview'),{timeout:3500});
+     }
+    }
+    await page.evaluate(axe.source);
+    const report=await page.evaluate(async()=>window.axe.run(document,{
+     runOnly:{type:'rule',values:['color-contrast']}
+    }));
+    const failures=report.violations.flatMap(v=>v.nodes.map(n=>({
+     rule:v.id,target:n.target,impact:v.impact,summary:n.failureSummary
+    })));
+    const incomplete=report.incomplete.flatMap(v=>v.nodes.map(n=>({
+     rule:v.id,target:n.target,html:n.html.slice(0,260),
+     checks:[...n.any,...n.all,...n.none].map(x=>({id:x.id,message:x.message,data:x.data}))
+    })));
+    const elements=await page.evaluate(nodes=>nodes.map(n=>{
+     const el=document.querySelector(n.target[0]);if(!el)return {target:n.target,error:'MISSING_TARGET'};
+     const ancestry=[];let parent=el;
+     for(let level=0;parent&&level<5;parent=parent.parentElement,level++){
+      const s=getComputedStyle(parent);
+      ancestry.push({tag:parent.tagName,id:parent.id,className:typeof parent.className==='string'?parent.className.slice(0,120):'',
+       foreground:s.color,background:s.backgroundColor,opacity:s.opacity,
+       fontSize:s.fontSize,fontWeight:s.fontWeight,backgroundImage:s.backgroundImage.slice(0,90)});
+     }
+     const r=el.getBoundingClientRect();
+     return{target:n.target,text:(el.textContent||'').trim().slice(0,70),box:{width:r.width,height:r.height},
+      ancestry};
+    }),incomplete);
+    console.log('V12_CONTRAST_DIAGNOSTIC '+JSON.stringify({
+     language:c.language,width:c.width,screen:c.screen,
+     violations:failures,incomplete,elements
+    }));
+    assert.deepEqual(failures,[],'Confirmed axe contrast violation');
+    assert.deepEqual(errors,[],'Unexpected JS runtime errors');
+   }finally{await page.close();}
+  }
+ }finally{await browser.close();await new Promise(ok=>server.close(ok));}
+}
+run().catch(e=>{console.error(e);process.exitCode=1;});
