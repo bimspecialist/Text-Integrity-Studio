@@ -63,10 +63,67 @@ async function run(){
      return{target:n.target,text:(el.textContent||'').trim().slice(0,70),box:{width:r.width,height:r.height},
       ancestry};
     }),incomplete);
+    // Independent computed-style contrast check. axe cannot infer textarea
+    // backgrounds when another element appears to overlap their paint region.
+    // Inspect representative hit-tests too; a good RGB ratio is not proof
+    // that the text is actually unobscured.
+    const measured=await page.evaluate(nodes=>{
+     function rgb(value){
+      const nums=(value||'').match(/[0-9]+(?:\\.[0-9]+)?/g);
+      if(!nums||nums.length<3)return null;
+      return nums.slice(0,3).map(Number);
+     }
+     function luminance(color){
+      const parts=color.map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4);
+      return parts[0]*.2126+parts[1]*.7152+parts[2]*.0722;
+     }
+     function contrast(a,b){
+      if(!a||!b)return null;
+      const values=[luminance(a),luminance(b)].sort((x,y)=>y-x);
+      return Math.round((values[0]+.05)/(values[1]+.05)*100)/100;
+     }
+     function background(el){
+      for(let p=el;p;p=p.parentElement){
+       const b=getComputedStyle(p).backgroundColor;
+       if(b&&b!=='transparent'&&!(b.startsWith('rgba(')&&b.endsWith(', 0)')))
+        return rgb(b);
+      }
+      return [255,255,255];
+     }
+     return nodes.map(n=>{
+      const el=document.querySelector(n.target[0]);if(!el)return{target:n.target,error:'MISSING'};
+      el.scrollIntoView({block:'center',inline:'nearest',behavior:'instant'});
+      const style=getComputedStyle(el),fg=rgb(style.color),bg=background(el);
+      const placeholder=el.tagName==='TEXTAREA'?rgb(getComputedStyle(el,'::placeholder').color):null;
+      const rect=el.getBoundingClientRect();
+      const hitResults=[];
+      for(const x of [.25,.5,.75]){
+       for(const y of [.25,.5,.75]){
+        const px=rect.left+rect.width*x,py=rect.top+rect.height*y;
+        if(px<0||py<0||px>=innerWidth||py>=innerHeight)continue;
+        const hit=document.elementFromPoint(px,py);
+        hitResults.push({x,y,hit:hit?.id||hit?.className||hit?.tagName||null,
+         same:hit===el||!!el.contains(hit)});
+       }
+      }
+      return{target:n.target,fg:style.color,bg:style.backgroundColor,
+       ratio:contrast(fg,bg),placeholderRatio:contrast(placeholder,bg),
+       hits:hitResults};
+     });
+    },incomplete);
     console.log('V12_CONTRAST_DIAGNOSTIC '+JSON.stringify({
      language:c.language,width:c.width,screen:c.screen,
-     violations:failures,incomplete,elements
+     violations:failures,incomplete,elements,measured
     }));
+    for(const item of measured){
+     if(item.ratio!==null){
+      // Even the decorative icon is expected to exceed the more conservative
+      // ordinary-text threshold in the audited color palette.
+      assert(item.ratio>=4.5,'Insufficient computed text contrast '+JSON.stringify(item));
+     }
+     if(item.placeholderRatio!==null)
+      assert(item.placeholderRatio>=4.5,'Insufficient placeholder contrast '+JSON.stringify(item));
+    }
     assert.deepEqual(failures,[],'Confirmed axe contrast violation');
     assert.deepEqual(errors,[],'Unexpected JS runtime errors');
    }finally{await page.close();}
