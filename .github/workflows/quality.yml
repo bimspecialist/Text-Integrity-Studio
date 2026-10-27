@@ -154,6 +154,11 @@ jobs:
           node tests/analysis/workspace-v9-structure.test.cjs
           node tests/analysis/workspace-v9-state.test.cjs
           node tests/analysis/workspace-v9-workflows-browser.test.cjs
+      - name: V9 safe discoverability of opt-in V12 with draft retention
+        run: |
+          node --check docs/analysis/workspace-entry.js
+          node --check tests/analysis/workspace-v9-discover-v12-browser.test.cjs
+          node tests/analysis/workspace-v9-discover-v12-browser.test.cjs
       - name: V9 writing-mode clarity and disabled unverified generator
         run: node tests/analysis/workspace-v9-mode-copy.test.cjs
       - name: V9 local writing, unsupported detector privacy and failure clarity
