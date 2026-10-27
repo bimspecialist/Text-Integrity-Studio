@@ -10,6 +10,7 @@ on:
       - 'docs/analysis/workspace-v11-guided.js'
       - 'docs/index.html'
       - 'tests/analysis/workspace-v12-*.test.cjs'
+      - 'docs/quality/v12-contrast-followup-20261027.md'
       - '.github/workflows/v12-unified-preview.yml'
   workflow_dispatch:
 permissions:
