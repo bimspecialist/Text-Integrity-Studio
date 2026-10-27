@@ -67,6 +67,13 @@ async function run(){
     // backgrounds when another element appears to overlap their paint region.
     // Inspect representative hit-tests too; a good RGB ratio is not proof
     // that the text is actually unobscured.
+    // Explicitly audit core controls even if a future axe version stops
+    // marking them incomplete. This keeps the regression guard non-vacuous.
+    const required=c.screen==='input'?['.file-icon','#source']:
+     c.screen==='writing'?['#source','#tisRevisedText','#tisV11Heading']:
+     ['#tisV11Heading'];
+    const auditedTargets=[...new Map([...incomplete,
+     ...required.map(selector=>({target:[selector]}))].map(item=>[item.target[0],item])).values()];
     const measured=await page.evaluate(nodes=>{
      function rgb(value){
       const nums=(value||'').match(/[0-9]+(?:\\.[0-9]+)?/g);
@@ -110,12 +117,17 @@ async function run(){
        ratio:contrast(fg,bg),placeholderRatio:contrast(placeholder,bg),
        hits:hitResults};
      });
-    },incomplete);
+    },auditedTargets);
     console.log('V12_CONTRAST_DIAGNOSTIC '+JSON.stringify({
      language:c.language,width:c.width,screen:c.screen,
      violations:failures,incomplete,elements,measured
     }));
+    assert.equal(measured.length,auditedTargets.length,'All expected contrast targets must be audited');
     for(const item of measured){
+     assert(!item.error,'Missing contrast target '+JSON.stringify(item));
+     assert(item.hits.length>=5,'At least five viewport hit-tests per audited target');
+     assert(item.hits.every(hit=>hit.same),
+      'Text element is visually obscured in browser hit testing '+JSON.stringify(item));
      if(item.ratio!==null){
       // Even the decorative icon is expected to exceed the more conservative
       // ordinary-text threshold in the audited color palette.
