@@ -39,6 +39,8 @@ jobs:
         run: node tests/analysis/workspace-v12-editor-recovery-browser.test.cjs
       - name: V12 EN AR axe-core input, writing guidance and dual editor
         run: node tests/analysis/workspace-v12-axe-browser.test.cjs
+      - name: Diagnose real V12 contrast incomplete cases before visual sign-off
+        run: node tests/analysis/workspace-v12-contrast-diagnostic.test.cjs
       - name: Retain V11 reviewed edit/undo and long-file coverage
         run: |
           node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
