@@ -76,8 +76,8 @@ async function run(){
      ...required.map(selector=>({target:[selector]}))].map(item=>[item.target[0],item])).values()];
     const measured=await page.evaluate(nodes=>{
      function rgb(value){
-      if(!/^rgba?\\(/.test(value||''))return null;
-      const nums=value.match(/[0-9]+(?:\\.[0-9]+)?/g);
+      if(!(value||'').startsWith('rgb(')&&!(value||'').startsWith('rgba('))return null;
+      const nums=value.slice(value.indexOf('(')+1,value.lastIndexOf(')')).replaceAll(',',' ').replaceAll('/',' ').split(' ').filter(Boolean).map(Number);
       if(!nums||nums.length<3)return null;
       // Fail closed on semitransparent colors; compositing must be inspected
       // rather than calculating a misleading ratio for an opaque color.
