@@ -148,8 +148,10 @@ class SelectiveMetricsTests(unittest.TestCase):
                 author_group="model-source-%02d" % index)
             for index in range(40)
         ]
-        baseline = compute_selective_metrics(humans, bootstrap_seed=43)
-        combined = compute_selective_metrics(humans + ais, bootstrap_seed=43)
+        # Fixed seed deliberately exposes AI-only clusters influencing the
+        # old source-cluster bootstrap despite unchanged human evidence.
+        baseline = compute_selective_metrics(humans, bootstrap_seed=0)
+        combined = compute_selective_metrics(humans + ais, bootstrap_seed=0)
         self.assertIsNotNone(baseline["group_bootstrap_fpr_ci95"])
         self.assertEqual(baseline["group_bootstrap_fpr_ci95"],
                          combined["group_bootstrap_fpr_ci95"])
