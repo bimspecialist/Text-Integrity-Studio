@@ -17,6 +17,7 @@ Both examples are purpose-built **synthetic diagnostic fixtures**. They do **not
 - Use a deterministic source-identifier order and a frozen seed for reproducibility.
 - Return only aggregate counts and confidence limits; source IDs, author names, digests, prompts, document text and private labels must not appear in the result.
 - Estimator method identifier: `HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2`. V1 and V2 intervals must not be silently compared as equal-method evidence.
+- The aggregate report distinguishes `independent_source_groups` (all human/AI linked components) from `fpr_human_source_groups` (components actually sampled for human FPR). The latter must not rise when only unrelated AI records are added.
 
 ## Regression guards
 
