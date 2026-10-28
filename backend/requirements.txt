@@ -4,5 +4,7 @@ pydantic==2.14.1
 uvicorn==0.54.0
 # Server-side private binary document extraction.
 python-multipart==0.0.32
-pypdf==6.20.0
+# pypdf 6.21.2 fixes malformed PDF cross-reference resource-exhaustion advisories
+# including CVE-2026-115580 and CVE-2026-115585.
+pypdf==6.21.2
 defusedxml==0.7.1
