@@ -79,6 +79,7 @@ class SelectiveMetricsTests(unittest.TestCase):
         ]
         result = compute_selective_metrics(rows, bootstrap_seed=19)
         self.assertEqual(result["independent_source_groups"], 2)
+        self.assertEqual(result["fpr_human_source_groups"], 1)
         self.assertIsNone(result["group_bootstrap_fpr_ci95"])
         self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
 
@@ -146,6 +147,7 @@ class SelectiveMetricsTests(unittest.TestCase):
         ]
         stats = compute_selective_metrics(rows)
         self.assertEqual(stats["independent_source_groups"], 1)
+        self.assertEqual(stats["fpr_human_source_groups"], 1)
         self.assertIsNone(stats["group_bootstrap_fpr_ci95"])
         self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", stats["evidence_gaps"])
 
@@ -167,8 +169,12 @@ class SelectiveMetricsTests(unittest.TestCase):
         baseline = compute_selective_metrics(humans, bootstrap_seed=0)
         combined = compute_selective_metrics(humans + ais, bootstrap_seed=0)
         self.assertIsNotNone(baseline["group_bootstrap_fpr_ci95"])
+        self.assertEqual(baseline["fpr_human_source_groups"], 12)
+        self.assertEqual(combined["fpr_human_source_groups"], 12)
         self.assertEqual(baseline["group_bootstrap_fpr_ci95"],
                          combined["group_bootstrap_fpr_ci95"])
+        self.assertEqual(baseline["group_bootstrap_fpr_ci95"]["method"],
+                         "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2")
 
     def test_group_bootstrap_reflects_correlation(self):
         samples = ([row("human",.9,"group-FP") for _ in range(20)]+
