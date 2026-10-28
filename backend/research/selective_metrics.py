@@ -201,15 +201,19 @@ def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tup
     for index, row in enumerate(rows):
         grouped[find(index)].append(row)
     n_groups = len(grouped)
-    human_clusters = sum(any(row["label"] == "human" for row in cluster)
-                         for cluster in grouped.values())
-    if n_groups < 2 or human_clusters < 2:
+    # Preserve links through AI records (they can connect two human authors),
+    # but sample only the HUMAN observations for an interval about HUMAN FPR.
+    # Otherwise adding unrelated AI groups changes a human-only interval.
+    human_groups = [[row for row in cluster if row["label"] == "human"]
+                    for cluster in grouped.values()]
+    human_groups = [cluster for cluster in human_groups if cluster]
+    if len(human_groups) < 2:
         return None, n_groups
 
-    # Stable cluster order irrespective of input row order. Do not export
-    # the underlying source keys, IDs, hashes, authors or document text.
+    # Stable HUMAN cluster order irrespective of AI-only rows or input order.
+    # Identifiers are private in-process data, never serialized in the report.
     clusters = sorted(
-        grouped.values(),
+        human_groups,
         key=lambda part: min(key for row in part for key in _group_keys(row))
     )
     rng = random.Random(seed)
@@ -227,7 +231,7 @@ def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tup
     rates.sort()
     return {"lower": rates[int(.025 * (len(rates) - 1))],
             "upper": rates[int(.975 * (len(rates) - 1))],
-            "method": "SOURCE_CLUSTER_BOOTSTRAP_RESEARCH_400"}, n_groups
+            "method": "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2"}, n_groups
 
 
 def _bucket(row: dict, field: str, train_families: set[str] | None):
