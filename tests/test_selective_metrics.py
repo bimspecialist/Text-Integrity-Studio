@@ -82,6 +82,59 @@ class SelectiveMetricsTests(unittest.TestCase):
         self.assertIsNone(result["group_bootstrap_fpr_ci95"])
         self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
 
+    def test_transitive_article_and_author_links_share_a_bootstrap_unit(self):
+        # A --same article--> B --same author--> C. Only D is independent.
+        records = [
+            row("human", .93, "s1", author_group="A", article_group="doc-1"),
+            row("human", .20, "s2", author_group="B", article_group="doc-1"),
+            row("human", .15, "s3", author_group="B", article_group="doc-2"),
+            row("human", .10, "s4", author_group="C", article_group="doc-3"),
+        ]
+        first = compute_selective_metrics(records, bootstrap_seed=37)
+        reordered = compute_selective_metrics(list(reversed(records)), bootstrap_seed=37)
+        self.assertEqual(first["independent_source_groups"], 2)
+        self.assertEqual(first["independent_source_groups"],
+                         reordered["independent_source_groups"])
+        self.assertEqual(first["group_bootstrap_fpr_ci95"],
+                         reordered["group_bootstrap_fpr_ci95"])
+        self.assertIsNotNone(first["group_bootstrap_fpr_ci95"])
+
+    def test_same_text_digest_unifies_distinct_upload_and_author_tags(self):
+        records = [
+            row("human", .93, "upload-1", author_group="writer-A",
+                content_digest="f" * 64),
+            row("human", .10, "upload-2", author_group="writer-B",
+                content_digest="f" * 64),
+            row("ai", .90, "upload-3", author_group="writer-C",
+                content_digest="e" * 64),
+        ]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 2)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        exported = json.dumps(result)
+        for private_tag in ("upload-1", "writer-A", "ffffffff", "eeeeeeee"):
+            self.assertNotIn(private_tag, exported)
+
+    def test_placeholder_identifiers_and_cross_field_names_do_not_join_sources(self):
+        records = [
+            row("human", .93, "unique-source-1", author_group="unknown",
+                article_group="none"),
+            row("human", .05, "unique-source-2", author_group="n/a",
+                article_group="null"),
+            row("human", .10, "author-label", author_group="unique-source-1",
+                article_group="not_applicable"),
+        ]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 3)
+        self.assertIsNotNone(result["group_bootstrap_fpr_ci95"])
+
+    def test_missing_every_source_identifier_disables_cluster_claim(self):
+        records = [row("human", .93), row("human", .07, "identified")]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 0)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
+
     def test_group_bootstrap_reflects_correlation(self):
         samples = ([row("human",.9,"group-FP") for _ in range(20)]+
                    [row("human",.1,"group-TN") for _ in range(20)])
