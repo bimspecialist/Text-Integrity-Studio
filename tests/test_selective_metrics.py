@@ -65,6 +65,117 @@ class SelectiveMetricsTests(unittest.TestCase):
         self.assertEqual(stats["human_fpr_all_maximum"],1)
         self.assertEqual(stats["ai_fnr_all_maximum"],1)
 
+    def test_distinct_source_groups_sharing_an_author_are_one_cluster(self):
+        # Synthetic negative control: two excerpts from one author must not
+        # become two "independent" samples just because the upload assigned
+        # distinct source_group values. An FPR confidence interval is not
+        # estimable from a single independent human author.
+        rows = [
+            row("human", .94, "chapter-one", author_group="same-author",
+                article_group="draft-1"),
+            row("human", .06, "chapter-two", author_group="same-author",
+                article_group="draft-2"),
+            row("ai", .88, "separate-generator", author_group="other-author"),
+        ]
+        result = compute_selective_metrics(rows, bootstrap_seed=19)
+        self.assertEqual(result["independent_source_groups"], 2)
+        self.assertEqual(result["fpr_human_source_groups"], 1)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
+
+    def test_transitive_article_and_author_links_share_a_bootstrap_unit(self):
+        # A --same article--> B --same author--> C. Only D is independent.
+        records = [
+            row("human", .93, "s1", author_group="A", article_group="doc-1"),
+            row("human", .20, "s2", author_group="B", article_group="doc-1"),
+            row("human", .15, "s3", author_group="B", article_group="doc-2"),
+            row("human", .10, "s4", author_group="C", article_group="doc-3"),
+        ]
+        first = compute_selective_metrics(records, bootstrap_seed=37)
+        reordered = compute_selective_metrics(list(reversed(records)), bootstrap_seed=37)
+        self.assertEqual(first["independent_source_groups"], 2)
+        self.assertEqual(first["independent_source_groups"],
+                         reordered["independent_source_groups"])
+        self.assertEqual(first["group_bootstrap_fpr_ci95"],
+                         reordered["group_bootstrap_fpr_ci95"])
+        self.assertIsNotNone(first["group_bootstrap_fpr_ci95"])
+
+    def test_same_text_digest_unifies_distinct_upload_and_author_tags(self):
+        records = [
+            row("human", .93, "upload-1", author_group="writer-A",
+                content_digest="f" * 64),
+            row("human", .10, "upload-2", author_group="writer-B",
+                content_digest="f" * 64),
+            row("ai", .90, "upload-3", author_group="writer-C",
+                content_digest="e" * 64),
+        ]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 2)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        exported = json.dumps(result)
+        for private_tag in ("upload-1", "writer-A", "ffffffff", "eeeeeeee"):
+            self.assertNotIn(private_tag, exported)
+
+    def test_placeholder_identifiers_and_cross_field_names_do_not_join_sources(self):
+        records = [
+            row("human", .93, "unique-source-1", author_group="unknown",
+                article_group="none"),
+            row("human", .05, "unique-source-2", author_group="n/a",
+                article_group="null"),
+            row("human", .10, "author-label", author_group="unique-source-1",
+                article_group="not_applicable"),
+        ]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 3)
+        self.assertIsNotNone(result["group_bootstrap_fpr_ci95"])
+
+    def test_missing_every_source_identifier_disables_cluster_claim(self):
+        records = [row("human", .93), row("human", .07, "identified")]
+        result = compute_selective_metrics(records)
+        self.assertEqual(result["independent_source_groups"], 0)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
+
+    def test_ai_record_can_bridge_two_human_sources_without_extra_fpr_units(self):
+        rows = [
+            row("human", .95, "human-one", author_group="author-A",
+                article_group="doc-A"),
+            row("ai", .97, "generated-bridge", author_group="author-A",
+                article_group="doc-B"),
+            row("human", .10, "human-two", author_group="author-B",
+                article_group="doc-B"),
+        ]
+        stats = compute_selective_metrics(rows)
+        self.assertEqual(stats["independent_source_groups"], 1)
+        self.assertEqual(stats["fpr_human_source_groups"], 1)
+        self.assertIsNone(stats["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", stats["evidence_gaps"])
+
+    def test_fpr_interval_does_not_depend_on_unrelated_ai_source_counts(self):
+        # Source-cluster FPR concerns HUMAN documents. Adding independent AI
+        # clusters must not alter this human-only uncertainty interval.
+        humans = [
+            row("human", .95 if index < 3 else .10, "human-%02d" % index,
+                author_group="author-%02d" % index)
+            for index in range(12)
+        ]
+        ais = [
+            row("ai", .91, "ai-%02d" % index,
+                author_group="model-source-%02d" % index)
+            for index in range(40)
+        ]
+        # Fixed seed deliberately exposes AI-only clusters influencing the
+        # old source-cluster bootstrap despite unchanged human evidence.
+        baseline = compute_selective_metrics(humans, bootstrap_seed=0)
+        combined = compute_selective_metrics(humans + ais, bootstrap_seed=0)
+        self.assertIsNotNone(baseline["group_bootstrap_fpr_ci95"])
+        self.assertEqual(baseline["fpr_human_source_groups"], 12)
+        self.assertEqual(combined["fpr_human_source_groups"], 12)
+        self.assertEqual(baseline["group_bootstrap_fpr_ci95"],
+                         combined["group_bootstrap_fpr_ci95"])
+        self.assertEqual(baseline["group_bootstrap_fpr_ci95"]["method"],
+                         "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2")
+
     def test_group_bootstrap_reflects_correlation(self):
         samples = ([row("human",.9,"group-FP") for _ in range(20)]+
                    [row("human",.1,"group-TN") for _ in range(20)])

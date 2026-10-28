@@ -21,7 +21,12 @@ except ImportError:
 CLASSES = ("human", "ai")
 RECOGNIZED_DOMAINS = {"academic", "technical", "formal", "general", "esl", "news", "creative"}
 RECOGNIZED_LANGUAGES = {"en", "ar"}
-EMPTY_GROUPS = {None, "", "unknown", "none", "n/a"}
+# Never let missing/placeholder identifiers merge unrelated records.
+EMPTY_GROUPS = {"", "unknown", "none", "n/a", "null", "not_applicable"}
+# More than one identifier may connect two rows through different paths.
+# Prefix every value with its field to avoid cross-field name collisions.
+SOURCE_LINK_FIELDS = ("content_digest", "source_group", "author_group",
+                      "article_group", "prompt_group")
 
 
 def _ratio(n: int, d: int) -> float | None:
@@ -148,43 +153,86 @@ def _core(rows: list[dict], threshold: float) -> dict:
     }
 
 
-def _group_key(row: dict) -> str | None:
-    for field in ("source_group", "author_group", "article_group", "prompt_group"):
+def _group_keys(row: dict) -> list[tuple[str, str]]:
+    """Private, typed identifiers for connected source/author/article clusters.
+
+    Missing metadata must not establish independence. These identifiers are
+    held in process only; only aggregate cluster counts leave this module.
+    """
+    keys = []
+    for field in SOURCE_LINK_FIELDS:
         value = row.get(field)
         if isinstance(value, str) and value.strip().lower() not in EMPTY_GROUPS:
-            return value
-    return None
+            keys.append((field, value.strip()))
+    return keys
 
 
-def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tuple[dict | None, int]:
-    groups = defaultdict(list)
-    for row in rows:
-        key = _group_key(row)
-        if key is None:
-            return None, 0
-        groups[key].append(row)
-    # A human FPR interval needs at least two independent human-source clusters.
-    human_clusters = sum(any(r["label"] == "human" for r in cluster)
-                         for cluster in groups.values())
-    if len(groups) < 2 or human_clusters < 2:
-        return None, len(groups)
-    keys = sorted(groups)
+def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tuple[dict | None, int, int]:
+    # Historical defect: choosing just source_group split excerpts from the
+    # same author into falsely independent bootstrap units. Build connected
+    # components over *all* known identifiers, including transitive links.
+    parent = list(range(len(rows)))
+
+    def find(i: int) -> int:
+        while parent[i] != i:
+            parent[i] = parent[parent[i]]
+            i = parent[i]
+        return i
+
+    def union(a: int, b: int) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[max(ra, rb)] = min(ra, rb)
+
+    owners: dict[tuple[str, str], int] = {}
+    for index, row in enumerate(rows):
+        identifiers = _group_keys(row)
+        if not identifiers:
+            # Unknown grouping makes cluster-level uncertainty unestimable.
+            return None, 0, 0
+        for identifier in identifiers:
+            prior = owners.get(identifier)
+            if prior is not None:
+                union(index, prior)
+            else:
+                owners[identifier] = index
+
+    grouped: dict[int, list[dict]] = defaultdict(list)
+    for index, row in enumerate(rows):
+        grouped[find(index)].append(row)
+    n_groups = len(grouped)
+    # Preserve links through AI records (they can connect two human authors),
+    # but sample only the HUMAN observations for an interval about HUMAN FPR.
+    # Otherwise adding unrelated AI groups changes a human-only interval.
+    human_groups = [[row for row in cluster if row["label"] == "human"]
+                    for cluster in grouped.values()]
+    human_groups = [cluster for cluster in human_groups if cluster]
+    n_human_groups = len(human_groups)
+    if n_human_groups < 2:
+        return None, n_groups, n_human_groups
+
+    # Stable HUMAN cluster order irrespective of AI-only rows or input order.
+    # Identifiers are private in-process data, never serialized in the report.
+    clusters = sorted(
+        human_groups,
+        key=lambda part: min(key for row in part for key in _group_keys(row))
+    )
     rng = random.Random(seed)
     rates = []
     for _ in range(400):
         sampled = []
-        for _ in keys:
-            sampled.extend(groups[rng.choice(keys)])
+        for _ in clusters:
+            sampled.extend(rng.choice(clusters))
         matrix, _, _, _, _ = _counts(sampled, threshold)
         denom = matrix["fp"] + matrix["tn"]
         if denom:
             rates.append(matrix["fp"] / denom)
     if len(rates) < 200:
-        return None, len(groups)
+        return None, n_groups, n_human_groups
     rates.sort()
     return {"lower": rates[int(.025 * (len(rates) - 1))],
             "upper": rates[int(.975 * (len(rates) - 1))],
-            "method": "SOURCE_CLUSTER_BOOTSTRAP_RESEARCH_400"}, len(groups)
+            "method": "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2"}, n_groups, n_human_groups
 
 
 def _bucket(row: dict, field: str, train_families: set[str] | None):
@@ -235,9 +283,10 @@ def compute_selective_metrics(
         if r.get("label") not in CLASSES:
             raise ValueError("INVALID_CLASS_LABEL")
     result = _core(rows, alert_threshold)
-    ci, n_groups = _cluster_bootstrap_fpr(rows, alert_threshold, bootstrap_seed)
+    ci, n_groups, n_human_groups = _cluster_bootstrap_fpr(rows, alert_threshold, bootstrap_seed)
     result["group_bootstrap_fpr_ci95"] = ci
     result["independent_source_groups"] = n_groups
+    result["fpr_human_source_groups"] = n_human_groups
     missing_metadata = any(
         _bucket(r, "language", train_model_families) == "unknown" or
         _bucket(r, "domain", train_model_families) == "other" or
