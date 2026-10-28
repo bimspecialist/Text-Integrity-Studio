@@ -167,7 +167,7 @@ def _group_keys(row: dict) -> list[tuple[str, str]]:
     return keys
 
 
-def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tuple[dict | None, int]:
+def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tuple[dict | None, int, int]:
     # Historical defect: choosing just source_group split excerpts from the
     # same author into falsely independent bootstrap units. Build connected
     # components over *all* known identifiers, including transitive links.
@@ -189,7 +189,7 @@ def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tup
         identifiers = _group_keys(row)
         if not identifiers:
             # Unknown grouping makes cluster-level uncertainty unestimable.
-            return None, 0
+            return None, 0, 0
         for identifier in identifiers:
             prior = owners.get(identifier)
             if prior is not None:
@@ -207,8 +207,9 @@ def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tup
     human_groups = [[row for row in cluster if row["label"] == "human"]
                     for cluster in grouped.values()]
     human_groups = [cluster for cluster in human_groups if cluster]
-    if len(human_groups) < 2:
-        return None, n_groups
+    n_human_groups = len(human_groups)
+    if n_human_groups < 2:
+        return None, n_groups, n_human_groups
 
     # Stable HUMAN cluster order irrespective of AI-only rows or input order.
     # Identifiers are private in-process data, never serialized in the report.
@@ -227,11 +228,11 @@ def _cluster_bootstrap_fpr(rows: list[dict], threshold: float, seed: int) -> tup
         if denom:
             rates.append(matrix["fp"] / denom)
     if len(rates) < 200:
-        return None, n_groups
+        return None, n_groups, n_human_groups
     rates.sort()
     return {"lower": rates[int(.025 * (len(rates) - 1))],
             "upper": rates[int(.975 * (len(rates) - 1))],
-            "method": "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2"}, n_groups
+            "method": "HUMAN_CONNECTED_CLUSTER_BOOTSTRAP_RESEARCH_400_V2"}, n_groups, n_human_groups
 
 
 def _bucket(row: dict, field: str, train_families: set[str] | None):
@@ -282,9 +283,10 @@ def compute_selective_metrics(
         if r.get("label") not in CLASSES:
             raise ValueError("INVALID_CLASS_LABEL")
     result = _core(rows, alert_threshold)
-    ci, n_groups = _cluster_bootstrap_fpr(rows, alert_threshold, bootstrap_seed)
+    ci, n_groups, n_human_groups = _cluster_bootstrap_fpr(rows, alert_threshold, bootstrap_seed)
     result["group_bootstrap_fpr_ci95"] = ci
     result["independent_source_groups"] = n_groups
+    result["fpr_human_source_groups"] = n_human_groups
     missing_metadata = any(
         _bucket(r, "language", train_model_families) == "unknown" or
         _bucket(r, "domain", train_model_families) == "other" or
