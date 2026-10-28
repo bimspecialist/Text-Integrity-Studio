@@ -65,6 +65,23 @@ class SelectiveMetricsTests(unittest.TestCase):
         self.assertEqual(stats["human_fpr_all_maximum"],1)
         self.assertEqual(stats["ai_fnr_all_maximum"],1)
 
+    def test_distinct_source_groups_sharing_an_author_are_one_cluster(self):
+        # Synthetic negative control: two excerpts from one author must not
+        # become two "independent" samples just because the upload assigned
+        # distinct source_group values. An FPR confidence interval is not
+        # estimable from a single independent human author.
+        rows = [
+            row("human", .94, "chapter-one", author_group="same-author",
+                article_group="draft-1"),
+            row("human", .06, "chapter-two", author_group="same-author",
+                article_group="draft-2"),
+            row("ai", .88, "separate-generator", author_group="other-author"),
+        ]
+        result = compute_selective_metrics(rows, bootstrap_seed=19)
+        self.assertEqual(result["independent_source_groups"], 2)
+        self.assertIsNone(result["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
+
     def test_group_bootstrap_reflects_correlation(self):
         samples = ([row("human",.9,"group-FP") for _ in range(20)]+
                    [row("human",.1,"group-TN") for _ in range(20)])
