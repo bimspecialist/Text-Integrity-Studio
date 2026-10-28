@@ -135,6 +135,25 @@ class SelectiveMetricsTests(unittest.TestCase):
         self.assertIsNone(result["group_bootstrap_fpr_ci95"])
         self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
 
+    def test_fpr_interval_does_not_depend_on_unrelated_ai_source_counts(self):
+        # Source-cluster FPR concerns HUMAN documents. Adding independent AI
+        # clusters must not alter this human-only uncertainty interval.
+        humans = [
+            row("human", .95 if index < 3 else .10, "human-%02d" % index,
+                author_group="author-%02d" % index)
+            for index in range(12)
+        ]
+        ais = [
+            row("ai", .91, "ai-%02d" % index,
+                author_group="model-source-%02d" % index)
+            for index in range(40)
+        ]
+        baseline = compute_selective_metrics(humans, bootstrap_seed=43)
+        combined = compute_selective_metrics(humans + ais, bootstrap_seed=43)
+        self.assertIsNotNone(baseline["group_bootstrap_fpr_ci95"])
+        self.assertEqual(baseline["group_bootstrap_fpr_ci95"],
+                         combined["group_bootstrap_fpr_ci95"])
+
     def test_group_bootstrap_reflects_correlation(self):
         samples = ([row("human",.9,"group-FP") for _ in range(20)]+
                    [row("human",.1,"group-TN") for _ in range(20)])
