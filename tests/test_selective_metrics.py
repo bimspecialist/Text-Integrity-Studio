@@ -135,6 +135,20 @@ class SelectiveMetricsTests(unittest.TestCase):
         self.assertIsNone(result["group_bootstrap_fpr_ci95"])
         self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", result["evidence_gaps"])
 
+    def test_ai_record_can_bridge_two_human_sources_without_extra_fpr_units(self):
+        rows = [
+            row("human", .95, "human-one", author_group="author-A",
+                article_group="doc-A"),
+            row("ai", .97, "generated-bridge", author_group="author-A",
+                article_group="doc-B"),
+            row("human", .10, "human-two", author_group="author-B",
+                article_group="doc-B"),
+        ]
+        stats = compute_selective_metrics(rows)
+        self.assertEqual(stats["independent_source_groups"], 1)
+        self.assertIsNone(stats["group_bootstrap_fpr_ci95"])
+        self.assertIn("GROUP_BOOTSTRAP_UNESTIMABLE", stats["evidence_gaps"])
+
     def test_fpr_interval_does_not_depend_on_unrelated_ai_source_counts(self):
         # Source-cluster FPR concerns HUMAN documents. Adding independent AI
         # clusters must not alter this human-only uncertainty interval.
