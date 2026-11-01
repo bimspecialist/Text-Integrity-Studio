@@ -1,0 +1,60 @@
+/* Midnight Tech visual polish for the shipped V9 public workspace only.
+   V10/V11/V12 research/previews and evidence color semantics stay unchanged. */
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12){
+ --v5-bg:#080d19;--v5-panel:#111b30;--v5-stroke:#2a4160;
+ --v5-ink:#edf6ff;--v5-muted:#b3c7e0;--v5-blue:#74d2ff;
+ --v5-ring-color:#85d8ff;
+ background:radial-gradient(ellipse at 82% -15%,#193052 0%,#080d19 60%)!important;
+ color:#edf6ff;color-scheme:dark
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-topbar{
+ background:rgba(9,16,29,.96);border-bottom:1px solid #2b4260;
+ box-shadow:0 8px 26px #0002
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-brand-icon{
+ background:linear-gradient(135deg,#329fe2,#8977e8);
+ box-shadow:0 8px 24px #477ce333
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .shell{
+ background:transparent
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #inputPanel,
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #reportPanel{
+ background:linear-gradient(155deg,#121e33,#0e182a);
+ border-color:#2c4564;box-shadow:0 15px 50px #0002;
+ border-radius:18px
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #inputPanel #source{
+ background:#0a1628;color:#ecf6ff;border:1px solid #3b5876;
+ box-shadow:inset 0 1px 8px #02091055
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #inputPanel #source:focus-visible{
+ outline:2px solid #89d6ff;outline-offset:2px
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #inputPanel .main-actions #scanAI{
+ background:linear-gradient(116deg,#70cefa,#a3b8ff);color:#05162a;
+ border-color:#99d6fa;box-shadow:0 9px 28px #398dfb30
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #inputPanel .main-actions #scanAI:hover:not(:disabled){
+ box-shadow:0 13px 34px #398dfb45;filter:brightness(1.055)
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-input-tab,
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-upload-tab,
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #language{
+ transition:background-color .18s ease,border-color .18s ease,box-shadow .18s ease
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-input-tab:focus-visible,
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) .v5-upload-tab:focus-visible,
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) #language:focus-visible{
+ outline:2px solid #93d9ff;outline-offset:3px
+}
+body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) [aria-invalid="true"]{
+ outline:2px solid #f7a1ac;outline-offset:1px
+}
+@media(prefers-reduced-motion:reduce){
+ body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) *,
+ body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) *::before,
+ body.tis-v9:not(.tis-v10):not(.tis-v11):not(.tis-v12) *::after{
+ transition:none!important;animation:none!important
+ }
+}
