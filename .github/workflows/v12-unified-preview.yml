@@ -10,6 +10,7 @@ on:
       - 'docs/analysis/workspace-v11-guided.js'
       - 'docs/index.html'
       - 'tests/analysis/workspace-v12-*.test.cjs'
+      - 'docs/quality/v12-contrast-followup-20261027.md'
       - '.github/workflows/v12-unified-preview.yml'
   workflow_dispatch:
 permissions:
@@ -28,6 +29,7 @@ jobs:
       - name: Validate syntax and existing research score safety
         run: |
           node --check docs/analysis/workspace-v12.js
+          node --check tests/analysis/workspace-v12-contrast-diagnostic.test.cjs
           node --check tests/analysis/workspace-v12-browser.test.cjs
           node tests/analysis/workspace-v11-signal-presentation.test.cjs
           node tests/analysis/analysis-controller.test.js
@@ -39,6 +41,8 @@ jobs:
         run: node tests/analysis/workspace-v12-editor-recovery-browser.test.cjs
       - name: V12 EN AR axe-core input, writing guidance and dual editor
         run: node tests/analysis/workspace-v12-axe-browser.test.cjs
+      - name: Diagnose real V12 contrast incomplete cases before visual sign-off
+        run: node tests/analysis/workspace-v12-contrast-diagnostic.test.cjs
       - name: Retain V11 reviewed edit/undo and long-file coverage
         run: |
           node tests/analysis/workspace-v11-m2-reviewed-edits-browser.test.cjs
