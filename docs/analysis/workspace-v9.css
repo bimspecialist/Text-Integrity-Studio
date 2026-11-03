@@ -144,3 +144,21 @@ body.tis-v9 #v5ToolboxItems .v9-tools-group{display:grid;gap:8px;padding:14px 2p
 body.tis-v9 #v5ToolboxItems .v9-tools-group:last-child{border-bottom:0}
 body.tis-v9 #v5ToolboxItems .v9-tools-group>h3{font-size:12px;font-weight:750;
  color:#b2baff;line-height:1.5;margin:0;padding-inline:9px}
+
+/* Optional V12 entry: never replace the current unsaved V9 document. */
+body.tis-v9 .v12-preview-link{
+ display:inline-flex;align-items:center;justify-content:center;min-height:37px;
+ padding:7px 11px;border:1px solid #7e9fe8;border-radius:9px;
+ background:#1a3354;color:#f1f6ff;font-size:12px;font-weight:650;
+ line-height:1.2;text-decoration:none;text-align:center;white-space:nowrap;
+}
+body.tis-v9 .v12-preview-link:hover{background:#28496f;color:#fff}
+body.tis-v9 .v12-preview-link:focus-visible{outline:3px solid #b9adff;outline-offset:3px}
+body.tis-v10 .v12-preview-link,body.tis-v11 .v12-preview-link,body.tis-v12 .v12-preview-link{display:none!important}
+@media(max-width:560px){
+ body.tis-v9 .v5-top-actions{gap:7px}
+ body.tis-v9 .v12-preview-link{min-height:34px;padding:6px 8px;font-size:11px;max-width:124px;white-space:normal}
+}
+@media(max-width:365px){
+ body.tis-v9 .v12-preview-link{max-width:92px;font-size:10px;padding:5px 6px}
+}
